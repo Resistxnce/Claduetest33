@@ -67,6 +67,10 @@ Esports Arena, LAN Cafe, Anti-Cheat HQ and Ban Court, from where the player spaw
 
 ![Maps](previews/maps_1.png)
 
+Gamer Bedroom (giant scale), Streamer House, Dev Studio and Classic Place:
+
+![More maps](previews/maps_2.png)
+
 ## Previews
 
 `previews/` has a picture of every model. The pictures are made by the
