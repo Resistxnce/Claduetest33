@@ -32,6 +32,8 @@ Copy this repo's `src/` folders into the game's `src/`, keeping the paths:
 | `src/server/Maps/Props.luau` | `src/server/Maps/Props.luau` | New map props, written like `Kit.luau` |
 | `src/server/Maps/Esports.luau` | `src/server/Maps/Esports.luau` | Esports Arena and LAN Cafe maps |
 | `src/server/Maps/AntiCheat.luau` | `src/server/Maps/AntiCheat.luau` | Anti-Cheat HQ and Ban Court maps |
+| `src/server/Maps/Hangouts.luau` | `src/server/Maps/Hangouts.luau` | Gamer Bedroom and Streamer House maps |
+| `src/server/Maps/Studio.luau` | `src/server/Maps/Studio.luau` | Dev Studio and Classic Place maps |
 
 `GunSpecsExtra` and `ConfigExtra` are folders with an `init.luau`. Rojo turns
 each one into a single ModuleScript with its other files as children.
@@ -83,11 +85,11 @@ in `Config.luau`. To keep an old look, delete that gun's file from `Guns/`.
    end
    ```
 
-**`src/server/Map.luau`**: add the two new map modules to the list of
+**`src/server/Map.luau`**: add the four new map modules to the list of
 layout modules (keep any others already in it, like `"Extra"` or `"Island"`):
 
 ```lua
-for _, moduleName in { "Classic", "Outdoor", "Indoor", "Esports", "AntiCheat" } do
+for _, moduleName in { "Classic", "Outdoor", "Indoor", "Esports", "AntiCheat", "Hangouts", "Studio" } do
 ```
 
 **`src/server/Main.server.luau`**: right after `Map.build()`:

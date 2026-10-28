@@ -51,8 +51,9 @@ function ConfigExtra.apply(Config)
 		end
 	end
 
-	for _, moduleName in { "MapsEsports", "MapsAntiCheat" } do
-		local maps = require(script[moduleName])
+	for _, moduleName in { "MapsEsports", "MapsAntiCheat", "MapsHangouts", "MapsStudio" } do
+		local module = script:FindFirstChild(moduleName)
+		local maps = if module then require(module) else { Themes = {}, MapPool = {} }
 		for name, theme in maps.Themes do
 			if not Config.Themes[name] then
 				Config.Themes[name] = theme

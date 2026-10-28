@@ -276,7 +276,7 @@ local THEME_FIELDS = {
 }
 
 local function checkMaps()
-	for _, pair in { { "Esports", "MapsEsports" }, { "AntiCheat", "MapsAntiCheat" } } do
+	for _, pair in { { "Esports", "MapsEsports" }, { "AntiCheat", "MapsAntiCheat" }, { "Hangouts", "MapsHangouts" }, { "Studio", "MapsStudio" } } do
 		local layouts = World.require("ServerScriptService.Server.Maps." .. pair[1])
 		local extra = World.require("ReplicatedStorage.Shared.ConfigExtra." .. pair[2])
 		for name, theme in extra.Themes do
