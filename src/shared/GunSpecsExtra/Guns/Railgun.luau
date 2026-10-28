@@ -1,0 +1,91 @@
+-- Railgun: a heavy slate-gray rail rifle with a fat power tube at the back, sights on top,
+-- a raked loop grip and a long segmented barrel, based on the top-left gun in the gun wall picture.
+local Shapes = require(script.Parent.Parent.Shapes)
+local box, wedge, egg, tube, disc, drum, ball, v3, rgb =
+	Shapes.box, Shapes.wedge, Shapes.egg, Shapes.tube, Shapes.disc, Shapes.drum, Shapes.ball, Shapes.v3, Shapes.rgb
+
+return {
+	Factory = { Body = rgb(58, 62, 68), Accent = rgb(170, 225, 255) },
+	View = CFrame.new(0, 0.05, -1.1),
+	Muzzle = v3(0, 0.13, -2.91),
+	Support = v3(-0.04, -0.2, -0.5),
+	Parts = {
+		-- Power tube
+		tube("PowerTube", 1.01, 0.35, v3(0, 0.18, 1.545), "Body"),
+		tube("ButtRing", 0.05, 0.36, v3(0, 0.18, 2.045), "Gunmetal"),
+		tube("ButtCap", 0.04, 0.32, v3(0, 0.18, 2.085), "Rubber"),
+		tube("TubeBand", 0.05, 0.36, v3(0, 0.18, 1.55), "Gunmetal"),
+		tube("JointRing", 0.06, 0.37, v3(0, 0.18, 1.04), "Gunmetal"),
+		box("SlingMount", v3(0.06, 0.05, 0.1), v3(0, 0.005, 1.85), "Gunmetal"),
+		drum("SlingRing", 0.04, 0.08, v3(0, -0.035, 1.85), "Metal"),
+
+		-- Receiver
+		tube("Receiver", 1.64, 0.33, v3(0, 0.16, 0.22), "Body"),
+		drum("ScrewBack", 0.04, 0.05, v3(-0.155, 0.22, 0.75), "Metal"),
+		drum("ScrewFront", 0.04, 0.05, v3(-0.155, 0.22, -0.35), "Metal"),
+		box("EjectPort", v3(0.04, 0.08, 0.26), v3(0.155, 0.22, 0.2), "Dark"),
+		box("ChargeHandle", v3(0.1, 0.05, 0.05), v3(0.19, 0.22, -0.02), "Gunmetal"),
+		ball("ChargeKnob", 0.08, v3(0.24, 0.22, -0.02), "Gunmetal"),
+		box("LowerReceiver", v3(0.28, 0.277, 0.844), v3(0, -0.0785, 0.362), "Gunmetal"),
+		wedge("LowerBack", v3(0.28, 0.237, 0.106), v3(0, -0.0985, 0.837), "Gunmetal", v3(180, 0, 0)),
+		box("SidePlateLeft", v3(0.04, 0.16, 0.6), v3(-0.135, -0.09, 0.4), "Gunmetal"),
+		box("SidePlateRight", v3(0.04, 0.16, 0.6), v3(0.135, -0.09, 0.4), "Gunmetal"),
+		drum("PinBack", 0.34, 0.05, v3(0, -0.1, 0.62), "Metal"),
+		drum("PinFront", 0.34, 0.05, v3(0, -0.1, 0.16), "Metal"),
+		drum("Selector", 0.34, 0.07, v3(0, -0.04, 0.5), "Gunmetal"),
+		wedge("LowerFrontSlope", v3(0.28, 0.112, 0.18), v3(0, -0.161, -0.14), "Gunmetal", v3(0, 0, 180)),
+		box("LowerFront", v3(0.27, 0.165, 0.56), v3(0, -0.0225, -0.34), "Gunmetal"),
+		box("FrontVent1", v3(0.28, 0.05, 0.06), v3(0, -0.04, -0.3), "Dark"),
+		box("FrontVent2", v3(0.28, 0.05, 0.06), v3(0, -0.04, -0.4), "Dark"),
+		box("FrontLug", v3(0.22, 0.14, 0.1), v3(0, -0.11, -0.505), "Gunmetal"),
+		drum("FrontLugBack", 0.22, 0.14, v3(0, -0.11, -0.455), "Gunmetal"),
+		drum("FrontLugFront", 0.22, 0.14, v3(0, -0.11, -0.555), "Gunmetal"),
+		tube("NoseRing", 0.04, 0.34, v3(0, 0.16, -0.58), "Gunmetal"),
+		ball("Nose", 0.33, v3(0, 0.155, -0.62), "Body"),
+
+		-- Sights
+		box("SightRail", v3(0.14, 0.12, 0.98), v3(0, 0.39, 0.51), "Gunmetal"),
+		box("RailSlot1", v3(0.15, 0.04, 0.04), v3(0, 0.44, 0.66), "Dark"),
+		box("RailSlot2", v3(0.15, 0.04, 0.04), v3(0, 0.44, 0.6), "Dark"),
+		box("RailSlot3", v3(0.15, 0.04, 0.04), v3(0, 0.44, 0.54), "Dark"),
+		box("RailSlot4", v3(0.15, 0.04, 0.04), v3(0, 0.44, 0.27), "Dark"),
+		tube("Optic", 0.36, 0.14, v3(0, 0.44, 0.9), "Gunmetal"),
+		tube("OpticRingBack", 0.04, 0.165, v3(0, 0.44, 0.98), "Gunmetal"),
+		tube("OpticRingFront", 0.04, 0.165, v3(0, 0.44, 0.8), "Gunmetal"),
+		tube("OpticEyecup", 0.06, 0.16, v3(0, 0.44, 1.07), "Rubber"),
+		tube("OpticLensBack", 0.04, 0.11, v3(0, 0.44, 1.095), "Lens"),
+		tube("OpticLensFront", 0.04, 0.11, v3(0, 0.44, 0.71), "Lens"),
+		box("TurretBase", v3(0.16, 0.08, 0.18), v3(0, 0.47, 0.4), "Gunmetal"),
+		disc("TurretKnob", 0.04, 0.1, v3(0, 0.525, 0.4), "Gunmetal"),
+		drum("WindageKnob", 0.05, 0.08, v3(0.1, 0.47, 0.4), "Gunmetal"),
+		box("FrontSightBase", v3(0.12, 0.1, 0.3), v3(0, 0.36, 0.08), "Gunmetal"),
+		wedge("FrontSightFin", v3(0.1, 0.12, 0.26), v3(0, 0.465, 0.09), "Gunmetal"),
+
+		-- Grip
+		box("Grip", v3(0.2, 0.5, 0.21), v3(0, -0.41, 0.31), "Gunmetal", v3(24, 0, 0)),
+		box("GripPanelLeft", v3(0.04, 0.34, 0.15), v3(-0.1, -0.44, 0.3), "Rubber", v3(24, 0, 0)),
+		box("GripPanelRight", v3(0.04, 0.34, 0.15), v3(0.1, -0.44, 0.3), "Rubber", v3(24, 0, 0)),
+		box("GripFoot", v3(0.2, 0.12, 0.3), v3(0, -0.585, 0.32), "Gunmetal"),
+		drum("GripHeel", 0.2, 0.12, v3(0, -0.585, 0.47), "Gunmetal"),
+		drum("GripToe", 0.2, 0.12, v3(0, -0.585, 0.17), "Gunmetal"),
+		box("GripLoop", v3(0.08, 0.38, 0.06), v3(0, -0.39, 0.6), "Gunmetal", v3(24, 0, 0)),
+		box("Trigger", v3(0.04, 0.1, 0.05), v3(0, -0.26, 0.06), "Metal", v3(24, 0, 0)),
+
+		-- Barrel
+		tube("Collar", 0.23, 0.25, v3(0, 0.14, -0.885), "Gunmetal"),
+		tube("CollarRing", 0.05, 0.27, v3(0, 0.14, -0.8), "Gunmetal"),
+		tube("BarrelStep", 0.2, 0.2, v3(0, 0.13, -1.1), "Gunmetal"),
+		tube("Barrel", 0.6, 0.16, v3(0, 0.13, -1.5), "Gunmetal"),
+		tube("CoilHousing", 0.38, 0.205, v3(0, 0.13, -1.985), "Body"),
+		tube("CoilRingBack", 0.04, 0.225, v3(0, 0.13, -1.81), "Gunmetal"),
+		tube("CoilRingFront", 0.04, 0.225, v3(0, 0.13, -2.16), "Gunmetal"),
+		box("CoilVent1", v3(0.22, 0.05, 0.08), v3(0, 0.13, -1.93), "Accent"),
+		box("CoilVent2", v3(0.22, 0.05, 0.08), v3(0, 0.13, -2.04), "Accent"),
+		tube("Neck", 0.15, 0.155, v3(0, 0.13, -2.25), "Gunmetal"),
+		tube("MuzzleRing", 0.13, 0.22, v3(0, 0.13, -2.4), "Gunmetal"),
+		tube("Brake", 0.34, 0.21, v3(0, 0.13, -2.64), "Gunmetal"),
+		box("BrakeGlow", v3(0.22, 0.04, 0.28), v3(0, 0.13, -2.645), "Accent"),
+		tube("EndCap", 0.1, 0.22, v3(0, 0.13, -2.85), "Gunmetal"),
+		tube("Bore", 0.04, 0.09, v3(0, 0.13, -2.89), "Dark"),
+	},
+}

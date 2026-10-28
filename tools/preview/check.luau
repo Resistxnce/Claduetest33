@@ -8,6 +8,8 @@ local process = require("@lune/process")
 
 local World = require("./world")
 
+local Enum = World.Enum
+
 local only = process.args[1]
 local problems = {}
 local notes = {}
