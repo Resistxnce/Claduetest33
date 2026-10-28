@@ -1,33 +1,61 @@
--- The part helpers GunModels uses, so extra guns are written the same way.
--- Each gun points along -Z with its middle at the origin and the grip just
--- below and behind it.
+-- The part helpers GunModels uses, plus a few more, so gun files are written
+-- the same way as the game's guns. Each gun points along -Z with its middle at
+-- the origin and the grip just below and behind it.
 --
--- Roles decide a part's color: Body and Accent come from the gun skin
--- (Accent always glows), the rest stay the same. GunModels has Dark, Metal,
--- Wood, Grip and Warhead; the ones below are added for the extra guns.
+-- Roles decide a part's color: Body and Accent come from the gun skin (with
+-- the Factory skin, from the gun's own Factory colors; Accent always glows).
+-- The rest stay the same on every skin. GunModels has Dark, Metal, Wood, Grip
+-- and Warhead; the ones below are added for the new guns.
 local Shapes = {}
 
 local rgb = Color3.fromRGB
+local M = Enum.Material
 
 Shapes.ROLES = {
-	Hazard = { Color = rgb(245, 190, 30), Material = Enum.Material.SmoothPlastic },
-	Brass = { Color = rgb(200, 160, 72), Material = Enum.Material.Metal },
-	Chrome = { Color = rgb(170, 175, 185), Material = Enum.Material.Metal },
+	Gunmetal = { Color = rgb(52, 55, 62), Material = M.Metal }, -- dark steel, lighter than Dark
+	Chrome = { Color = rgb(175, 180, 190), Material = M.Metal }, -- bright polished steel
+	Brass = { Color = rgb(200, 160, 72), Material = M.Metal }, -- shells and rounds
+	Hazard = { Color = rgb(245, 190, 30), Material = M.SmoothPlastic }, -- warning-stripe yellow
+	Orange = { Color = rgb(222, 112, 32), Material = M.SmoothPlastic },
+	Red = { Color = rgb(180, 30, 32), Material = M.SmoothPlastic },
+	Green = { Color = rgb(70, 160, 50), Material = M.SmoothPlastic },
+	White = { Color = rgb(225, 228, 232), Material = M.SmoothPlastic },
+	Tan = { Color = rgb(196, 176, 140), Material = M.SmoothPlastic },
+	Bone = { Color = rgb(222, 214, 196), Material = M.Marble }, -- pearl grips
+	Lens = { Color = rgb(30, 60, 90), Material = M.Glass }, -- scope glass
+	Rubber = { Color = rgb(18, 18, 20), Material = M.Fabric }, -- pads and grips
 }
 
 local CYLINDER = Enum.PartType.Cylinder
 local BALL = Enum.PartType.Ball
 
--- A block. Angles are degrees around X, Y and Z.
-function Shapes.box(name, size, position, role, angles)
+local function turn(position, angles)
 	local offset = CFrame.new(position)
 	if angles then
 		offset *= CFrame.Angles(math.rad(angles.X), math.rad(angles.Y), math.rad(angles.Z))
 	end
-	return { Name = name, Size = size, Offset = offset, Role = role }
+	return offset
 end
 
--- A cylinder lying along Z
+-- A block. Angles are degrees around X, Y and Z.
+function Shapes.box(name, size, position, role, angles)
+	return { Name = name, Size = size, Offset = turn(position, angles), Role = role }
+end
+
+-- A wedge: a full bottom and a full back (+Z) face, sloping down to a sharp
+-- edge along the front (-Z) bottom. Turn it with angles to aim the slope:
+-- e.g. Vector3.new(0, 180, 0) puts the tall side at the front, and
+-- Vector3.new(180, 0, 0) flips it upside down.
+function Shapes.wedge(name, size, position, role, angles)
+	return { Name = name, Size = size, Offset = turn(position, angles), Role = role, Class = "WedgePart" }
+end
+
+-- A rounded egg shape that fills size (smooth stocks, scope bells, rocket noses)
+function Shapes.egg(name, size, position, role, angles)
+	return { Name = name, Size = size, Offset = turn(position, angles), Role = role, Mesh = Enum.MeshType.Sphere }
+end
+
+-- A cylinder lying along Z (barrels, scopes, tubes)
 function Shapes.tube(name, length, diameter, position, role)
 	return {
 		Name = name,
@@ -72,5 +100,6 @@ function Shapes.ball(name, diameter, position, role)
 end
 
 Shapes.v3 = Vector3.new
+Shapes.rgb = rgb
 
 return Shapes

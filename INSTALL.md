@@ -4,14 +4,29 @@ Everything in `src/` uses the same layout as the game's Rojo project
 (`EarnEsp/src`), so installing is: copy the files, then add a few hook lines to
 five game files. Nothing in the game is replaced or reordered.
 
+## 0. Get the files onto your PC
+
+Pick one:
+
+- **Easiest:** in the Claude Code session that works on the game on your PC
+  (the one in `Downloads\Build\EarnEsp`), say: *"Clone
+  github.com/Resistxnce/Claduetest33 and install the models into EarnEsp by
+  following its INSTALL.md"*. It can do steps 1 to 3 for you.
+- **By hand:** on the GitHub page, click **Code > Download ZIP** and unzip it.
+  If you use git, run
+  `git clone https://github.com/Resistxnce/Claduetest33` instead. Then do
+  steps 1 and 2 yourself.
+
+To get later updates, download the ZIP again or run `git pull`.
+
 ## 1. Copy the files
 
 Copy this repo's `src/` folders into the game's `src/`, keeping the paths:
 
 | From this repo | To the game | What it is |
 |---|---|---|
-| `src/shared/GunSpecsExtra/` (folder) | `src/shared/GunSpecsExtra/` | Part lists for the 10 new guns, plus 3 extra part roles |
-| `src/shared/ConfigExtra/` (folder) | `src/shared/ConfigExtra/` | Gun stats, bot types and waves, map lighting themes and map pool ids |
+| `src/shared/GunSpecsExtra/` (folder) | `src/shared/GunSpecsExtra/` | One part list per gun in `Guns/`: 13 new guns, plus new looks for the game's 8 guns |
+| `src/shared/ConfigExtra/` (folder) | `src/shared/ConfigExtra/` | Stats for the new guns (`Weapons/`), bot types and waves, map lighting themes and map pool ids |
 | `src/server/BotOutfits.luau` | `src/server/BotOutfits.luau` | Outfits for the new bots, bosses and lobby NPCs, plus boss trash talk |
 | `src/server/LobbyNpcs.luau` | `src/server/LobbyNpcs.luau` | Friendly lobby characters (Skin Spin vendor and others) |
 | `src/server/Maps/Props.luau` | `src/server/Maps/Props.luau` | New map props, written like `Kit.luau` |
@@ -30,19 +45,18 @@ each one into a single ModuleScript with its other files as children.
 require(script.Parent.ConfigExtra).apply(Config)
 ```
 
-**`src/shared/GunModels.luau`**: right after the loop that fills
-`SPECS.Minigun.Spinning`:
+**`src/shared/GunModels.luau`**: just above the last line (`return GunModels`):
 
 ```lua
--- Extra guns (src/shared/GunSpecsExtra)
-local Extra = require(script.Parent.GunSpecsExtra)
-for name, role in Extra.Roles do
-	ROLES[name] = role
-end
-for id, spec in Extra.Specs do
-	SPECS[id] = spec
-end
+-- New guns and new looks for these ones (src/shared/GunSpecsExtra)
+require(script.Parent.GunSpecsExtra).install(GunModels, SPECS, ROLES)
 ```
+
+This adds the new part lists and part roles. It also swaps in a `makeParts`
+that understands wedges, rounded parts and each gun's own Factory colors.
+Everything else in GunModels stays the same. A gun in `Guns/` with the same
+id as one of the game's guns replaces only that gun's look; its stats stay
+in `Config.luau`. To keep an old look, delete that gun's file from `Guns/`.
 
 **`src/server/Bots.luau`**: three small additions.
 
@@ -104,6 +118,11 @@ require(script.Parent.LobbyNpcs).start()
   them from `ConfigExtra`.
 - New guns slot into `Config.Weapons` by price, so the Guns tab stays in cost
   order.
+- With the Factory skin (the default), each gun shows its own colors from the
+  pictures, like the green Plasma Rifle or the tan Marksman Rifle. Every other
+  skin recolors the gun's main body and glow, the same as before.
+- The new guns have 45 to 95 parts each, up from about 15. That's still light
+  for Roblox, but keep it in mind if bots ever carry a lot of them.
 - New bots use only the abilities `Bots.luau` already has (Jams, Disarm, Lag,
   TeleportEvery, Spin, Hammer, Summons, Decoy), so no new bot code is needed.
 - To give a new bot one of the new guns, set its `Gun` in

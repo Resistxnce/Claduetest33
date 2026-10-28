@@ -37,6 +37,8 @@ local WEAPON_OPTIONAL = {
 	Pellets = "number", Range = "number", Scope = "number", Walk = "number", SpinUp = "number", Splash = "number",
 }
 
+local BASE_GUNS = { "Pistol", "SMG", "Shotgun", "Rifle", "Revolver", "Sniper", "Minigun", "Rocket" }
+
 local function checkGuns()
 	local GunModels = World.require("ReplicatedStorage.Shared.GunModels")
 	local Extra = World.require("ReplicatedStorage.Shared.GunSpecsExtra")
@@ -44,44 +46,53 @@ local function checkGuns()
 	for name in Extra.Roles do
 		roles[name] = true
 	end
-	local extraIds = {}
-	for _, moduleName in { "WeaponsClassic", "WeaponsSciFi" } do
-		for _, weapon in World.require("ReplicatedStorage.Shared.ConfigExtra." .. moduleName) do
-			table.insert(extraIds, weapon.Id)
-			for field, kind in WEAPON_FIELDS do
-				if type(weapon[field]) ~= kind then
-					problem(`weapon {weapon.Id}: {field} should be a {kind}`)
+	local stats = {}
+	local weaponsFolder = Shared.ConfigExtra:FindFirstChild("Weapons")
+	for _, module in if weaponsFolder then weaponsFolder:GetChildren() else {} do
+		local weapon = World.require("ReplicatedStorage.Shared.ConfigExtra.Weapons." .. module.Name)
+		if type(weapon) ~= "table" then
+			problem(`ConfigExtra/Weapons/{module.Name} should return one weapon entry`)
+			continue
+		end
+		if weapon.Id ~= module.Name then
+			problem(`ConfigExtra/Weapons/{module.Name}.luau has Id {tostring(weapon.Id)}; the file name must match the Id`)
+		end
+		stats[weapon.Id] = weapon
+		for field, kind in WEAPON_FIELDS do
+			if type(weapon[field]) ~= kind then
+				problem(`weapon {weapon.Id}: {field} should be a {kind}`)
+			end
+		end
+		for field, value in weapon do
+			if not WEAPON_FIELDS[field] and not WEAPON_OPTIONAL[field] then
+				problem(`weapon {weapon.Id}: {field} isn't a field the game reads`)
+			elseif WEAPON_OPTIONAL[field] and type(value) ~= WEAPON_OPTIONAL[field] then
+				problem(`weapon {weapon.Id}: {field} should be a {WEAPON_OPTIONAL[field]}`)
+			end
+		end
+		if type(weapon.Spread) == "table" then
+			for _, key in { "Base", "PerShot", "Max", "Moving" } do
+				if type(weapon.Spread[key]) ~= "number" then
+					problem(`weapon {weapon.Id}: Spread.{key} should be a number`)
 				end
 			end
-			for field, value in weapon do
-				if not WEAPON_FIELDS[field] and not WEAPON_OPTIONAL[field] then
-					problem(`weapon {weapon.Id}: {field} isn't a field the game reads`)
-				elseif WEAPON_OPTIONAL[field] and type(value) ~= WEAPON_OPTIONAL[field] then
-					problem(`weapon {weapon.Id}: {field} should be a {WEAPON_OPTIONAL[field]}`)
-				end
-			end
-			if type(weapon.Spread) == "table" then
-				for _, key in { "Base", "PerShot", "Max", "Moving" } do
-					if type(weapon.Spread[key]) ~= "number" then
-						problem(`weapon {weapon.Id}: Spread.{key} should be a number`)
-					end
-				end
-			end
-			if Config.getWeapon(weapon.Id).Id ~= weapon.Id then
-				problem(`weapon {weapon.Id} didn't make it into Config.Weapons`)
-			end
-			local spec = Extra.Specs[weapon.Id]
-			if not spec then
-				problem(`weapon {weapon.Id} has stats but no model in GunSpecsExtra`)
-			end
+		end
+		if Config.getWeapon(weapon.Id).Id ~= weapon.Id then
+			problem(`weapon {weapon.Id} didn't make it into Config.Weapons`)
+		end
+		if table.find(BASE_GUNS, weapon.Id) then
+			problem(`weapon {weapon.Id} is one of the game's guns; its stats stay in Config.luau, so don't add a Weapons file for it`)
+		end
+		if not Extra.Specs[weapon.Id] then
+			problem(`weapon {weapon.Id} has stats but no model in GunSpecsExtra/Guns`)
 		end
 	end
 	for id, spec in Extra.Specs do
-		if not table.find(extraIds, id) then
-			problem(`model {id} has no stats in ConfigExtra`)
+		if not stats[id] and not table.find(BASE_GUNS, id) then
+			problem(`model {id} is a new gun but has no stats file in ConfigExtra/Weapons`)
 		end
 		if GunModels.spec(id) ~= spec then
-			problem(`model {id} wasn't merged into GunModels (is the hook in?)`)
+			problem(`model {id} wasn't merged into GunModels (is the install hook in?)`)
 		end
 		if not isA(spec.Muzzle, "Vector3") then
 			problem(`model {id}: Muzzle should be a Vector3`)
@@ -92,20 +103,50 @@ local function checkGuns()
 		if spec.View ~= nil and not isA(spec.View, "CFrame") then
 			problem(`model {id}: View should be a CFrame`)
 		end
+		if spec.Factory ~= nil then
+			if type(spec.Factory) ~= "table" then
+				problem(`model {id}: Factory should be a table`)
+			else
+				for field, value in spec.Factory do
+					local kind = if field == "Material" then "EnumItem" else "Color3"
+					if (field ~= "Body" and field ~= "Accent" and field ~= "Material") or typeof(value) ~= kind then
+						problem(`model {id}: Factory.{field} should be a {kind} (Factory has Body, Accent, Material)`)
+					end
+				end
+			end
+		end
 		local count = #spec.Parts + #(spec.Spinning or {})
-		if count > 34 then
-			problem(`model {id} has {count} parts; keep guns at 34 or fewer (every player and bot carries one)`)
+		if count > 100 then
+			problem(`model {id} has {count} parts; keep guns at 100 or fewer (every player and bot carries one)`)
 		end
 		local names = {}
 		local minZ, maxZ = math.huge, -math.huge
-		for _, entry in spec.Parts do
+		local all = table.clone(spec.Parts)
+		for _, entry in spec.Spinning or {} do
+			table.insert(all, entry)
+		end
+		for _, entry in all do
 			if not roles[entry.Role] then
-				problem(`model {id}: part {entry.Name} has unknown Role {entry.Role}`)
+				problem(`model {id}: part {entry.Name} has unknown Role {tostring(entry.Role)}`)
 			end
 			if names[entry.Name] then
 				problem(`model {id}: two parts are named {entry.Name}`)
 			end
 			names[entry.Name] = true
+			if entry.Class ~= nil and entry.Class ~= "WedgePart" then
+				problem(`model {id}: part {entry.Name} has Class {tostring(entry.Class)}; only "WedgePart" is supported`)
+			end
+			if entry.Class and entry.Shape then
+				problem(`model {id}: part {entry.Name} is a wedge with a Shape; wedges can't have one`)
+			end
+			if entry.Mesh ~= nil and entry.Mesh ~= Enum.MeshType.Sphere then
+				problem(`model {id}: part {entry.Name} Mesh must be Enum.MeshType.Sphere`)
+			end
+			if not isA(entry.Size, "Vector3") or entry.Size.X <= 0 or entry.Size.Y <= 0 or entry.Size.Z <= 0 then
+				problem(`model {id}: part {entry.Name} needs a positive Vector3 Size`)
+			elseif math.min(entry.Size.X, entry.Size.Y, entry.Size.Z) < 0.02 then
+				problem(`model {id}: part {entry.Name} is thinner than 0.02 studs and won't show`)
+			end
 			local reach = math.max(entry.Size.X, entry.Size.Y, entry.Size.Z) / 2
 			minZ = math.min(minZ, entry.Offset.Position.Z - reach)
 			maxZ = math.max(maxZ, entry.Offset.Position.Z + reach)
@@ -117,7 +158,7 @@ local function checkGuns()
 				end
 			end
 		end
-		if isA(spec.Muzzle, "Vector3") and spec.Muzzle.Z > minZ + 0.35 then
+		if isA(spec.Muzzle, "Vector3") and spec.Muzzle.Z > minZ + 0.4 then
 			problem(`model {id}: Muzzle (z={spec.Muzzle.Z}) should be at the front tip (front of the gun is z={minZ})`)
 		end
 		local length = maxZ - minZ

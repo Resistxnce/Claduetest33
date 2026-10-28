@@ -27,9 +27,12 @@ local function insertByCost(weapons, weapon)
 end
 
 function ConfigExtra.apply(Config)
-	for _, moduleName in { "WeaponsClassic", "WeaponsSciFi" } do
-		for _, weapon in require(script[moduleName]) do
-			if not hasId(Config.Weapons, weapon.Id) then
+	-- One file per new gun in Weapons/, each returning its Config.Weapons entry
+	local weapons = script:FindFirstChild("Weapons")
+	if weapons then
+		for _, module in weapons:GetChildren() do
+			local weapon = module:IsA("ModuleScript") and require(module)
+			if weapon and not hasId(Config.Weapons, weapon.Id) then
 				insertByCost(Config.Weapons, weapon)
 			end
 		end
