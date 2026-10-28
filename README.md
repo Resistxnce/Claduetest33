@@ -61,6 +61,12 @@ Each gun was built from the vault's gun pictures. Its preview shows the picture 
 ![Props](previews/props_1.png)
 ![Props](previews/props_2.png)
 
+## Maps
+
+Esports Arena, LAN Cafe, Anti-Cheat HQ and Ban Court, from where the player spawns:
+
+![Maps](previews/maps_1.png)
+
 ## Previews
 
 `previews/` has a picture of every model. The pictures are made by the
