@@ -7,14 +7,19 @@
 --   { Name = "Lobby", Build = function() ... end }
 -- plus optional settings:
 --   Viewport = { 1280, 720 }   screen size in pixels (the camera's ViewportSize)
---   Inset = 58                 Roblox topbar height (58 = today's topbar, 36 = the old one)
---   Topbar = "new"             draw the Roblox buttons: "new", "classic" or false
+--   Inset = 58                 Roblox topbar height: 58 for today's topbar (what the game's
+--                              screenshots show), 36 for the old one
+--   Topbar = "new"             the Roblox buttons drawn on top: "new", "classic" (36px inset)
+--                              or false; Roblox's health bar shows top right when hurt
 --   Backdrop = "sky"           what's behind the UI: "sky", "lobby", "dark", "gradient",
 --                              "none", a "#rrggbb" color, an image path (relative to the
 --                              screens file) or { Image = path, Crop = { x, y, w, h }, Blur = 6, Dim = 0.15 }
 --   Frames = 30                frames (60 per second) to run after Build, so RenderStepped
 --                              code updates text and visibility
 --   Touch = false              true pretends to be a phone (TouchEnabled)
+-- The game's own BlurEffect and ColorCorrectionEffect (in Lighting or the
+-- camera) are applied to the backdrop, like the menu blur in game. Screens
+-- files see the Roblox types (Instance, UDim2, Enum, ...), Client and World.
 -- Build runs in a fresh client each time (new player, PlayerGui and modules).
 -- It requires client modules with Client.require, sets attributes, clicks
 -- buttons and so on (see client.luau), then returns what to capture: a
@@ -159,7 +164,12 @@ local MODS = {
 	end,
 	UIGradient = exportGradient,
 	UIPadding = function(item)
-		return { Top = udim(item.PaddingTop), Bottom = udim(item.PaddingBottom), Left = udim(item.PaddingLeft), Right = udim(item.PaddingRight) }
+		return {
+			Top = udim(item.PaddingTop),
+			Bottom = udim(item.PaddingBottom),
+			Left = udim(item.PaddingLeft),
+			Right = udim(item.PaddingRight),
+		}
 	end,
 	UIListLayout = function(item)
 		return {
@@ -205,7 +215,11 @@ local MODS = {
 		}
 	end,
 	UIAspectRatioConstraint = function(item)
-		return { AspectRatio = num(item.AspectRatio), AspectType = enumName(item.AspectType), DominantAxis = enumName(item.DominantAxis) }
+		return {
+			AspectRatio = num(item.AspectRatio),
+			AspectType = enumName(item.AspectType),
+			DominantAxis = enumName(item.DominantAxis),
+		}
 	end,
 	UISizeConstraint = function(item)
 		return { MinSize = vec2(item.MinSize), MaxSize = vec2(item.MaxSize) }
@@ -217,7 +231,11 @@ local MODS = {
 		return { Scale = num(item.Scale) }
 	end,
 	UIFlexItem = function(item)
-		return { FlexMode = enumName(read(item, "FlexMode"), "None"), GrowRatio = num(read(item, "GrowRatio") or 0), ShrinkRatio = num(read(item, "ShrinkRatio") or 0) }
+		return {
+			FlexMode = enumName(read(item, "FlexMode"), "None"),
+			GrowRatio = num(read(item, "GrowRatio") or 0),
+			ShrinkRatio = num(read(item, "ShrinkRatio") or 0),
+		}
 	end,
 }
 -- Where a layout lives on the parent's mods
@@ -405,7 +423,10 @@ end
 local function backdropOf(screen)
 	local backdrop = screen.Backdrop or "sky"
 	if type(backdrop) == "string" then
-		if backdrop:match("%.[%a]+$") and (backdrop:find("/") or backdrop:match("%.png$") or backdrop:match("%.jpe?g$")) then
+		if
+			backdrop:match("%.[%a]+$")
+			and (backdrop:find("/") or backdrop:match("%.png$") or backdrop:match("%.jpe?g$"))
+		then
 			backdrop = { Image = backdrop }
 		else
 			return { Kind = backdrop }
@@ -423,7 +444,50 @@ local function backdropOf(screen)
 	return result
 end
 
-local loadScreens = luau.load(fs.readFile(screensPath), { debugName = screensPath, environment = Client.environment() })()
+-- Post effects on the 3D world (the menu blur, color correction), so the
+-- backdrop behind the UI changes like the game world would
+local function worldEffects()
+	local effects = { Blur = 0, Brightness = 0, Contrast = 0, Saturation = 0, Tint = { 255, 255, 255 } }
+	for _, root in { Client.lighting, Client.camera } do
+		for _, item in root:GetChildren() do
+			if read(item, "Enabled") ~= false then
+				if item:IsA("BlurEffect") then
+					effects.Blur += read(item, "Size") or 0
+				elseif item:IsA("ColorCorrectionEffect") then
+					effects.Brightness += read(item, "Brightness") or 0
+					effects.Contrast += read(item, "Contrast") or 0
+					effects.Saturation += read(item, "Saturation") or 0
+					local tint = read(item, "TintColor")
+					if tint then
+						local c = color(tint)
+						for index = 1, 3 do
+							effects.Tint[index] = math.floor(effects.Tint[index] * c[index] / 255 + 0.5)
+						end
+					end
+				end
+			end
+		end
+	end
+	effects.Blur = num(effects.Blur)
+	effects.Brightness = num(effects.Brightness)
+	effects.Contrast = num(effects.Contrast)
+	effects.Saturation = num(effects.Saturation)
+	return effects
+end
+
+-- The character's health, for Roblox's own health bar (shown when hurt)
+local function coreHealth()
+	local character = Client.player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local starterGui = Client.getService("StarterGui")
+	if not humanoid or not starterGui:GetCoreGuiEnabled(Enum.CoreGuiType.Health) then
+		return nil
+	end
+	return { Health = num(read(humanoid, "Health") or 100), MaxHealth = num(read(humanoid, "MaxHealth") or 100) }
+end
+
+local loadScreens =
+	luau.load(fs.readFile(screensPath), { debugName = screensPath, environment = Client.environment() })()
 local screens = loadScreens(Client)
 local failures, built = 0, 0
 local BUILD_LIMIT = 600 -- frames (10 fake seconds) for Build to finish
@@ -452,7 +516,12 @@ for _, screen in screens do
 	end
 	if not state.Done then
 		failures += 1
-		print(`FAIL {screen.Name}: Build was still waiting after {BUILD_LIMIT / 60}s on: {table.concat(Client.waiting(), ", ")}`)
+		print(
+			`FAIL {screen.Name}: Build was still waiting after {BUILD_LIMIT / 60}s on: {table.concat(
+				Client.waiting(),
+				", "
+			)}`
+		)
 		continue
 	end
 	if not state.Ok then
@@ -470,7 +539,15 @@ for _, screen in screens do
 	local guis = {}
 	for _, root in rootsOf(state.Result) do
 		if root.Only then
-			local gui = if root.Gui then exportScreenGui(root.Gui, { objects = 0, hidden = 0, warnings = {} }) else { Name = "Gui", Enabled = true, DisplayOrder = 0, IgnoreGuiInset = true, ZIndexBehavior = "Sibling" }
+			local gui = if root.Gui
+				then exportScreenGui(root.Gui, { objects = 0, hidden = 0, warnings = {} })
+				else {
+					Name = "Gui",
+					Enabled = true,
+					DisplayOrder = 0,
+					IgnoreGuiInset = true,
+					ZIndexBehavior = "Sibling",
+				}
 			local node = exportObject(root.Only, gui.Name .. "." .. root.Only.Name, stats)
 			gui.Children = { node }
 			table.insert(guis, gui)
@@ -485,6 +562,8 @@ for _, screen in screens do
 		inset = inset,
 		topbar = if screen.Topbar == nil then (if inset == 36 then "classic" else "new") else screen.Topbar,
 		backdrop = backdropOf(screen),
+		effects = worldEffects(),
+		health = coreHealth(),
 		guis = guis,
 		stats = { objects = stats.objects, hidden = stats.hidden },
 		warnings = stats.warnings,

@@ -797,6 +797,10 @@ function drawNode(node) {
       border: `${t}px solid ${rgba(stroke.Color, 1 - stroke.Transparency)}`,
       borderRadius: `${radius > 0 ? radius + outer : stroke.LineJoinMode === 'Round' ? outer : 0}px`,
     })
+    if (radius === 0 && stroke.LineJoinMode === 'Bevel' && outer > 0) {
+      const o = outer
+      ring.style.clipPath = `polygon(${o}px 0, calc(100% - ${o}px) 0, 100% ${o}px, 100% calc(100% - ${o}px), calc(100% - ${o}px) 100%, ${o}px 100%, 0 calc(100% - ${o}px), 0 ${o}px)`
+    }
     if (stroke.Gradient && stroke.Gradient.Enabled) {
       ring.style.borderColor = 'transparent'
       ring.style.background = `${gradientCss(stroke.Gradient, stroke.Color, 1 - stroke.Transparency, node.w, node.h)} border-box`
@@ -880,7 +884,7 @@ function drawOrder(kids, behavior) {
   return items
 }
 
-function drawLayer(container, kids, behavior) {
+function drawLayer(container, kids, behavior, size) {
   for (const item of drawOrder(kids, behavior)) {
     if (item.scrollBarOf) {
       const node = item.scrollBarOf
@@ -890,10 +894,15 @@ function drawLayer(container, kids, behavior) {
     }
     const node = item
     if (node.Class === 'CanvasGroup') {
-      const group = el('div', 'abs', { right: '0', bottom: '0', opacity: String(1 - node.GroupTransparency) })
       if (node.GroupTransparency >= 1) continue
+      const group = el('div', 'abs', { width: `${size.w}px`, height: `${size.h}px`, opacity: String(1 - node.GroupTransparency) })
+      // A CanvasGroup clips its contents to its own shape, rounded corners included
+      if (!node.Rotation) {
+        const b = node.box
+        group.style.clipPath = `inset(${b.y}px ${size.w - b.r}px ${size.h - b.b}px ${b.x}px round ${cornerRadius(node) * node.s}px)`
+      }
       mount(group, drawNode(node), node.matrix, node.clip, node.w, node.h)
-      drawLayer(group, node.Children || [], behavior)
+      drawLayer(group, node.Children || [], behavior, size)
       container.appendChild(group)
       continue
     }
@@ -902,52 +911,83 @@ function drawLayer(container, kids, behavior) {
 }
 
 // Backdrop and Roblox topbar -----------------------------------------------------------
-async function drawBackdrop(stage, backdrop, w, h) {
+async function drawBackdrop(stage, backdrop, effects, w, h) {
   const layer = el('div', 'abs', { width: `${w}px`, height: `${h}px`, overflow: 'hidden' })
+  // Drawn bigger than the screen so blurred edges don't fade to black
+  const M = 80
+  const scene = el('div', 'abs', { left: `${-M}px`, top: `${-M}px`, width: `${w + M * 2}px`, height: `${h + M * 2}px` })
+  const box = (x, y, bw, bh, style) => scene.appendChild(el('div', 'abs', { left: `${M + x}px`, top: `${M + y}px`, width: `${bw}px`, height: `${bh}px`, ...style }))
   const kind = (backdrop && backdrop.Kind) || 'sky'
+  let blur = 0
+  let brightness = 1
   if (kind === 'image') {
     const image = new Image()
     image.src = `/file?path=${encodeURIComponent(backdrop.Image)}`
     await image.decode()
     const crop = backdrop.Crop || [0, 0, image.naturalWidth, image.naturalHeight]
-    const blur = backdrop.Blur ?? 4
     const sx = w / crop[2]
     const sy = h / crop[3]
-    const pic = el('div', 'abs', {
-      left: `${-crop[0] * sx}px`, top: `${-crop[1] * sy}px`, width: `${image.naturalWidth * sx}px`, height: `${image.naturalHeight * sy}px`,
-      backgroundImage: `url("${image.src}")`, backgroundSize: '100% 100%', filter: `blur(${blur}px) brightness(${1 - (backdrop.Dim ?? 0.1)})`,
-    })
-    layer.appendChild(pic)
+    box(-crop[0] * sx, -crop[1] * sy, image.naturalWidth * sx, image.naturalHeight * sy, { backgroundImage: `url("${image.src}")`, backgroundSize: '100% 100%' })
+    blur = backdrop.Blur ?? 4
+    brightness = 1 - (backdrop.Dim ?? 0.1)
   } else if (kind === 'sky') {
     // A sunny arena: sky, a horizon haze, grey paving and a few blocks
-    layer.style.background = 'linear-gradient(180deg, #4f8fd0 0%, #86b8e6 34%, #c9dff0 49%, #b9c0c8 50.5%, #9aa0a8 62%, #7c8189 100%)'
-    const tiles = el('div', 'abs', { left: '-50%', top: `${h * 0.505}px`, width: '200%', height: `${h}px`, opacity: '0.25',
+    scene.style.background = `linear-gradient(180deg, #4f8fd0 0px, #86b8e6 ${M + h * 0.34}px, #c9dff0 ${M + h * 0.49}px, #b9c0c8 ${M + h * 0.505}px, #9aa0a8 ${M + h * 0.62}px, #7c8189 100%)`
+    box(-w * 0.5, h * 0.505, w * 2, h, {
+      opacity: '0.25', transform: 'perspective(400px) rotateX(62deg)', transformOrigin: '50% 0',
       background: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 60px), repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 40px)',
-      transform: 'perspective(400px) rotateX(62deg)', transformOrigin: '50% 0' })
-    layer.appendChild(tiles)
+    })
     for (const [x, y, bw, bh, c] of [[0.02, 0.36, 0.13, 0.32, '#d7dade'], [0.33, 0.47, 0.08, 0.05, '#c3c7cc'], [0.7, 0.46, 0.08, 0.07, '#cfd2d6'], [0.72, 0.52, 0.28, 0.06, '#e2e4e7']]) {
-      layer.appendChild(el('div', 'abs', { left: `${x * w}px`, top: `${y * h}px`, width: `${bw * w}px`, height: `${bh * h}px`, background: c, boxShadow: 'inset -6px -6px 0 rgba(0,0,0,0.08)' }))
+      box(x * w, y * h, bw * w, bh * h, { background: c, boxShadow: 'inset -6px -6px 0 rgba(0,0,0,0.08)' })
     }
-    layer.style.filter = 'blur(1.5px)'
+    blur = 1.5
   } else if (kind === 'lobby') {
     // The lobby plaza: sky, trees, dark paving and a neon pink ring
-    layer.style.background = 'linear-gradient(180deg, #5d8fb3 0%, #8fb6cf 30%, #a9c3cf 44%, #55595f 45%, #3f4248 70%, #2c2e33 100%)'
-    for (const [x, y, r] of [[0.1, 0.35, 0.09], [0.82, 0.33, 0.08], [0.6, 0.38, 0.05]]) {
-      layer.appendChild(el('div', 'abs', { left: `${(x - r) * w}px`, top: `${(y - r * 0.9) * h}px`, width: `${r * 2 * w}px`, height: `${r * 1.5 * h}px`, borderRadius: '50%', background: 'radial-gradient(circle at 40% 35%, #6aa64a, #3d6e2c 70%)' }))
+    scene.style.background = `linear-gradient(180deg, #5d8fb3 0px, #8fb6cf ${M + h * 0.3}px, #a9c3cf ${M + h * 0.44}px, #55595f ${M + h * 0.45}px, #3f4248 ${M + h * 0.7}px, #2c2e33 100%)`
+    for (const [x, y, r] of [[0.1, 0.33, 0.07], [0.86, 0.31, 0.065], [0.62, 0.38, 0.035]]) {
+      box((x - 0.006) * w, y * h, w * 0.012, h * 0.16, { background: '#5a3d2b' })
+      box((x - r) * w, (y - r * 1.1) * h, r * 2 * w, r * 2.2 * h, { borderRadius: '50%', background: 'radial-gradient(circle at 40% 35%, #6aa64a, #3d6e2c 70%)' })
     }
-    layer.appendChild(el('div', 'abs', { left: `${-0.2 * w}px`, top: `${0.62 * h}px`, width: `${1.4 * w}px`, height: `${0.9 * h}px`, borderRadius: '50%', border: `${Math.max(4, h * 0.012)}px solid #ff2fb3`, boxShadow: '0 0 24px #ff2fb3, inset 0 0 24px #ff2fb3' }))
-    layer.appendChild(el('div', 'abs', { left: `${0.4 * w}px`, top: `${0.7 * h}px`, width: `${0.2 * w}px`, height: `${0.18 * h}px`, background: '#14161b', border: '6px solid #ff2fb3', boxShadow: '0 0 18px #ff2fb3', transform: 'perspective(300px) rotateX(40deg)' }))
-    layer.style.filter = 'blur(2px)'
+    box(-0.2 * w, 0.62 * h, 1.4 * w, 0.9 * h, { borderRadius: '50%', border: `${Math.max(4, h * 0.012)}px solid #ff2fb3`, boxShadow: '0 0 24px #ff2fb3, inset 0 0 24px #ff2fb3' })
+    box(0.4 * w, 0.7 * h, 0.2 * w, 0.18 * h, { background: '#14161b', border: '6px solid #ff2fb3', boxShadow: '0 0 18px #ff2fb3', transform: 'perspective(300px) rotateX(40deg)' })
+    blur = 2
   } else if (kind === 'dark') {
-    layer.style.background = 'radial-gradient(ellipse at 50% 40%, #2a2d36 0%, #15161b 70%, #0c0d10 100%)'
+    scene.style.background = 'radial-gradient(ellipse at 50% 40%, #2a2d36 0%, #15161b 70%, #0c0d10 100%)'
   } else if (kind === 'gradient') {
-    layer.style.background = 'linear-gradient(160deg, #7d8794 0%, #4b5260 55%, #2d313a 100%)'
+    scene.style.background = 'linear-gradient(160deg, #7d8794 0%, #4b5260 55%, #2d313a 100%)'
   } else if (kind === 'none') {
-    layer.style.background = 'repeating-conic-gradient(#cfcfcf 0 25%, #ffffff 0 50%) 0 0 / 24px 24px'
+    scene.style.background = 'repeating-conic-gradient(#cfcfcf 0 25%, #ffffff 0 50%) 0 0 / 24px 24px'
   } else {
-    layer.style.background = kind
+    scene.style.background = kind
+  }
+  // The game's BlurEffect (the menu blur) and ColorCorrectionEffect
+  const fx = effects || {}
+  blur += (fx.Blur || 0) * 0.5
+  const filters = []
+  if (blur > 0) filters.push(`blur(${blur}px)`)
+  brightness += fx.Brightness || 0
+  if (brightness !== 1) filters.push(`brightness(${Math.max(0, brightness)})`)
+  if (fx.Contrast) filters.push(`contrast(${Math.max(0, 1 + fx.Contrast)})`)
+  if (fx.Saturation) filters.push(`saturate(${Math.max(0, 1 + fx.Saturation)})`)
+  scene.style.filter = filters.join(' ')
+  layer.appendChild(scene)
+  const tint = fx.Tint
+  if (tint && (tint[0] < 255 || tint[1] < 255 || tint[2] < 255)) {
+    layer.appendChild(el('div', 'fill', { background: rgba(tint, 1), mixBlendMode: 'multiply' }))
   }
   stage.appendChild(layer)
+}
+
+// Roblox's own health bar, top right, shown once the character is hurt
+function drawHealthBar(stage, health, w) {
+  if (!health || health.Health >= health.MaxHealth) return
+  const fraction = Math.max(0, Math.min(1, health.Health / Math.max(1, health.MaxHealth)))
+  const bar = el('div', 'abs', { left: `${w - 20 - 123}px`, top: '24px', width: '123px', height: '19px', borderRadius: '9.5px', background: 'rgba(25,27,29,0.9)' })
+  const hue = fraction > 0.5 ? 140 : Math.max(0, fraction * 2 * 140)
+  const track = el('div', 'abs', { left: '3px', top: '3px', right: '3px', bottom: '3px', borderRadius: '6.5px', background: 'rgba(120,120,120,0.9)', overflow: 'hidden' })
+  track.appendChild(el('div', 'abs', { width: `${fraction * 100}%`, height: '100%', borderRadius: '6px', background: `hsl(${hue}, 100%, 54%)` }))
+  bar.appendChild(track)
+  stage.appendChild(bar)
 }
 
 function drawTopbar(stage, style) {
@@ -1003,7 +1043,7 @@ window.renderScreen = async function renderScreen(data) {
   Object.assign(stage.style, { width: `${w}px`, height: `${h}px` })
   await document.fonts.ready
   const warnings = []
-  await drawBackdrop(stage, data.backdrop, w, h)
+  await drawBackdrop(stage, data.backdrop, data.effects, w, h)
   const guis = data.guis.filter((gui) => gui.Enabled).map((gui, index) => [gui, index])
   guis.sort((a, b) => a[0].DisplayOrder - b[0].DisplayOrder || a[1] - b[1])
   const inset = data.inset || 0
@@ -1014,10 +1054,13 @@ window.renderScreen = async function renderScreen(data) {
     const root = { Children: kids, Mods: gui.Mods, Class: 'ScreenGui', Path: gui.Name }
     layoutChildren(root, w, h - top)
     for (const kid of kids) placeTree(kid, IDENTITY, null, warnings, { w, h: h - top })
-    drawLayer(layer, kids, gui.ZIndexBehavior)
+    drawLayer(layer, kids, gui.ZIndexBehavior, { w, h: h - top })
     stage.appendChild(layer)
   }
-  if (data.topbar && data.topbar !== 'none') drawTopbar(stage, data.topbar)
+  if (data.topbar && data.topbar !== 'none') {
+    drawTopbar(stage, data.topbar)
+    drawHealthBar(stage, data.health, w)
+  }
   await document.fonts.ready
   return { warnings }
 }

@@ -62,6 +62,15 @@ local session
 
 -- Errors from game code -------------------------------------------------------------
 
+-- Lune's errors from Roblox properties aren't strings, and debug.traceback
+-- fails on them ("error in error handling"), so make a string first
+local function traceback(err)
+	if type(err) ~= "string" then
+		return tostring(err)
+	end
+	return debug.traceback(err, 2)
+end
+
 -- Game errors are printed once each, the way Studio's output shows them
 local function report(message)
 	message = tostring(message)
@@ -85,8 +94,13 @@ Client.report = report
 local function spawnFunction(fn, ...)
 	local thread
 	thread = coroutine.create(function(...)
-		local ok, err = xpcall(fn, debug.traceback, ...)
+		local ok, err = xpcall(fn, traceback, ...)
 		if not ok then
+			if type(err) == "string" and string.find(err, "error in error handling", 1, true) then
+				-- The traceback itself failed (usually a stack overflow); say where it started
+				local source, line = debug.info(fn, "sl")
+				err ..= ` (in a function from {source}:{line})`
+			end
 			report(err)
 		end
 	end)
@@ -186,7 +200,10 @@ local function runDue()
 	for _ = 1, 10000 do
 		local best, bestIndex
 		for index, entry in session.queue do
-			if entry.At <= session.now + 1e-9 and (not best or entry.At < best.At or (entry.At == best.At and entry.Seq < best.Seq)) then
+			if
+				entry.At <= session.now + 1e-9
+				and (not best or entry.At < best.At or (entry.At == best.At and entry.Seq < best.Seq))
+			then
 				best, bestIndex = entry, index
 			end
 		end
@@ -272,7 +289,11 @@ end
 
 -- Lune instances have no events, so each one gets fake signals on first use.
 -- They only fire when the preview fires them (clicks, Client.set, ...).
-local instanceSignals = setmetatable({}, { __mode = "k" })
+-- These tables hold their instances strongly on purpose: Lune hands out the
+-- same Lua object for an instance only while one is still alive, so a weak
+-- key would let a button lose its connections to the garbage collector.
+-- Client.reset starts them over.
+local instanceSignals = {}
 
 local function signalOf(instance, name)
 	local list = instanceSignals[instance]
@@ -290,18 +311,66 @@ end
 Client.signalOf = signalOf
 
 local EVENTS = {
-	Instance = { "Changed", "ChildAdded", "ChildRemoved", "DescendantAdded", "DescendantRemoving", "AncestryChanged", "AttributeChanged", "Destroying" },
-	GuiObject = {
-		"MouseEnter", "MouseLeave", "MouseMoved", "MouseWheelForward", "MouseWheelBackward", "InputBegan", "InputChanged", "InputEnded",
-		"TouchTap", "TouchLongPress", "TouchPan", "TouchPinch", "TouchRotate", "TouchSwipe", "SelectionGained", "SelectionLost",
+	Instance = {
+		"Changed",
+		"ChildAdded",
+		"ChildRemoved",
+		"DescendantAdded",
+		"DescendantRemoving",
+		"AncestryChanged",
+		"AttributeChanged",
+		"Destroying",
 	},
-	GuiButton = { "Activated", "MouseButton1Click", "MouseButton1Down", "MouseButton1Up", "MouseButton2Click", "MouseButton2Down", "MouseButton2Up" },
+	GuiObject = {
+		"MouseEnter",
+		"MouseLeave",
+		"MouseMoved",
+		"MouseWheelForward",
+		"MouseWheelBackward",
+		"InputBegan",
+		"InputChanged",
+		"InputEnded",
+		"TouchTap",
+		"TouchLongPress",
+		"TouchPan",
+		"TouchPinch",
+		"TouchRotate",
+		"TouchSwipe",
+		"SelectionGained",
+		"SelectionLost",
+	},
+	GuiButton = {
+		"Activated",
+		"MouseButton1Click",
+		"MouseButton1Down",
+		"MouseButton1Up",
+		"MouseButton2Click",
+		"MouseButton2Down",
+		"MouseButton2Up",
+	},
 	TextBox = { "FocusLost", "Focused", "ReturnPressedFromOnScreenKeyboard" },
-	Humanoid = { "Died", "HealthChanged", "Running", "Jumping", "StateChanged", "MoveToFinished", "FreeFalling", "Seated", "Climbing" },
+	Humanoid = {
+		"Died",
+		"HealthChanged",
+		"Running",
+		"Jumping",
+		"StateChanged",
+		"MoveToFinished",
+		"FreeFalling",
+		"Seated",
+		"Climbing",
+	},
 	BasePart = { "Touched", "TouchEnded" },
 	Sound = { "Ended", "Played", "Loaded", "Paused", "Resumed", "Stopped" },
 	BindableEvent = { "Event" },
-	ProximityPrompt = { "Triggered", "TriggerEnded", "PromptShown", "PromptHidden", "PromptButtonHoldBegan", "PromptButtonHoldEnded" },
+	ProximityPrompt = {
+		"Triggered",
+		"TriggerEnded",
+		"PromptShown",
+		"PromptHidden",
+		"PromptButtonHoldBegan",
+		"PromptButtonHoldEnded",
+	},
 	ClickDetector = { "MouseClick", "MouseHoverEnter", "MouseHoverLeave", "RightMouseClick" },
 	Animator = { "AnimationPlayed" },
 	Tool = { "Activated", "Deactivated", "Equipped", "Unequipped" },
@@ -329,7 +398,10 @@ roblox.implementMethod("Instance", "WaitForChild", function(self, name, timeout)
 	end
 	local managed = inTaskThread()
 	if not managed then
-		error(`Infinite yield: {self:GetFullName()} has no child named "{name}" yet (and the preview can't wait outside a task thread)`, 2)
+		error(
+			`Infinite yield: {self:GetFullName()} has no child named "{name}" yet (and the preview can't wait outside a task thread)`,
+			2
+		)
 	end
 	local started = session.now
 	local warned = false
@@ -371,7 +443,7 @@ roblox.implementMethod("SoundService", "PlayLocalSound", noop)
 roblox.implementMethod("BindableEvent", "Fire", function(self, ...)
 	signalOf(self, "Event"):Fire(...)
 end)
-local bindableCallbacks = setmetatable({}, { __mode = "k" })
+local bindableCallbacks = {}
 roblox.implementProperty("BindableFunction", "OnInvoke", function(self)
 	return bindableCallbacks[self]
 end, function(self, fn)
@@ -387,7 +459,14 @@ end)
 
 -- Humanoid and animation stand-ins
 local function fakeTrack()
-	local track = { IsPlaying = false, Length = 1, Speed = 1, TimePosition = 0, Looped = false, Priority = Enum.AnimationPriority.Action }
+	local track = {
+		IsPlaying = false,
+		Length = 1,
+		Speed = 1,
+		TimePosition = 0,
+		Looped = false,
+		Priority = Enum.AnimationPriority.Action,
+	}
 	track.Stopped = newSignal("Stopped")
 	track.Ended = newSignal("Ended")
 	track.DidLoop = newSignal("DidLoop")
@@ -417,7 +496,18 @@ end)
 roblox.implementMethod("Humanoid", "TakeDamage", function(self, amount)
 	self.Health = math.max(0, self.Health - amount)
 end)
-for _, method in { "MoveTo", "Move", "EquipTool", "UnequipTools", "ApplyDescription", "BuildRigFromAttachments", "SetStateEnabled", "ChangeState" } do
+for _, method in
+	{
+		"MoveTo",
+		"Move",
+		"EquipTool",
+		"UnequipTools",
+		"ApplyDescription",
+		"BuildRigFromAttachments",
+		"SetStateEnabled",
+		"ChangeState",
+	}
+do
 	roblox.implementMethod("Humanoid", method, noop)
 end
 roblox.implementMethod("Humanoid", "GetState", function()
@@ -478,12 +568,30 @@ end)
 roblox.implementMethod("Workspace", "GetServerTimeNow", function()
 	return EPOCH + session.now
 end)
-for _, method in { "Raycast", "Blockcast", "Spherecast", "Shapecast", "FindPartOnRay", "FindPartOnRayWithIgnoreList", "FindPartOnRayWithWhitelist" } do
+for _, method in
+	{
+		"Raycast",
+		"Blockcast",
+		"Spherecast",
+		"Shapecast",
+		"FindPartOnRay",
+		"FindPartOnRayWithIgnoreList",
+		"FindPartOnRayWithWhitelist",
+	}
+do
 	roblox.implementMethod("Workspace", method, function()
 		return nil
 	end)
 end
-for _, method in { "GetPartBoundsInBox", "GetPartBoundsInRadius", "GetPartsInPart", "FindPartsInRegion3", "FindPartsInRegion3WithIgnoreList" } do
+for _, method in
+	{
+		"GetPartBoundsInBox",
+		"GetPartBoundsInRadius",
+		"GetPartsInPart",
+		"FindPartsInRegion3",
+		"FindPartsInRegion3WithIgnoreList",
+	}
+do
 	roblox.implementMethod("Workspace", method, function()
 		return {}
 	end)
@@ -556,17 +664,48 @@ local SEEDS = {
 	GuiBase2d = { AbsoluteSize = Vector2.zero, AbsolutePosition = Vector2.zero, AbsoluteRotation = 0 },
 	TextLabel = { TextBounds = Vector2.zero, TextFits = true },
 	TextButton = { TextBounds = Vector2.zero, TextFits = true },
-	TextBox = { TextBounds = Vector2.zero, TextFits = true },
 	ImageLabel = { Image = "" },
 	ImageButton = { Image = "" },
 	ScrollingFrame = { AbsoluteCanvasSize = Vector2.zero, AbsoluteWindowSize = Vector2.zero },
 	UIGridStyleLayout = { AbsoluteContentSize = Vector2.zero },
 	UIGridLayout = { AbsoluteCellSize = Vector2.zero, AbsoluteCellCount = Vector2.zero },
+	TextBox = { TextBounds = Vector2.zero, TextFits = true, ContentText = "", LocalizedText = "" },
 	UICorner = { CornerRadius = roblox.UDim.new(0, 8) },
 	ScreenGui = { IgnoreGuiInset = false },
-	Humanoid = { Health = 100, MaxHealth = 100, WalkSpeed = 16, JumpPower = 50, JumpHeight = 7.2, HipHeight = 2, MoveDirection = Vector3.zero },
-	Sound = { IsPlaying = false, TimeLength = 1, IsLoaded = true },
+	Humanoid = {
+		Health = 100,
+		MaxHealth = 100,
+		WalkSpeed = 16,
+		JumpPower = 50,
+		JumpHeight = 7.2,
+		HipHeight = 2,
+		MoveDirection = Vector3.zero,
+		FloorMaterial = Enum.Material.Plastic,
+		Jump = false,
+		PlatformStand = false,
+		Sit = false,
+		CameraOffset = Vector3.zero,
+		WalkToPoint = Vector3.zero,
+	},
+	BasePart = {
+		Position = Vector3.zero,
+		Orientation = Vector3.zero,
+		AssemblyLinearVelocity = Vector3.zero,
+		AssemblyAngularVelocity = Vector3.zero,
+		Mass = 1,
+		AssemblyMass = 1,
+		LocalTransparencyModifier = 0,
+	},
+	Attachment = { Position = Vector3.zero, WorldPosition = Vector3.zero, WorldCFrame = CFrame.new() },
+	Model = { WorldPivot = CFrame.new() },
+	Camera = { NearPlaneZ = -0.1 },
+	Lighting = { ClockTime = 14 },
+	Sound = { IsPlaying = false, TimeLength = 1, IsLoaded = true, SoundId = "" },
 }
+SEEDS.TextLabel.ContentText = ""
+SEEDS.TextLabel.LocalizedText = ""
+SEEDS.TextButton.ContentText = ""
+SEEDS.TextButton.LocalizedText = ""
 local function seed(instance)
 	for className, values in SEEDS do
 		if instance:IsA(className) then
@@ -586,8 +725,31 @@ local function seed(instance)
 end
 Client.seed = seed
 
+-- Lune keeps a part's Position apart from its CFrame, and can't read it until
+-- it's set; each frame copies one into the other (whichever code changed)
+local placed = {}
+local function syncParts(root)
+	for _, item in root:GetDescendants() do
+		if item:IsA("BasePart") then
+			local ok, position = pcall(function()
+				return item.Position
+			end)
+			local written = placed[item]
+			if ok and written and position ~= written then
+				item.CFrame = item.CFrame.Rotation + position
+			end
+			local current = item.CFrame.Position
+			item.Position = current
+			placed[item] = current
+		end
+	end
+end
+
 local function newInstance(className, parent)
 	local instance = seed(Instance.new(className))
+	if instance:IsA("BasePart") then
+		placed[instance] = Vector3.zero
+	end
 	if parent ~= nil then
 		instance.Parent = parent
 	end
@@ -702,7 +864,10 @@ local NODE_METHODS = {
 	end,
 	IsA = function(self, name)
 		local own = className(self)
-		return name == own or name == "Instance" or (name == "LuaSourceContainer" and own ~= "Folder") or (name == "BaseScript" and own == "LocalScript")
+		return name == own
+			or name == "Instance"
+			or (name == "LuaSourceContainer" and own ~= "Folder")
+			or (name == "BaseScript" and own == "LocalScript")
 	end,
 	GetFullName = function(self)
 		local names = {}
@@ -851,7 +1016,19 @@ setmetatable(rawget(remotesNode, "Children"), {
 local function stubService(name)
 	return setmetatable({ Name = name, ClassName = name }, {
 		__index = function(self, key)
-			if type(key) == "string" and key:match("^[A-Z]") and (key:find("Added") or key:find("Removing") or key:find("Changed") or key:find("Finished") or key:find("Ended") or key:find("Began") or key:find("Event")) then
+			if
+				type(key) == "string"
+				and key:match("^[A-Z]")
+				and (
+					key:find("Added")
+					or key:find("Removing")
+					or key:find("Changed")
+					or key:find("Finished")
+					or key:find("Ended")
+					or key:find("Began")
+					or key:find("Event")
+				)
+			then
 				local made = newSignal(name .. "." .. key)
 				rawset(self, key, made)
 				return made
@@ -921,11 +1098,31 @@ local function makeInputService(touch)
 		ModalEnabled = false,
 		OnScreenKeyboardVisible = false,
 	}
-	for _, name in {
-		"InputBegan", "InputEnded", "InputChanged", "JumpRequest", "TouchStarted", "TouchEnded", "TouchMoved", "TouchTap",
-		"TouchLongPress", "TouchPan", "TouchPinch", "TouchSwipe", "TouchRotate", "LastInputTypeChanged", "WindowFocused",
-		"WindowFocusReleased", "GamepadConnected", "GamepadDisconnected", "TextBoxFocused", "TextBoxFocusReleased", "PointerAction",
-	} do
+	for _, name in
+		{
+			"InputBegan",
+			"InputEnded",
+			"InputChanged",
+			"JumpRequest",
+			"TouchStarted",
+			"TouchEnded",
+			"TouchMoved",
+			"TouchTap",
+			"TouchLongPress",
+			"TouchPan",
+			"TouchPinch",
+			"TouchSwipe",
+			"TouchRotate",
+			"LastInputTypeChanged",
+			"WindowFocused",
+			"WindowFocusReleased",
+			"GamepadConnected",
+			"GamepadDisconnected",
+			"TextBoxFocused",
+			"TextBoxFocusReleased",
+			"PointerAction",
+		}
+	do
 		service[name] = newSignal("UserInputService." .. name)
 	end
 	function service.GetMouseLocation()
@@ -1034,12 +1231,20 @@ local TweenInfo = {
 
 local function makeStarterGui()
 	local enabled = {}
-	local service = { Name = "StarterGui", ClassName = "StarterGui", ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor }
+	local service =
+		{ Name = "StarterGui", ClassName = "StarterGui", ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor }
+	-- CoreGuiType.All switches every type at once
 	function service.SetCoreGuiEnabled(_, coreType, on)
-		enabled[coreType] = on
+		if coreType == Enum.CoreGuiType.All then
+			table.clear(enabled)
+		end
+		enabled[coreType] = on == true
 	end
 	function service.GetCoreGuiEnabled(_, coreType)
-		return enabled[coreType] ~= false
+		if enabled[coreType] ~= nil then
+			return enabled[coreType]
+		end
+		return enabled[Enum.CoreGuiType.All] ~= false
 	end
 	service.SetCore = noop
 	function service.GetCore()
@@ -1106,12 +1311,29 @@ end
 
 local function makeMarketplaceService()
 	local service = { Name = "MarketplaceService", ClassName = "MarketplaceService" }
-	for _, name in { "PromptGamePassPurchase", "PromptProductPurchase", "PromptPurchase", "PromptPremiumPurchase", "PromptSubscriptionPurchase", "PromptBundlePurchase" } do
+	for _, name in
+		{
+			"PromptGamePassPurchase",
+			"PromptProductPurchase",
+			"PromptPurchase",
+			"PromptPremiumPurchase",
+			"PromptSubscriptionPurchase",
+			"PromptBundlePurchase",
+		}
+	do
 		service[name] = function(_, ...)
 			table.insert(session.sent, { Remote = "MarketplaceService." .. name, Args = table.pack(...) })
 		end
 	end
-	for _, name in { "PromptGamePassPurchaseFinished", "PromptProductPurchaseFinished", "PromptPurchaseFinished", "PromptPremiumPurchaseFinished", "PromptBundlePurchaseFinished" } do
+	for _, name in
+		{
+			"PromptGamePassPurchaseFinished",
+			"PromptProductPurchaseFinished",
+			"PromptPurchaseFinished",
+			"PromptPremiumPurchaseFinished",
+			"PromptBundlePurchaseFinished",
+		}
+	do
 		service[name] = newSignal(name)
 	end
 	function service.UserOwnsGamePassAsync()
@@ -1121,7 +1343,13 @@ local function makeMarketplaceService()
 		return false
 	end
 	function service.GetProductInfo(_, id)
-		return { Name = "Product " .. tostring(id), Description = "", PriceInRobux = 99, IconImageAssetId = 0, IsForSale = true }
+		return {
+			Name = "Product " .. tostring(id),
+			Description = "",
+			PriceInRobux = 99,
+			IconImageAssetId = 0,
+			IsForSale = true,
+		}
 	end
 	return service
 end
@@ -1223,7 +1451,18 @@ end
 
 -- The local player ------------------------------------------------------------------------
 
-local PLAYER_EVENTS = { "CharacterAdded", "CharacterRemoving", "CharacterAppearanceLoaded", "AttributeChanged", "Changed", "Chatted", "Idled", "OnTeleport", "ChildAdded", "ChildRemoved" }
+local PLAYER_EVENTS = {
+	"CharacterAdded",
+	"CharacterRemoving",
+	"CharacterAppearanceLoaded",
+	"AttributeChanged",
+	"Changed",
+	"Chatted",
+	"Idled",
+	"OnTeleport",
+	"ChildAdded",
+	"ChildRemoved",
+}
 
 local function makeMouse()
 	local mouse = {
@@ -1235,7 +1474,9 @@ local function makeMouse()
 		Icon = "",
 		UnitRay = roblox.Ray.new(Vector3.zero, Vector3.new(0, 0, -1)),
 	}
-	for _, name in { "Button1Down", "Button1Up", "Button2Down", "Button2Up", "Move", "Idle", "WheelForward", "WheelBackward" } do
+	for _, name in
+		{ "Button1Down", "Button1Up", "Button2Down", "Button2Up", "Move", "Idle", "WheelForward", "WheelBackward" }
+	do
 		mouse[name] = newSignal("Mouse." .. name)
 	end
 	return setmetatable(mouse, {
@@ -1338,7 +1579,16 @@ local function makePlayer(playersService, options)
 	function methods.WaitForChild(_, name, timeout)
 		return holder:WaitForChild(name, timeout)
 	end
-	for _, name in { "FindFirstChild", "FindFirstChildOfClass", "FindFirstChildWhichIsA", "GetChildren", "GetDescendants", "ClearAllChildren" } do
+	for _, name in
+		{
+			"FindFirstChild",
+			"FindFirstChildOfClass",
+			"FindFirstChildWhichIsA",
+			"GetChildren",
+			"GetDescendants",
+			"ClearAllChildren",
+		}
+	do
 		methods[name] = function(_, ...)
 			return holder[name](holder, ...)
 		end
@@ -1385,7 +1635,16 @@ local function makePlayer(playersService, options)
 	function methods.Kick(_, message)
 		report("LocalPlayer:Kick(" .. tostring(message) .. ")")
 	end
-	for _, name in { "LoadCharacter", "Move", "ClearCharacterAppearance", "RequestStreamAroundAsync", "SetSuperSafeChat", "Destroy" } do
+	for _, name in
+		{
+			"LoadCharacter",
+			"Move",
+			"ClearCharacterAppearance",
+			"RequestStreamAroundAsync",
+			"SetSuperSafeChat",
+			"Destroy",
+		}
+	do
 		methods[name] = noop
 	end
 
@@ -1427,7 +1686,8 @@ local function makePlayer(playersService, options)
 end
 
 local function makePlayersService(options)
-	local service = { Name = "Players", ClassName = "Players", MaxPlayers = 12, RespawnTime = 5, CharacterAutoLoads = true }
+	local service =
+		{ Name = "Players", ClassName = "Players", MaxPlayers = 12, RespawnTime = 5, CharacterAutoLoads = true }
 	service.PlayerAdded = newSignal("PlayerAdded")
 	service.PlayerRemoving = newSignal("PlayerRemoving")
 	local player, holder, playerGui, leaderstats, attributes = makePlayer(service, options)
@@ -1482,7 +1742,8 @@ local SERVICE_MAKERS = {
 	Debris = makeDebris,
 }
 -- Services that are real Lune instances (so things can be parented to them)
-local REAL_SERVICES = { Lighting = true, SoundService = true, ReplicatedFirst = true, Teams = true, MaterialService = true, Chat = true }
+local REAL_SERVICES =
+	{ Lighting = true, SoundService = true, ReplicatedFirst = true, Teams = true, MaterialService = true, Chat = true }
 
 local function getService(name)
 	local services = session.services
@@ -1516,40 +1777,61 @@ Client.getService = function(name)
 end
 
 local function makeGame()
-	return setmetatable({ Name = "Game", ClassName = "DataModel", PlaceId = 0, GameId = 0, JobId = "preview", CreatorId = 0, PlaceVersion = 1 }, {
-		__index = function(self, key)
-			if key == "GetService" or key == "FindService" then
-				return function(_, name)
-					return getService(name)
+	return setmetatable(
+		{
+			Name = "Game",
+			ClassName = "DataModel",
+			PlaceId = 0,
+			GameId = 0,
+			JobId = "preview",
+			CreatorId = 0,
+			PlaceVersion = 1,
+		},
+		{
+			__index = function(self, key)
+				if key == "GetService" or key == "FindService" then
+					return function(_, name)
+						return getService(name)
+					end
+				elseif key == "Workspace" or key == "workspace" then
+					return session.workspace
+				elseif key == "IsLoaded" then
+					return function()
+						return true
+					end
+				elseif key == "Loaded" or key == "Close" then
+					return newSignal(key)
+				elseif key == "BindToClose" then
+					return noop
+				elseif key == "GetPropertyChangedSignal" then
+					return function(_, name)
+						return newSignal(name)
+					end
+				elseif key == "IsA" then
+					return function(_, name)
+						return name == "DataModel" or name == "Instance"
+					end
+				elseif key == "FindFirstChild" or key == "WaitForChild" then
+					return function(_, name)
+						return getService(name)
+					end
+				elseif
+					type(key) == "string"
+					and (
+						key:match("Service$")
+						or key == "Lighting"
+						or key == "Players"
+						or key == "ReplicatedStorage"
+						or key == "StarterGui"
+						or key == "StarterPlayer"
+					)
+				then
+					return getService(key)
 				end
-			elseif key == "Workspace" or key == "workspace" then
-				return session.workspace
-			elseif key == "IsLoaded" then
-				return function()
-					return true
-				end
-			elseif key == "Loaded" or key == "Close" then
-				return newSignal(key)
-			elseif key == "BindToClose" then
-				return noop
-			elseif key == "GetPropertyChangedSignal" then
-				return function(_, name)
-					return newSignal(name)
-				end
-			elseif key == "IsA" then
-				return function(_, name)
-					return name == "DataModel" or name == "Instance"
-				end
-			elseif key == "FindFirstChild" or key == "WaitForChild" then
-				return function(_, name)
-					return getService(name)
-				end
-			elseif type(key) == "string" and (key:match("Service$") or key == "Lighting" or key == "Players" or key == "ReplicatedStorage" or key == "StarterGui" or key == "StarterPlayer") then
-				return getService(key)
-			end
-			error(`{key} is not a valid member of DataModel "Game"`, 2)
-		end,
-	})
+				error(`{key} is not a valid member of DataModel "Game"`, 2)
+			end,
+		}
+	)
 end
 
 local DEFAULTS = { Viewport = { 1280, 720 }, Inset = 58, Touch = false, PlayerName = "Player1" }
@@ -1578,6 +1860,9 @@ function Client.reset(options)
 		G = {},
 	}
 	focusedBox = nil
+	table.clear(instanceSignals)
+	table.clear(bindableCallbacks)
+	table.clear(placed)
 	session.datamodel = Instance.new("DataModel")
 	session.workspace = session.datamodel:GetService("Workspace")
 	session.lighting = session.datamodel:GetService("Lighting")
@@ -1681,12 +1966,26 @@ end
 
 local RaycastParams = {
 	new = function()
-		return { FilterType = Enum.RaycastFilterType.Exclude, FilterDescendantsInstances = {}, IgnoreWater = false, CollisionGroup = "Default", RespectCanCollide = false, AddToFilter = noop }
+		return {
+			FilterType = Enum.RaycastFilterType.Exclude,
+			FilterDescendantsInstances = {},
+			IgnoreWater = false,
+			CollisionGroup = "Default",
+			RespectCanCollide = false,
+			AddToFilter = noop,
+		}
 	end,
 }
 local OverlapParams = {
 	new = function()
-		return { FilterType = Enum.RaycastFilterType.Exclude, FilterDescendantsInstances = {}, MaxParts = 0, CollisionGroup = "Default", RespectCanCollide = false, AddToFilter = noop }
+		return {
+			FilterType = Enum.RaycastFilterType.Exclude,
+			FilterDescendantsInstances = {},
+			MaxParts = 0,
+			CollisionGroup = "Default",
+			RespectCanCollide = false,
+			AddToFilter = noop,
+		}
 	end,
 }
 
@@ -1715,9 +2014,12 @@ DateTimeClass.fromUnixTimestamp = function()
 	return DateTimeClass.now()
 end
 
-local InstanceClass = { new = newInstance, fromExisting = function(instance)
-	return instance:Clone()
-end }
+local InstanceClass = {
+	new = newInstance,
+	fromExisting = function(instance)
+		return instance:Clone()
+	end,
+}
 
 function makeEnvironment(node)
 	return {
@@ -1730,7 +2032,10 @@ function makeEnvironment(node)
 			if type(target) == "table" and getmetatable(target) == nodeMeta then
 				return requireNode(target)
 			end
-			error("require() in the preview only takes modules found through script or game:GetService (not asset ids)", 2)
+			error(
+				"require() in the preview only takes modules found through script or game:GetService (not asset ids)",
+				2
+			)
 		end,
 		Instance = InstanceClass,
 		Vector3 = Vector3,
@@ -1787,7 +2092,11 @@ function makeEnvironment(node)
 		end,
 		UserSettings = function()
 			return {
-				GameSettings = { SavedQualityLevel = Enum.SavedQualitySetting.Automatic, MasterVolume = 1, RotationType = Enum.RotationType.MovementRelative },
+				GameSettings = {
+					SavedQualityLevel = Enum.SavedQualitySetting.Automatic,
+					MasterVolume = 1,
+					RotationType = Enum.RotationType.MovementRelative,
+				},
 				GetService = function(_, name)
 					return stubService(name)
 				end,
@@ -1813,7 +2122,7 @@ function requireNode(node)
 	end
 	cache[file] = cache -- marks "loading"
 	local chunk = luau.load(rawget(node, "Source"), { debugName = file, environment = makeEnvironment(node) })
-	local ok, result = xpcall(chunk, debug.traceback)
+	local ok, result = xpcall(chunk, traceback)
 	if not ok then
 		cache[file] = nil
 		error(result, 0)
@@ -1853,8 +2162,9 @@ function Client.run(path)
 	if rawget(node, "Kind") ~= "LocalScript" then
 		error(path .. " isn't a LocalScript (*.client.luau)")
 	end
-	local chunk = luau.load(rawget(node, "Source"), { debugName = rawget(node, "File"), environment = makeEnvironment(node) })
-	local ok, err = xpcall(chunk, debug.traceback)
+	local chunk =
+		luau.load(rawget(node, "Source"), { debugName = rawget(node, "File"), environment = makeEnvironment(node) })
+	local ok, err = xpcall(chunk, traceback)
 	if not ok then
 		error(err, 0)
 	end
@@ -1931,7 +2241,8 @@ local function layoutObject(item, x, y, w, h)
 		pcall(function()
 			item.AbsoluteWindowSize = Vector2.new(w, h)
 			local canvas = item.CanvasSize
-			item.AbsoluteCanvasSize = Vector2.new(math.max(w, udimPixels(canvas.X, w)), math.max(h, udimPixels(canvas.Y, h)))
+			item.AbsoluteCanvasSize =
+				Vector2.new(math.max(w, udimPixels(canvas.X, w)), math.max(h, udimPixels(canvas.Y, h)))
 		end)
 	end
 	local kids = {}
@@ -1994,7 +2305,9 @@ local function layoutObject(item, x, y, w, h)
 	if list or grid then
 		pcall(function()
 			local layout = list or grid
-			layout.AbsoluteContentSize = if list and list.FillDirection == Enum.FillDirection.Vertical then Vector2.new(cw, cursor) else Vector2.new(cursor, ch)
+			layout.AbsoluteContentSize = if list and list.FillDirection == Enum.FillDirection.Vertical
+				then Vector2.new(cw, cursor)
+				else Vector2.new(cursor, ch)
 		end)
 	end
 end
@@ -2012,7 +2325,13 @@ function Client.layout()
 				if child:IsA("GuiObject") then
 					local size, position, anchor = child.Size, child.Position, child.AnchorPoint
 					local w, h = udimPixels(size.X, viewport.X), udimPixels(size.Y, viewport.Y - top)
-					layoutObject(child, udimPixels(position.X, viewport.X) - anchor.X * w, top + udimPixels(position.Y, viewport.Y - top) - anchor.Y * h, w, h)
+					layoutObject(
+						child,
+						udimPixels(position.X, viewport.X) - anchor.X * w,
+						top + udimPixels(position.Y, viewport.Y - top) - anchor.Y * h,
+						w,
+						h
+					)
 				end
 			end
 		end
@@ -2030,6 +2349,7 @@ function Client.step(seconds)
 	local run = session.runService
 	for _ = 1, frames do
 		session.now += dt
+		syncParts(session.workspace)
 		Client.layout()
 		local bound = {}
 		for name, entry in run.Bound do
@@ -2039,7 +2359,7 @@ function Client.step(seconds)
 			return a.Priority < b.Priority
 		end)
 		for _, entry in bound do
-			local ok, err = xpcall(entry.Fn, debug.traceback, dt)
+			local ok, err = xpcall(entry.Fn, traceback, dt)
 			if not ok then
 				report(err)
 			end
@@ -2069,7 +2389,7 @@ function Client.spawn(fn, ...)
 	local state = { Done = false }
 	local args = table.pack(...)
 	local thread = coroutine.create(function()
-		local result = table.pack(xpcall(fn, debug.traceback, table.unpack(args, 1, args.n)))
+		local result = table.pack(xpcall(fn, traceback, table.unpack(args, 1, args.n)))
 		state.Done = true
 		state.Ok = result[1]
 		state.Result = result[2]
@@ -2147,8 +2467,10 @@ function Client.spawnCharacter(options)
 	options = options or {}
 	local rig = World.rig({ Torso = Color3.fromRGB(40, 40, 50), Legs = Color3.fromRGB(30, 30, 36) })
 	rig.Name = session.player.Name
+	for _, item in rig:GetDescendants() do
+		seed(item)
+	end
 	local humanoid = rig:FindFirstChildOfClass("Humanoid")
-	seed(humanoid)
 	humanoid.MaxHealth = options.MaxHealth or 100
 	humanoid.Health = options.Health or humanoid.MaxHealth
 	humanoid.WalkSpeed = options.WalkSpeed or 16
@@ -2160,9 +2482,19 @@ function Client.spawnCharacter(options)
 	return rig
 end
 
+local NO_KEY = (select(
+	2,
+	pcall(function()
+		return Enum.KeyCode.Unknown
+	end)
+))
+if typeof(NO_KEY) ~= "EnumItem" then
+	NO_KEY = nil
+end
+
 local function inputObject(props)
 	local input = {
-		KeyCode = Enum.KeyCode.Unknown,
+		KeyCode = NO_KEY,
 		UserInputType = Enum.UserInputType.None,
 		UserInputState = Enum.UserInputState.Begin,
 		Position = Vector3.zero,
@@ -2180,8 +2512,18 @@ end
 -- Presses and releases a key, as if typed outside any TextBox
 function Client.pressKey(keyCode, gameProcessed)
 	local service = session.inputService
-	service.InputBegan:Fire(inputObject({ KeyCode = keyCode, UserInputType = Enum.UserInputType.Keyboard }), gameProcessed == true)
-	service.InputEnded:Fire(inputObject({ KeyCode = keyCode, UserInputType = Enum.UserInputType.Keyboard, UserInputState = Enum.UserInputState.End }), gameProcessed == true)
+	service.InputBegan:Fire(
+		inputObject({ KeyCode = keyCode, UserInputType = Enum.UserInputType.Keyboard }),
+		gameProcessed == true
+	)
+	service.InputEnded:Fire(
+		inputObject({
+			KeyCode = keyCode,
+			UserInputType = Enum.UserInputType.Keyboard,
+			UserInputState = Enum.UserInputState.End,
+		}),
+		gameProcessed == true
+	)
 end
 
 -- Clicks a button: mouse down, up, click and Activated
