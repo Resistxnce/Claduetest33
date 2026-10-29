@@ -1,0 +1,9 @@
+{
+  "name": "earnesp-model-preview",
+  "private": true,
+  "type": "module",
+  "description": "Renders the JSON from scene.luau to PNGs with three.js in headless Chromium",
+  "dependencies": {
+    "three": "0.160.0"
+  }
+}

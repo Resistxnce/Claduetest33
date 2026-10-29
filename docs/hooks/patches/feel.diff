@@ -1,0 +1,128 @@
+--- a/src/client/Main.client.luau
++++ b/src/client/Main.client.luau
+@@ -15,6 +15,8 @@
+ local Movement = require(script.Parent.Movement)
+ local Esp = require(script.Parent.Esp)
+ local Atmosphere = require(script.Parent.Atmosphere)
++local CameraFx = require(script.Parent.CameraFx) -- feel: the shared camera effects layer
++local LobbyCam = require(script.Parent.LobbyCam) -- feel: smooth lobby camera and round drop-in
+ 
+ local player = Players.LocalPlayer
+ 
+@@ -24,11 +26,13 @@
+ HackMenu.start()
+ PlayMenu.start(HackMenu)
+ Viewmodel.start()
+-Gun.start()
++-- feel: was `Gun.start()`; Gun.start needs isMenuOpen, or holding the Sniper in a round errors every frame
++Gun.start(HackMenu.isOpen)
+ Aim.start(HackMenu.isOpen)
+ Movement.start()
+ Esp.start()
+ Atmosphere.start()
++CameraFx.start() -- feel: recoil kicks, shakes, slide and landing camera all go through this
+ 
+ -- Turn the camera toward the middle of the arena. Otherwise it keeps facing
+ -- whichever way it faced in the lobby, and the character turns to match it.
+@@ -51,18 +55,12 @@
+ 	if player:GetAttribute("InRound") then
+ 		player.CameraMode = Enum.CameraMode.LockFirstPerson
+ 		task.delay(0.1, faceArena)
++		LobbyCam.enterRound() -- feel: quick FOV drop-in as the round starts
+ 	else
+ 		player.CameraMode = Enum.CameraMode.Classic
+ 		-- Push the camera back out of first person and turn it toward the portals
+-		player.CameraMinZoomDistance = 12
+-		task.delay(0.15, function()
+-			player.CameraMinZoomDistance = 0.5
+-			local character = player.Character
+-			local root = character and character:FindFirstChild("HumanoidRootPart")
+-			if root then
+-				workspace.CurrentCamera.CFrame = CFrame.lookAt(root.Position + Vector3.new(0, 5, 12), root.Position + Vector3.new(0, 2, -10))
+-			end
+-		end)
++		-- feel: replaces the zoom-out and the camera snap that were here; LobbyCam eases out and turns toward the queue area
++		LobbyCam.enterLobby()
+ 	end
+ end
+ player:GetAttributeChangedSignal("InRound"):Connect(updateCameraMode)
+--- a/src/client/Movement.luau
++++ b/src/client/Movement.luau
+@@ -14,6 +14,8 @@
+ local Hud = require(script.Parent.Hud)
+ local Toggles = require(script.Parent.Toggles)
+ local Targets = require(script.Parent.Targets)
++local CameraFx = require(script.Parent.CameraFx) -- feel: FOV goes through CameraFx so zooms and punches add up
++local MoveFeel = require(script.Parent.MoveFeel) -- feel: slide, momentum, camera bob/lean/landing, footsteps
+ 
+ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+ local player = Players.LocalPlayer
+@@ -97,12 +99,14 @@
+ 	root.CFrame = CFrame.lookAt(behind, Vector3.new(entry.Root.Position.X, behind.Y, entry.Root.Position.Z))
+ 	Effects.flash(behind, Ui.CYAN, 3, 0.15)
+ 	Effects.sound("Teleport")
++	MoveFeel.teleported() -- feel: warp kick on the camera
+ 	task.wait()
+ 	local camera = workspace.CurrentCamera
+ 	camera.CFrame = CFrame.lookAt(camera.CFrame.Position, entry.Head.Position)
+ end
+ 
+ function Movement.start()
++	MoveFeel.start() -- feel: slide key, footsteps, landing and hit camera
+ 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+ 		if gameProcessed then
+ 			return
+@@ -185,10 +189,15 @@
+ 
+ 		local baseSpeed = if Toggles.isOn("SpeedHack") then Config.Player.SpeedHackWalkSpeed + Toggles.bonus("SpeedHack") else Config.Player.WalkSpeed
+ 		humanoid.WalkSpeed = baseSpeed * (1 + hopBonus)
++		humanoid.WalkSpeed = MoveFeel.walkSpeed(humanoid.WalkSpeed) -- feel: slides and the speed kept from them
+ 
+ 		-- FOV Changer, the Low Gravity round modifier, and Spider wall climbing
+ 		local roundActive = player:GetAttribute("InRound") == true
+-		workspace.CurrentCamera.FieldOfView = if roundActive and Toggles.isOn("FovChanger") then 95 else 70
++		-- feel: was `FieldOfView = if ... then 95 else 70`; CameraFx.fov adds ADS zoom, speed and punches on top,
++		-- feel: and a Scriptable camera (Skin Spin, cutscenes) sets its own FieldOfView while it runs
++		if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Scriptable then -- feel: skip while Scriptable
++			workspace.CurrentCamera.FieldOfView = CameraFx.fov(if roundActive and Toggles.isOn("FovChanger") then 95 else 70)
++		end -- feel: end of the Scriptable check
+ 		workspace.Gravity = if roundActive and player:GetAttribute("Modifier") == "LowGravity" then 196.2 * 0.4 else 196.2
+ 		if Toggles.isOn("Spider") and humanoid.MoveDirection.Magnitude > 0.1 then
+ 			local params = RaycastParams.new()
+--- a/src/client/Atmosphere.luau
++++ b/src/client/Atmosphere.luau
+@@ -10,6 +10,7 @@
+ 
+ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+ local Toggles = require(script.Parent.Toggles)
++local AtmosphereFeel = require(script.Parent.AtmosphereFeel) -- feel: League HQ lobby look and richer map looks
+ 
+ local player = Players.LocalPlayer
+ 
+@@ -34,6 +35,7 @@
+ 	end
+ 	applied = name
+ 	local theme = Config.Themes[name] or Config.Themes.Lobby
++	theme = AtmosphereFeel.prepare(name, theme) -- feel: lay AtmosphereFeel.LOOKS over the theme (and start on it when joining)
+ 	TweenService:Create(Lighting, FADE, {
+ 		ClockTime = theme.ClockTime,
+ 		Brightness = theme.Brightness,
+@@ -57,6 +59,7 @@
+ 	if bloom then
+ 		TweenService:Create(bloom, FADE, { Intensity = theme.Bloom }):Play()
+ 	end
++	AtmosphereFeel.apply(name, theme) -- feel: sun rays, bloom size, exposure, lobby depth of field, lobby <-> round dip
+ end
+ 
+ local function blinkLights()
+@@ -72,6 +75,10 @@
+ 
+ function Atmosphere.start()
+ 	applyTheme(themeName())
++	-- feel: switch the moment you enter or leave a round, so the lighting change lines up with the teleport
++	player:GetAttributeChangedSignal("InRound"):Connect(function()
++		applyTheme(themeName())
++	end)
+ 	task.spawn(blinkLights)
+ 
+ 	local timer = 0

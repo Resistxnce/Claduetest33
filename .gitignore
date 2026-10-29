@@ -1,0 +1,4 @@
+tools/preview/node_modules/
+out/
+*.rbxlx
+*.rbxl

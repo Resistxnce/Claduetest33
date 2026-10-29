@@ -1,0 +1,1096 @@
+<!doctype html>
+<!--
+  Draws the ScreenGui JSON from gui.luau the way Roblox lays it out, for
+  gui_render.mjs to screenshot. Open it through gui_render.mjs (it serves this
+  page and the JSON); window.renderScreen(data) draws one screen.
+
+  Layout follows Roblox's rules: UDim2 against the parent's size, AnchorPoint,
+  UIPadding, UIListLayout / UIGridLayout / UIPageLayout (with UIFlexItem),
+  AutomaticSize, ScrollingFrame canvases, size and aspect constraints, UIScale
+  and Rotation.
+  Drawing covers backgrounds, borders, UICorner, UIStroke, UIGradient, text
+  (Roblox fonts mapped to installed ones, TextScaled, wrapping, RichText,
+  strokes), ZIndex in both ZIndexBehavior modes, ClipsDescendants and
+  CanvasGroup transparency. Images and ViewportFrames are placeholders.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>GUI preview</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; overflow: hidden; }
+  .abs { position: absolute; left: 0; top: 0; box-sizing: border-box; }
+  .node { position: absolute; left: 0; top: 0; transform-origin: 0 0; box-sizing: border-box; }
+  .fill { position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; }
+  .text { position: absolute; display: flex; box-sizing: border-box; }
+  .text > span { flex: none; }
+  .ghost, .ghost * { color: transparent !important; background: none !important; }
+  #measure { position: absolute; left: -20000px; top: 0; visibility: hidden; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="measure"></div>
+<script>
+'use strict'
+
+// Fonts ---------------------------------------------------------------------------
+// Roblox's TextSize is the line height; the font's em is smaller. `scale` turns
+// TextSize into a CSS font-size and `spacing` (em) widens Inter toward Gotham.
+// Both were measured against in-game screenshots of Gotham text.
+const GOTHAM = { css: '"Inter", sans-serif', scale: 0.83, spacing: 0.035 }
+const INTER = { css: '"Inter", sans-serif', scale: 0.83, spacing: 0 }
+const ARIAL = { css: '"Liberation Sans", Arial, sans-serif', scale: 0.87, spacing: 0 }
+const SOURCE = { css: '"Carlito", "Liberation Sans", sans-serif', scale: 0.82, spacing: 0 }
+const MONO = { css: '"JetBrains Mono", "DejaVu Sans Mono", monospace', scale: 0.82, spacing: 0 }
+const SERIF = { css: '"Liberation Serif", "DejaVu Serif", serif', scale: 0.85, spacing: 0 }
+const FAMILIES = {
+  GothamSSm: GOTHAM, Gotham: GOTHAM, Montserrat: { ...GOTHAM, spacing: 0.02 }, BuilderSans: INTER,
+  LegacyArial: ARIAL, Arial: ARIAL, Arimo: ARIAL, HighwayGothic: ARIAL,
+  SourceSansPro: SOURCE, SourceSans: SOURCE, TitilliumWeb: SOURCE, Balthazar: SOURCE,
+  Roboto: INTER, Ubuntu: INTER, Nunito: INTER, Jura: INTER, Sarpanch: INTER, Michroma: { ...INTER, spacing: 0.08 },
+  Zekton: INTER, DenkOne: INTER, Oswald: { ...INTER, spacing: -0.03 }, FredokaOne: INTER, LuckiestGuy: INTER,
+  Bangers: INTER, Creepster: INTER, PermanentMarker: INTER, ComicNeueAngular: INTER, IndieFlower: INTER, Kalam: INTER,
+  AmaticSC: { ...INTER, spacing: -0.05 }, RobotoMono: MONO, Inconsolata: MONO, PressStart2P: MONO, SpecialElite: MONO,
+  Code: MONO, Merriweather: SERIF, AccanthisADFStd: SERIF, GrenzeGotisch: SERIF, Guru: SERIF, Bodoni: SERIF,
+}
+// Display fonts that only come in heavy weights
+const HEAVY = { FredokaOne: 800, LuckiestGuy: 900, Bangers: 800, Creepster: 800, PermanentMarker: 800, DenkOne: 700 }
+const ENUM_FAMILIES = { // Enum.Font names used in <font face="...">
+  Gotham: ['GothamSSm', 400], GothamMedium: ['GothamSSm', 500], GothamBold: ['GothamSSm', 700], GothamSemibold: ['GothamSSm', 600],
+  GothamBlack: ['GothamSSm', 900], SourceSans: ['SourceSansPro', 400], SourceSansBold: ['SourceSansPro', 700],
+  SourceSansSemibold: ['SourceSansPro', 600], SourceSansLight: ['SourceSansPro', 300], Arial: ['Arial', 400], ArialBold: ['Arial', 700],
+  Legacy: ['LegacyArial', 400], Code: ['RobotoMono', 400], RobotoMono: ['RobotoMono', 400], Roboto: ['Roboto', 400],
+  Montserrat: ['Montserrat', 400], MontserratBold: ['Montserrat', 700], MontserratBlack: ['Montserrat', 900],
+  FredokaOne: ['FredokaOne', 800], LuckiestGuy: ['LuckiestGuy', 900], Bangers: ['Bangers', 800], Ubuntu: ['Ubuntu', 400],
+  BuilderSans: ['BuilderSans', 400], BuilderSansMedium: ['BuilderSans', 500], BuilderSansBold: ['BuilderSans', 700], BuilderSansExtraBold: ['BuilderSans', 800],
+}
+
+function fontInfo(font) {
+  const family = (font && font.Family) || 'LegacyArial'
+  const base = FAMILIES[family] || INTER
+  const weight = Math.max((font && font.Weight) || 400, HEAVY[family] || 0)
+  return { ...base, weight, italic: !!(font && font.Italic) }
+}
+
+// Colors ----------------------------------------------------------------------------
+function rgba(c, alpha) {
+  const a = Math.max(0, Math.min(1, alpha))
+  return `rgba(${c[0]},${c[1]},${c[2]},${+a.toFixed(4)})`
+}
+function parseColor(text) {
+  if (!text) return null
+  text = text.trim()
+  let m = /^#?([0-9a-f]{6})$/i.exec(text)
+  if (m) return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)]
+  m = /^#([0-9a-f]{3})$/i.exec(text)
+  if (m) return [...m[1]].map((h) => parseInt(h + h, 16))
+  m = /^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(text)
+  if (m) return [+m[1], +m[2], +m[3]]
+  return null
+}
+
+// Text ------------------------------------------------------------------------------
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+function decodeEntities(text) {
+  return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&')
+}
+const WEIGHTS = { thin: 100, extralight: 200, light: 300, regular: 400, normal: 400, medium: 500, semibold: 600, bold: 700, extrabold: 800, heavy: 900, black: 900 }
+
+// The text shadows that make an outline of a given thickness
+function ringShadow(thickness, color) {
+  if (thickness <= 0) return ''
+  const parts = []
+  for (let radius = Math.min(1, thickness); radius <= thickness + 0.01; radius += 1) {
+    const steps = Math.max(8, Math.ceil(radius * 8))
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * Math.PI * 2
+      parts.push(`${(Math.cos(angle) * radius).toFixed(2)}px ${(Math.sin(angle) * radius).toFixed(2)}px 0 ${color}`)
+    }
+    if (radius < thickness && radius + 1 > thickness) radius = thickness - 1
+  }
+  return parts.join(',')
+}
+
+// Roblox RichText -> HTML spans. Unknown tags are dropped.
+function richToHtml(text, info, textSize) {
+  let out = ''
+  const stack = []
+  const re = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z]+)((?:\s+[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))*)\s*(\/?)>/g
+  let last = 0
+  let m
+  while ((m = re.exec(text))) {
+    out += escapeHtml(decodeEntities(text.slice(last, m.index)))
+    last = re.lastIndex
+    if (m[0].startsWith('<!--')) continue
+    const closing = m[1] === '/'
+    const tag = m[2].toLowerCase()
+    if (tag === 'br') { out += '\n'; continue }
+    if (closing) {
+      const index = stack.lastIndexOf(tag)
+      if (index < 0) continue
+      while (stack.length > index) { stack.pop(); out += '</span>' }
+      continue
+    }
+    const attrs = {}
+    m[3].replace(/([a-zA-Z]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g, (_, key, a, b, c) => { attrs[key.toLowerCase()] = a ?? b ?? c })
+    let style = ''
+    if (tag === 'b') style = `font-weight:${Math.max(info.weight, 700)}`
+    else if (tag === 'i') style = 'font-style:italic'
+    else if (tag === 'u') style = 'text-decoration:underline'
+    else if (tag === 's') style = 'text-decoration:line-through'
+    else if (tag === 'uppercase' || tag === 'uc') style = 'text-transform:uppercase'
+    else if (tag === 'smallcaps' || tag === 'sc') style = 'font-variant:small-caps'
+    else if (tag === 'font') {
+      const color = parseColor(attrs.color)
+      const alpha = attrs.transparency !== undefined ? 1 - parseFloat(attrs.transparency) : 1
+      if (color) style += `color:${rgba(color, alpha)};`
+      else if (attrs.transparency !== undefined) style += `opacity:${alpha};`
+      let family = info
+      if (attrs.face && ENUM_FAMILIES[attrs.face]) {
+        const [name, weight] = ENUM_FAMILIES[attrs.face]
+        family = { ...(FAMILIES[name] || INTER), weight }
+        style += `font-family:${family.css};font-weight:${weight};letter-spacing:${family.spacing}em;`
+      } else if (attrs.family) {
+        const name = (/([^/]+)\.json$/.exec(attrs.family) || [])[1]
+        if (name && FAMILIES[name]) { family = { ...FAMILIES[name], weight: info.weight }; style += `font-family:${family.css};letter-spacing:${family.spacing}em;` }
+      }
+      if (attrs.size) style += `font-size:${parseFloat(attrs.size) * family.scale}px;line-height:${parseFloat(attrs.size)}px;`
+      if (attrs.weight) {
+        const weight = WEIGHTS[attrs.weight.toLowerCase()] || parseInt(attrs.weight, 10)
+        if (weight) style += `font-weight:${weight};`
+      }
+    } else if (tag === 'stroke') {
+      const color = parseColor(attrs.color) || [0, 0, 0]
+      const alpha = 1 - parseFloat(attrs.transparency || '0')
+      style = `text-shadow:${ringShadow(parseFloat(attrs.thickness || '1'), rgba(color, alpha))}`
+    } else if (tag === 'mark') {
+      const color = parseColor(attrs.color) || [255, 255, 0]
+      style = `background:${rgba(color, 1 - parseFloat(attrs.transparency || '0'))}`
+    } else {
+      continue
+    }
+    stack.push(tag)
+    out += `<span style="${style}">`
+  }
+  out += escapeHtml(decodeEntities(text.slice(last)))
+  while (stack.length) { stack.pop(); out += '</span>' }
+  return out
+}
+
+function plainText(node) {
+  if (node.Class === 'TextBox' && node.Text === '' && node.PlaceholderText) return node.PlaceholderText
+  return node.Text || ''
+}
+
+function textHtml(node) {
+  const info = fontInfo(node.Font)
+  let text = plainText(node)
+  if (node.MaxVisibleGraphemes >= 0 && !node.RichText) text = [...text].slice(0, node.MaxVisibleGraphemes).join('')
+  return node.RichText ? richToHtml(text, info, node.TextSize) : escapeHtml(text)
+}
+
+function fontCss(node, size) {
+  const info = fontInfo(node.Font)
+  return {
+    fontFamily: info.css,
+    fontWeight: String(info.weight),
+    fontStyle: info.italic ? 'italic' : 'normal',
+    fontSize: `${size * info.scale}px`,
+    letterSpacing: `${info.spacing}em`,
+    lineHeight: `${size * (node.LineHeight || 1)}px`,
+  }
+}
+
+const measureBox = document.getElementById('measure')
+// Width and height of the text at `size`; wraps at `wrapWidth` when given
+function measureText(node, size, wrapWidth) {
+  const span = document.createElement('span')
+  Object.assign(span.style, fontCss(node, size))
+  span.style.display = 'inline-block'
+  if (wrapWidth != null) {
+    span.style.whiteSpace = 'pre-wrap'
+    span.style.maxWidth = `${Math.max(1, wrapWidth)}px`
+  } else {
+    span.style.whiteSpace = 'pre'
+  }
+  span.innerHTML = node.html
+  measureBox.appendChild(span)
+  const rect = span.getBoundingClientRect()
+  measureBox.removeChild(span)
+  return { w: rect.width, h: rect.height }
+}
+
+const isText = (node) => node.Class === 'TextLabel' || node.Class === 'TextButton' || node.Class === 'TextBox'
+const isImage = (node) => node.Class === 'ImageLabel' || node.Class === 'ImageButton'
+
+// Layout ------------------------------------------------------------------------------
+const mods = (node) => node.Mods || {}
+
+function padding(node, w, h) {
+  const p = mods(node).UIPadding
+  if (!p) return { l: 0, r: 0, t: 0, b: 0 }
+  return { l: p.Left[0] * w + p.Left[1], r: p.Right[0] * w + p.Right[1], t: p.Top[0] * h + p.Top[1], b: p.Bottom[0] * h + p.Bottom[1] }
+}
+
+function clampSize(node, w, h) {
+  const c = mods(node).UISizeConstraint
+  if (c) {
+    w = Math.min(Math.max(w, c.MinSize[0]), c.MaxSize[0])
+    h = Math.min(Math.max(h, c.MinSize[1]), c.MaxSize[1])
+  }
+  return [w, h]
+}
+
+function aspect(constraint, w, h) {
+  const ratio = constraint.AspectRatio > 0 ? constraint.AspectRatio : 1
+  if (constraint.AspectType === 'ScaleWithParentSize') {
+    return constraint.DominantAxis === 'Height' ? [h * ratio, h] : [w, w / ratio]
+  }
+  // FitWithinMaxSize: the biggest box with that ratio inside the given one
+  return w / Math.max(h, 1e-6) > ratio ? [h * ratio, h] : [w, w / ratio]
+}
+
+function constrain(node, w, h) {
+  ;[w, h] = clampSize(node, w, h)
+  const a = mods(node).UIAspectRatioConstraint
+  if (a) [w, h] = aspect(a, w, h)
+  return [Math.max(0, w), Math.max(0, h)]
+}
+
+function sortKids(kids, order) {
+  const indexed = kids.map((kid, index) => [kid, index])
+  if (order === 'Name') indexed.sort((a, b) => (a[0].Name < b[0].Name ? -1 : a[0].Name > b[0].Name ? 1 : a[1] - b[1]))
+  else if (order !== 'Custom') indexed.sort((a, b) => a[0].LayoutOrder - b[0].LayoutOrder || a[1] - b[1])
+  return indexed.map((pair) => pair[0])
+}
+
+// Sets a node's size directly (layouts that force sizes) and lays out its children
+function resize(node, w, h) {
+  node.w = w
+  node.h = h
+  node.vw = w * node.s
+  node.vh = h * node.s
+  fitText(node)
+  layoutChildren(node, w, h)
+}
+
+function layoutNode(node, pw, ph) {
+  node.s = mods(node).UIScale ? mods(node).UIScale.Scale : 1
+  if (isText(node)) node.html = textHtml(node)
+  let w = node.Size[0] * pw + node.Size[1]
+  let h = node.Size[2] * ph + node.Size[3]
+  ;[w, h] = constrain(node, w, h)
+  const auto = node.AutomaticSize
+  if (auto && auto !== 'None') {
+    node.w = w
+    node.h = h
+    const [cw, ch] = contentSize(node, w, h)
+    if (auto === 'X' || auto === 'XY') w = Math.max(w, cw)
+    if (auto === 'Y' || auto === 'XY') h = Math.max(h, ch)
+    ;[w, h] = clampSize(node, w, h)
+  }
+  resize(node, w, h)
+}
+
+// How big the content wants the node to be, for AutomaticSize
+function contentSize(node, w, h) {
+  const pad = padding(node, w, h)
+  let cw = 0
+  let ch = 0
+  if (isText(node) && plainText(node) !== '') {
+    const wrap = node.TextWrapped && node.AutomaticSize === 'Y' ? w - pad.l - pad.r : null
+    const size = node.TextScaled ? node.TextSize : textSizeOf(node, node.TextSize)
+    const m = measureText(node, size, wrap)
+    cw = m.w + pad.l + pad.r
+    ch = m.h + pad.t + pad.b
+  }
+  const kids = visibleKids(node)
+  if (kids.length) {
+    layoutChildren(node, w, h)
+    if (node.layoutContent) {
+      cw = Math.max(cw, node.layoutContent.w + pad.l + pad.r)
+      ch = Math.max(ch, node.layoutContent.h + pad.t + pad.b)
+    } else {
+      for (const kid of kids) {
+        if (kid.Size[0] === 0) cw = Math.max(cw, kid.x + kid.vw + pad.r)
+        if (kid.Size[2] === 0) ch = Math.max(ch, kid.y + kid.vh + pad.b)
+      }
+    }
+  }
+  return [cw, ch]
+}
+
+const visibleKids = (node) => (node.Children || []).filter((kid) => !kid.pageHidden)
+
+function textSizeOf(node, size) {
+  const c = mods(node).UITextSizeConstraint
+  if (c) size = Math.min(Math.max(size, c.MinTextSize), c.MaxTextSize)
+  return size
+}
+
+// TextScaled: the biggest whole size (up to 100) whose wrapped text fits the box
+function fitText(node) {
+  if (!isText(node)) return
+  node.drawSize = textSizeOf(node, node.TextSize)
+  if (!node.TextScaled || plainText(node) === '') return
+  const pad = padding(node, node.w, node.h)
+  const boxW = node.w - pad.l - pad.r
+  const boxH = node.h - pad.t - pad.b
+  const c = mods(node).UITextSizeConstraint
+  let low = 1
+  let high = c ? Math.min(100, c.MaxTextSize) : 100
+  let best = 1
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const m = measureText(node, mid, boxW)
+    if (m.w <= boxW + 0.5 && m.h <= boxH + 0.5) { best = mid; low = mid + 1 } else high = mid - 1
+  }
+  node.drawSize = textSizeOf(node, best)
+}
+
+function layoutChildren(node, w, h) {
+  node.layoutContent = null
+  const kids = (node.Children || [])
+  if (!kids.length) return
+  const m = mods(node)
+  const pad = padding(node, w, h)
+  let originX = pad.l
+  let originY = pad.t
+  let areaW = w - pad.l - pad.r
+  let areaH = h - pad.t - pad.b
+  const scrolling = node.Class === 'ScrollingFrame'
+  if (scrolling) {
+    const win = scrollWindow(node, w, h, false)
+    node.canvasW = Math.max(win.w, node.CanvasSize[0] * win.w + node.CanvasSize[1])
+    node.canvasH = Math.max(win.h, node.CanvasSize[2] * win.h + node.CanvasSize[3])
+    areaW = node.canvasW - pad.l - pad.r
+    areaH = node.canvasH - pad.t - pad.b
+    originX -= node.CanvasPosition[0]
+    originY -= node.CanvasPosition[1]
+  }
+  const place = () => {
+    for (const kid of kids) kid.pageHidden = false
+    for (const kid of kids) layoutNode(kid, areaW, areaH)
+    let content
+    if (m.UIListLayout) content = placeList(kids, m.UIListLayout, areaW, areaH)
+    else if (m.UIGridLayout) content = placeGrid(kids, m.UIGridLayout, areaW, areaH, m.UIAspectRatioConstraint)
+    else if (m.UIPageLayout) content = placePage(kids, m.UIPageLayout, areaW, areaH)
+    else {
+      for (const kid of kids) {
+        kid.lx = kid.Position[0] * areaW + kid.Position[1] - kid.AnchorPoint[0] * kid.vw
+        kid.ly = kid.Position[2] * areaH + kid.Position[3] - kid.AnchorPoint[1] * kid.vh
+      }
+    }
+    for (const kid of kids) { kid.x = originX + kid.lx; kid.y = originY + kid.ly }
+    node.layoutContent = content || null
+    return content
+  }
+  let content = place()
+  if (scrolling && node.AutomaticCanvasSize !== 'None') {
+    // Grow the canvas to fit what's in it, then lay out again on the new canvas
+    let extentW = 0
+    let extentH = 0
+    if (content) { extentW = content.w; extentH = content.h } else {
+      for (const kid of kids) {
+        extentW = Math.max(extentW, kid.lx + kid.vw)
+        extentH = Math.max(extentH, kid.ly + kid.vh)
+      }
+    }
+    const auto = node.AutomaticCanvasSize
+    const win = scrollWindow(node, w, h, false)
+    const canvasW = auto === 'X' || auto === 'XY' ? Math.max(node.CanvasSize[0] * win.w + node.CanvasSize[1], extentW + pad.l + pad.r) : node.canvasW
+    const canvasH = auto === 'Y' || auto === 'XY' ? Math.max(node.CanvasSize[2] * win.h + node.CanvasSize[3], extentH + pad.t + pad.b) : node.canvasH
+    const grewW = Math.max(win.w, canvasW)
+    const grewH = Math.max(win.h, canvasH)
+    if (grewW !== node.canvasW || grewH !== node.canvasH) {
+      node.canvasW = grewW
+      node.canvasH = grewH
+      areaW = grewW - pad.l - pad.r
+      areaH = grewH - pad.t - pad.b
+      content = place()
+    }
+  }
+}
+
+// The visible part of a ScrollingFrame (less the scroll bar when it insets)
+function scrollWindow(node, w, h) {
+  let winW = w
+  let winH = h
+  const bar = node.ScrollBarThickness || 0
+  if (node.VerticalScrollBarInset === 'Always') winW -= bar
+  if (node.HorizontalScrollBarInset === 'Always') winH -= bar
+  return { w: Math.max(0, winW), h: Math.max(0, winH) }
+}
+
+function alignOffset(align, free) {
+  if (align === 'Center') return free / 2
+  if (align === 'Right' || align === 'Bottom') return free
+  return 0
+}
+
+// How much of a list's free space a child takes (grow) or gives back (shrink), from its UIFlexItem
+function flexRatios(kid) {
+  const item = mods(kid).UIFlexItem
+  if (!item) return { grow: 0, shrink: 0 }
+  if (item.FlexMode === 'Fill') return { grow: 1, shrink: 1 }
+  if (item.FlexMode === 'Grow') return { grow: 1, shrink: 0 }
+  if (item.FlexMode === 'Shrink') return { grow: 0, shrink: 1 }
+  if (item.FlexMode === 'Custom') return { grow: Math.max(0, item.GrowRatio || 0), shrink: Math.max(0, item.ShrinkRatio || 0) }
+  return { grow: 0, shrink: 0 }
+}
+
+function placeList(kids, list, areaW, areaH) {
+  const sorted = sortKids(kids, list.SortOrder)
+  const vertical = list.FillDirection !== 'Horizontal'
+  const mainSize = vertical ? areaH : areaW
+  const crossSize = vertical ? areaW : areaH
+  const gap = list.Padding[0] * mainSize + list.Padding[1]
+  const mainOf = (kid) => (vertical ? kid.vh : kid.vw)
+  const crossOf = (kid) => (vertical ? kid.vw : kid.vh)
+  const mainAlign = vertical ? list.VerticalAlignment : list.HorizontalAlignment
+  const crossAlign = vertical ? list.HorizontalAlignment : list.VerticalAlignment
+  const flex = vertical ? list.VerticalFlex : list.HorizontalFlex
+
+  // Split into lines when Wraps is on
+  const lines = []
+  let line = []
+  let used = 0
+  for (const kid of sorted) {
+    const size = mainOf(kid)
+    if (list.Wraps && line.length && used + gap + size > mainSize + 0.01) {
+      lines.push(line)
+      line = []
+      used = 0
+    }
+    used += (line.length ? gap : 0) + size
+    line.push(kid)
+  }
+  if (line.length) lines.push(line)
+
+  let crossCursor = 0
+  const lineCross = lines.map((items) => Math.max(0, ...items.map(crossOf)))
+  const totalCross = lineCross.reduce((a, b) => a + b, 0) + Math.max(0, lines.length - 1) * gap
+  let widest = 0
+  lines.forEach((items, lineIndex) => {
+    let total = items.reduce((sum, kid) => sum + mainOf(kid), 0) + Math.max(0, items.length - 1) * gap
+    let spacing = gap
+    let start = 0
+    let free = mainSize - total
+    // UIFlexItem: items share out the free space (or give some back) by their ratios
+    const ratios = items.map(flexRatios)
+    const growTotal = ratios.reduce((sum, r) => sum + r.grow, 0)
+    const shrinkTotal = ratios.reduce((sum, r) => sum + r.shrink, 0)
+    if ((free > 0.01 && growTotal > 0) || (free < -0.01 && shrinkTotal > 0)) {
+      items.forEach((kid, index) => {
+        const share = free > 0 ? (free * ratios[index].grow) / growTotal : (free * ratios[index].shrink) / shrinkTotal
+        if (!share) return
+        if (vertical) resize(kid, kid.w, Math.max(0, kid.h + share / kid.s))
+        else resize(kid, Math.max(0, kid.w + share / kid.s), kid.h)
+      })
+      total = items.reduce((sum, kid) => sum + mainOf(kid), 0) + Math.max(0, items.length - 1) * gap
+      free = mainSize - total
+    }
+    if (flex === 'Fill' && free > 0) {
+      const extra = free / items.length
+      for (const kid of items) {
+        if (vertical) resize(kid, kid.w, kid.h + extra / kid.s)
+        else resize(kid, kid.w + extra / kid.s, kid.h)
+      }
+      total = mainSize
+    } else if (flex === 'SpaceBetween' && items.length > 1 && free > 0) {
+      spacing = gap + free / (items.length - 1)
+      total = mainSize
+    } else if (flex === 'SpaceAround' && free > 0) {
+      spacing = gap + free / items.length
+      start = spacing / 2 - gap / 2
+      total = mainSize
+    } else if (flex === 'SpaceEvenly' && free > 0) {
+      spacing = gap + free / (items.length + 1)
+      start = spacing - gap
+      total = mainSize
+    } else {
+      start = alignOffset(mainAlign, free)
+    }
+    let cursor = start
+    const crossBase = lines.length > 1 || list.Wraps ? alignOffset(crossAlign, crossSize - totalCross) + crossCursor : 0
+    for (const kid of items) {
+      const cross = lines.length > 1 || list.Wraps
+        ? crossBase + alignOffset(crossAlign, lineCross[lineIndex] - crossOf(kid))
+        : alignOffset(crossAlign, crossSize - crossOf(kid))
+      if (vertical) { kid.lx = cross; kid.ly = cursor } else { kid.lx = cursor; kid.ly = cross }
+      cursor += mainOf(kid) + spacing
+    }
+    widest = Math.max(widest, total)
+    crossCursor += lineCross[lineIndex] + gap
+  })
+  return vertical ? { w: totalCross, h: widest } : { w: widest, h: totalCross }
+}
+
+function placeGrid(kids, grid, areaW, areaH, aspectConstraint) {
+  const sorted = sortKids(kids, grid.SortOrder)
+  let cellW = grid.CellSize[0] * areaW + grid.CellSize[1]
+  let cellH = grid.CellSize[2] * areaH + grid.CellSize[3]
+  if (aspectConstraint) [cellW, cellH] = aspect(aspectConstraint, cellW, cellH)
+  const padX = grid.CellPadding[0] * areaW + grid.CellPadding[1]
+  const padY = grid.CellPadding[2] * areaH + grid.CellPadding[3]
+  const horizontal = grid.FillDirection !== 'Vertical'
+  let perLine = horizontal ? Math.floor((areaW + padX) / Math.max(1e-6, cellW + padX)) : Math.floor((areaH + padY) / Math.max(1e-6, cellH + padY))
+  perLine = Math.max(1, perLine)
+  if (grid.FillDirectionMaxCells > 0) perLine = Math.min(perLine, grid.FillDirectionMaxCells)
+  const count = sorted.length
+  const lines = Math.ceil(count / perLine)
+  const along = Math.min(count, perLine)
+  const cols = horizontal ? along : lines
+  const rows = horizontal ? lines : along
+  const gridW = cols * cellW + Math.max(0, cols - 1) * padX
+  const gridH = rows * cellH + Math.max(0, rows - 1) * padY
+  const offsetX = alignOffset(grid.HorizontalAlignment, areaW - gridW)
+  const offsetY = alignOffset(grid.VerticalAlignment, areaH - gridH)
+  const corner = grid.StartCorner || 'TopLeft'
+  sorted.forEach((kid, index) => {
+    const lineIndex = Math.floor(index / perLine)
+    const slot = index % perLine
+    const col = horizontal ? slot : lineIndex
+    const row = horizontal ? lineIndex : slot
+    let x = col * (cellW + padX)
+    let y = row * (cellH + padY)
+    if (corner.includes('Right')) x = gridW - x - cellW
+    if (corner.includes('Bottom')) y = gridH - y - cellH
+    resize(kid, cellW / kid.s, cellH / kid.s)
+    kid.lx = offsetX + x
+    kid.ly = offsetY + y
+  })
+  return { w: gridW, h: gridH }
+}
+
+// UIPageLayout: only the first page shows
+function placePage(kids, page, areaW, areaH) {
+  const sorted = sortKids(kids, page.SortOrder)
+  sorted.forEach((kid, index) => {
+    if (index === 0) {
+      kid.lx = alignOffset(page.HorizontalAlignment, areaW - kid.vw)
+      kid.ly = alignOffset(page.VerticalAlignment, areaH - kid.vh)
+    } else {
+      kid.pageHidden = true
+      kid.lx = 0
+      kid.ly = 0
+    }
+  })
+  return null
+}
+
+// Matrices --------------------------------------------------------------------------
+// [a, b, c, d, e, f] like CSS matrix(): x' = a x + c y + e, y' = b x + d y + f
+const IDENTITY = [1, 0, 0, 1, 0, 0]
+function multiply(m, n) {
+  return [
+    m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1],
+    m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3],
+    m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5],
+  ]
+}
+const translate = (x, y) => [1, 0, 0, 1, x, y]
+const scaling = (s) => [s, 0, 0, s, 0, 0]
+function rotation(degrees) {
+  const r = (degrees * Math.PI) / 180
+  return [Math.cos(r), Math.sin(r), -Math.sin(r), Math.cos(r), 0, 0]
+}
+function apply(m, x, y) {
+  return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]
+}
+function bounds(m, w, h) {
+  const points = [apply(m, 0, 0), apply(m, w, 0), apply(m, 0, h), apply(m, w, h)]
+  const xs = points.map((p) => p[0])
+  const ys = points.map((p) => p[1])
+  return { x: Math.min(...xs), y: Math.min(...ys), r: Math.max(...xs), b: Math.max(...ys) }
+}
+function intersect(a, b) {
+  if (!a) return b
+  if (!b) return a
+  return { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y), r: Math.min(a.r, b.r), b: Math.min(a.b, b.b) }
+}
+
+// Works out every node's screen matrix and clip rectangle
+function placeTree(node, parentMatrix, parentClip, warnings, screen) {
+  let local = multiply(translate(node.x, node.y), scaling(node.s))
+  if (node.Rotation) local = multiply(local, multiply(translate(node.w / 2, node.h / 2), multiply(rotation(node.Rotation), translate(-node.w / 2, -node.h / 2))))
+  node.matrix = multiply(parentMatrix, local)
+  node.clip = parentClip
+  node.box = bounds(node.matrix, node.w, node.h)
+  const clipsKids = node.ClipsDescendants || node.Class === 'ScrollingFrame' || node.Class === 'CanvasGroup'
+  let kidClip = parentClip
+  if (clipsKids) {
+    const own = node.Class === 'ScrollingFrame' ? bounds(node.matrix, scrollWindow(node, node.w, node.h).w, scrollWindow(node, node.w, node.h).h) : node.box
+    kidClip = intersect(parentClip, own)
+  }
+  checkNode(node, warnings, screen)
+  for (const kid of visibleKids(node)) placeTree(kid, node.matrix, kidClip, warnings, screen)
+}
+
+// Problems worth telling a UI author about
+function checkNode(node, warnings, screen) {
+  const box = node.box
+  const visible = intersect(node.clip, { x: 0, y: 0, r: screen.w, b: screen.h })
+  if (node.w > 0 && node.h > 0 && (box.r <= visible.x || box.x >= visible.r || box.b <= visible.y || box.y >= visible.b)) {
+    if (!node.clip) warnings.push(`${node.Path}: off screen (at ${Math.round(box.x)}, ${Math.round(box.y)})`)
+    return
+  }
+  if (!isText(node) || plainText(node).trim() === '' || node.TextTransparency >= 1) return
+  const pad = padding(node, node.w, node.h)
+  const boxW = node.w - pad.l - pad.r
+  const boxH = node.h - pad.t - pad.b
+  const size = node.drawSize
+  if (node.TextScaled) {
+    if (size < 9) warnings.push(`${node.Path}: TextScaled text shrank to ${size}px ("${plainText(node).slice(0, 30)}")`)
+    return
+  }
+  const m = measureText(node, size, node.TextWrapped ? boxW : null)
+  if (node.TextTruncate === 'None' && (m.w > boxW + 2 || (node.TextWrapped && m.h > boxH + 2))) {
+    warnings.push(`${node.Path}: text doesn't fit (${Math.round(m.w)}x${Math.round(m.h)} in ${Math.round(boxW)}x${Math.round(boxH)}): "${plainText(node).slice(0, 40)}"`)
+  }
+}
+
+// Drawing ---------------------------------------------------------------------------
+function el(tag, className, style) {
+  const item = document.createElement(tag)
+  if (className) item.className = className
+  if (style) Object.assign(item.style, style)
+  return item
+}
+
+function cornerRadius(node) {
+  const corner = mods(node).UICorner
+  if (!corner) return 0
+  const small = Math.min(node.w, node.h)
+  return Math.max(0, Math.min(small / 2, corner.CornerRadius[0] * small + corner.CornerRadius[1]))
+}
+
+// Value of a keypoint list at time t (linear, like ColorSequence)
+function sample(points, t, width) {
+  if (!points.length) return width === 1 ? [0] : [255, 255, 255]
+  if (t <= points[0][0]) return points[0].slice(1)
+  for (let i = 1; i < points.length; i++) {
+    if (t <= points[i][0]) {
+      const a = points[i - 1]
+      const b = points[i]
+      const k = (t - a[0]) / Math.max(1e-6, b[0] - a[0])
+      return a.slice(1).map((v, j) => v + (b[j + 1] - v) * k)
+    }
+  }
+  return points[points.length - 1].slice(1)
+}
+
+// A CSS gradient for UIGradient over a base color/alpha (or null without one)
+function gradientCss(gradient, color, alpha, w, h) {
+  if (!gradient || !gradient.Enabled) return null
+  const times = new Set([0, 1])
+  for (const p of gradient.Color) times.add(p[0])
+  for (const p of gradient.Transparency) times.add(p[0])
+  const sorted = [...times].sort((a, b) => a - b)
+  // Roblox rotates the gradient in the box's 0..1 space; find the matching CSS angle
+  const r = (gradient.Rotation * Math.PI) / 180
+  const dx = Math.cos(r) / Math.max(w, 1e-6)
+  const dy = Math.sin(r) / Math.max(h, 1e-6)
+  const angle = (Math.atan2(dx, -dy) * 180) / Math.PI
+  const k = 1 / (Math.abs(Math.cos(r)) + Math.abs(Math.sin(r)))
+  const shift = k * (gradient.Offset[0] * Math.cos(r) + gradient.Offset[1] * Math.sin(r))
+  const stops = sorted.map((t) => {
+    const c = sample(gradient.Color, t, 3)
+    const tr = sample(gradient.Transparency, t, 1)[0]
+    const mixed = [0, 1, 2].map((i) => Math.round((color[i] * c[i]) / 255))
+    return `${rgba(mixed, alpha * (1 - tr))} ${((t + shift) * 100).toFixed(2)}%`
+  })
+  return `linear-gradient(${angle.toFixed(2)}deg, ${stops.join(', ')})`
+}
+
+const TEXT_ALIGN = { Left: 'flex-start', Center: 'center', Right: 'flex-end', Top: 'flex-start', Bottom: 'flex-end' }
+
+function drawText(node, box) {
+  const text = plainText(node)
+  if (text === '' || node.TextTransparency >= 1) return
+  const pad = padding(node, node.w, node.h)
+  const layer = el('div', 'text', {
+    left: `${pad.l}px`, top: `${pad.t}px`, width: `${Math.max(0, node.w - pad.l - pad.r)}px`, height: `${Math.max(0, node.h - pad.t - pad.b)}px`,
+    justifyContent: TEXT_ALIGN[node.TextXAlignment] || 'center', alignItems: TEXT_ALIGN[node.TextYAlignment] || 'center',
+    textAlign: (node.TextXAlignment || 'Center').toLowerCase(),
+  })
+  if (node.ClipsDescendants) layer.style.overflow = 'hidden'
+  const placeholder = node.Class === 'TextBox' && node.Text === ''
+  const alpha = 1 - node.TextTransparency
+  const color = placeholder ? node.PlaceholderColor3 : node.TextColor3
+  const wrap = node.TextWrapped || node.TextScaled
+  const makeSpan = () => {
+    const span = el('span', null, fontCss(node, node.drawSize))
+    span.style.whiteSpace = wrap ? 'pre-wrap' : 'pre'
+    if (wrap) span.style.width = '100%'
+    if (node.TextTruncate !== 'None') {
+      Object.assign(span.style, { overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', display: 'block', whiteSpace: wrap ? 'pre-wrap' : 'pre' })
+    }
+    span.innerHTML = node.html
+    return span
+  }
+  // Outlines: the old TextStroke and a Contextual UIStroke
+  const shadows = []
+  if (node.TextStrokeTransparency < 1) shadows.push(ringShadow(1, rgba(node.TextStrokeColor3, (1 - node.TextStrokeTransparency) * alpha)))
+  const stroke = mods(node).UIStroke
+  if (stroke && stroke.Enabled && stroke.ApplyStrokeMode !== 'Border' && stroke.Thickness > 0 && stroke.Transparency < 1) {
+    shadows.push(ringShadow(stroke.Thickness, rgba(stroke.Color, (1 - stroke.Transparency) * alpha)))
+  }
+  const gradient = gradientCss(mods(node).UIGradient, color, alpha, node.w, node.h)
+  if (gradient) {
+    if (shadows.length) {
+      const ghost = makeSpan()
+      ghost.classList.add('ghost')
+      ghost.style.textShadow = shadows.join(',')
+      const ghostLayer = layer.cloneNode(false)
+      ghostLayer.appendChild(ghost)
+      box.appendChild(ghostLayer)
+    }
+    const span = makeSpan()
+    span.style.color = 'transparent'
+    span.style.backgroundImage = gradient
+    span.style.webkitBackgroundClip = 'text'
+    span.style.backgroundClip = 'text'
+    layer.appendChild(span)
+  } else {
+    const span = makeSpan()
+    span.style.color = rgba(color, alpha)
+    if (shadows.length) span.style.textShadow = shadows.join(',')
+    layer.appendChild(span)
+  }
+  box.appendChild(layer)
+}
+
+function drawNode(node) {
+  const box = el('div', 'node', { width: `${node.w}px`, height: `${node.h}px` })
+  const radius = cornerRadius(node)
+  const gradient = mods(node).UIGradient
+  // Background
+  if (node.BackgroundTransparency < 1) {
+    const alpha = 1 - node.BackgroundTransparency
+    const fill = el('div', 'fill', { borderRadius: `${radius}px` })
+    fill.style.background = gradientCss(gradient, node.BackgroundColor3, alpha, node.w, node.h) || rgba(node.BackgroundColor3, alpha)
+    // The old 1px border: only without UICorner, and it fades with the background
+    if (node.BorderSizePixel > 0 && !mods(node).UICorner) {
+      const size = node.BorderSizePixel
+      const color = rgba(node.BorderColor3, alpha)
+      fill.style.boxShadow = node.BorderMode === 'Inset' ? `inset 0 0 0 ${size}px ${color}` : node.BorderMode === 'Middle' ? `0 0 0 ${size / 2}px ${color}, inset 0 0 0 ${size / 2}px ${color}` : `0 0 0 ${size}px ${color}`
+    }
+    box.appendChild(fill)
+  }
+  // Images can't be loaded here: a soft tinted placeholder
+  if (isImage(node) && node.Image && node.ImageTransparency < 1) {
+    const alpha = 1 - node.ImageTransparency
+    const holderRadius = radius || Math.min(8, Math.min(node.w, node.h) * 0.2)
+    const image = el('div', 'fill', {
+      borderRadius: `${holderRadius}px`,
+      background: `repeating-linear-gradient(135deg, ${rgba(node.ImageColor3, alpha * 0.42)} 0 6px, ${rgba(node.ImageColor3, alpha * 0.3)} 6px 12px)`,
+      boxShadow: `inset 0 0 0 1px ${rgba(node.ImageColor3, alpha * 0.55)}`,
+    })
+    if (node.w >= 34 && node.h >= 18) {
+      Object.assign(image.style, { display: 'flex', alignItems: 'center', justifyContent: 'center', font: '700 9px "Inter", sans-serif', letterSpacing: '0.08em', color: rgba([255, 255, 255], 0.55 * alpha) })
+      image.textContent = 'IMG'
+    }
+    box.appendChild(image)
+  }
+  if (node.Class === 'ViewportFrame' || node.Class === 'VideoFrame') {
+    const label = node.Class === 'VideoFrame' ? 'VIDEO' : 'VIEWPORT'
+    const view = el('div', 'fill', {
+      borderRadius: `${radius || 6}px`, background: 'rgba(8,10,18,0.55)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      font: '700 13px "Inter", sans-serif', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.45)',
+    })
+    view.textContent = label
+    if (node.Parts) {
+      const count = el('div', null, { font: '500 10px "Inter", sans-serif', letterSpacing: '0.05em', marginTop: '4px' })
+      count.textContent = `${node.Parts} part${node.Parts === 1 ? '' : 's'}`
+      view.appendChild(count)
+    }
+    box.appendChild(view)
+  }
+  // UIStroke around the box (Border mode, or anything that isn't text)
+  const stroke = mods(node).UIStroke
+  if (stroke && stroke.Enabled && stroke.Thickness > 0 && stroke.Transparency < 1 && (stroke.ApplyStrokeMode === 'Border' || !isText(node))) {
+    const t = stroke.Thickness
+    const inset = stroke.Position === 'Inner' ? t : stroke.Position === 'Center' ? t / 2 : 0
+    const outer = t - inset
+    const ring = el('div', 'abs', {
+      left: `${-outer}px`, top: `${-outer}px`, width: `${node.w + outer * 2}px`, height: `${node.h + outer * 2}px`,
+      border: `${t}px solid ${rgba(stroke.Color, 1 - stroke.Transparency)}`,
+      borderRadius: `${radius > 0 ? radius + outer : stroke.LineJoinMode === 'Round' ? outer : 0}px`,
+    })
+    if (radius === 0 && stroke.LineJoinMode === 'Bevel' && outer > 0) {
+      const o = outer
+      ring.style.clipPath = `polygon(${o}px 0, calc(100% - ${o}px) 0, 100% ${o}px, 100% calc(100% - ${o}px), calc(100% - ${o}px) 100%, ${o}px 100%, 0 calc(100% - ${o}px), 0 ${o}px)`
+    }
+    if (stroke.Gradient && stroke.Gradient.Enabled) {
+      ring.style.borderColor = 'transparent'
+      ring.style.background = `${gradientCss(stroke.Gradient, stroke.Color, 1 - stroke.Transparency, node.w, node.h)} border-box`
+      ring.style.webkitMask = 'linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0)'
+      ring.style.mask = 'linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0)'
+    }
+    box.appendChild(ring)
+  }
+  if (isText(node)) drawText(node, box)
+  return box
+}
+
+function drawScrollBar(node) {
+  const win = scrollWindow(node, node.w, node.h)
+  const bar = node.ScrollBarThickness
+  if (!bar || node.ScrollBarImageTransparency >= 1) return null
+  const color = rgba(node.ScrollBarImageColor3, 1 - node.ScrollBarImageTransparency)
+  const holder = el('div', 'node', { width: `${node.w}px`, height: `${node.h}px` })
+  let drawn = false
+  const direction = node.ScrollingDirection
+  if (direction !== 'X' && node.canvasH > win.h + 0.5) {
+    const length = Math.max(bar, (win.h * win.h) / node.canvasH)
+    const travel = (node.CanvasPosition[1] / Math.max(1, node.canvasH - win.h)) * (win.h - length)
+    const left = node.VerticalScrollBarPosition === 'Left' ? 0 : node.w - bar
+    holder.appendChild(el('div', 'abs', { left: `${left}px`, top: `${travel}px`, width: `${bar}px`, height: `${length}px`, background: color, borderRadius: `${bar / 2}px` }))
+    drawn = true
+  }
+  if (direction !== 'Y' && node.canvasW > win.w + 0.5) {
+    const length = Math.max(bar, (win.w * win.w) / node.canvasW)
+    const travel = (node.CanvasPosition[0] / Math.max(1, node.canvasW - win.w)) * (win.w - length)
+    holder.appendChild(el('div', 'abs', { left: `${travel}px`, top: `${node.h - bar}px`, width: `${length}px`, height: `${bar}px`, background: color, borderRadius: `${bar / 2}px` }))
+    drawn = true
+  }
+  return drawn ? holder : null
+}
+
+// Puts a drawn element at its screen matrix, inside a clip box when clipped
+function mount(container, element, matrix, clip, w, h) {
+  if (clip) {
+    if (clip.r <= clip.x || clip.b <= clip.y) return
+    const wrapper = el('div', 'abs', { left: `${clip.x}px`, top: `${clip.y}px`, width: `${clip.r - clip.x}px`, height: `${clip.b - clip.y}px`, overflow: 'hidden' })
+    element.style.transform = `matrix(${multiply(translate(-clip.x, -clip.y), matrix).join(',')})`
+    wrapper.appendChild(element)
+    container.appendChild(wrapper)
+  } else {
+    element.style.transform = `matrix(${matrix.join(',')})`
+    container.appendChild(element)
+  }
+}
+
+// Draw order. Sibling: a parent, then its children by ZIndex (ties keep their
+// order). Global: every object in the ScreenGui by ZIndex. A CanvasGroup draws
+// its own subtree in a layer that fades as a whole.
+function drawOrder(kids, behavior) {
+  const items = []
+  if (behavior === 'Global') {
+    const all = []
+    const walk = (list) => {
+      for (const node of list) {
+        if (node.pageHidden) continue
+        all.push(node)
+        if (node.Class !== 'CanvasGroup') walk(node.Children || [])
+        if (node.Class === 'ScrollingFrame') all.push({ scrollBarOf: node, ZIndex: node.ZIndex })
+      }
+    }
+    walk(kids)
+    all.forEach((item, index) => { item.order = index })
+    all.sort((a, b) => a.ZIndex - b.ZIndex || a.order - b.order)
+    return all
+  }
+  const walk = (list) => {
+    const sorted = list.filter((node) => !node.pageHidden).map((node, index) => [node, index])
+    sorted.sort((a, b) => a[0].ZIndex - b[0].ZIndex || a[1] - b[1])
+    for (const [node] of sorted) {
+      items.push(node)
+      if (node.Class !== 'CanvasGroup') walk(node.Children || [])
+      if (node.Class === 'ScrollingFrame') items.push({ scrollBarOf: node })
+    }
+  }
+  walk(kids)
+  return items
+}
+
+function drawLayer(container, kids, behavior, size) {
+  for (const item of drawOrder(kids, behavior)) {
+    if (item.scrollBarOf) {
+      const node = item.scrollBarOf
+      const bar = drawScrollBar(node)
+      if (bar) mount(container, bar, node.matrix, node.clip, node.w, node.h)
+      continue
+    }
+    const node = item
+    if (node.Class === 'CanvasGroup') {
+      if (node.GroupTransparency >= 1) continue
+      const group = el('div', 'abs', { width: `${size.w}px`, height: `${size.h}px`, opacity: String(1 - node.GroupTransparency) })
+      // A CanvasGroup clips its contents to its own shape, rounded corners included
+      if (!node.Rotation) {
+        const b = node.box
+        group.style.clipPath = `inset(${b.y}px ${size.w - b.r}px ${size.h - b.b}px ${b.x}px round ${cornerRadius(node) * node.s}px)`
+      }
+      mount(group, drawNode(node), node.matrix, node.clip, node.w, node.h)
+      drawLayer(group, node.Children || [], behavior, size)
+      container.appendChild(group)
+      continue
+    }
+    mount(container, drawNode(node), node.matrix, node.clip, node.w, node.h)
+  }
+}
+
+// Backdrop and Roblox topbar -----------------------------------------------------------
+async function drawBackdrop(stage, backdrop, effects, w, h) {
+  const layer = el('div', 'abs', { width: `${w}px`, height: `${h}px`, overflow: 'hidden' })
+  // Drawn bigger than the screen so blurred edges don't fade to black
+  const M = 80
+  const scene = el('div', 'abs', { left: `${-M}px`, top: `${-M}px`, width: `${w + M * 2}px`, height: `${h + M * 2}px` })
+  const box = (x, y, bw, bh, style) => scene.appendChild(el('div', 'abs', { left: `${M + x}px`, top: `${M + y}px`, width: `${bw}px`, height: `${bh}px`, ...style }))
+  const kind = (backdrop && backdrop.Kind) || 'sky'
+  let blur = 0
+  let brightness = 1
+  if (kind === 'image') {
+    const image = new Image()
+    image.src = `/file?path=${encodeURIComponent(backdrop.Image)}`
+    await image.decode()
+    const crop = backdrop.Crop || [0, 0, image.naturalWidth, image.naturalHeight]
+    const sx = w / crop[2]
+    const sy = h / crop[3]
+    box(-crop[0] * sx, -crop[1] * sy, image.naturalWidth * sx, image.naturalHeight * sy, { backgroundImage: `url("${image.src}")`, backgroundSize: '100% 100%' })
+    blur = backdrop.Blur ?? 4
+    brightness = 1 - (backdrop.Dim ?? 0.1)
+  } else if (kind === 'sky') {
+    // A sunny arena: sky, a horizon haze, grey paving and a few blocks
+    scene.style.background = `linear-gradient(180deg, #4f8fd0 0px, #86b8e6 ${M + h * 0.34}px, #c9dff0 ${M + h * 0.49}px, #b9c0c8 ${M + h * 0.505}px, #9aa0a8 ${M + h * 0.62}px, #7c8189 100%)`
+    box(-w * 0.5, h * 0.505, w * 2, h, {
+      opacity: '0.25', transform: 'perspective(400px) rotateX(62deg)', transformOrigin: '50% 0',
+      background: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 60px), repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 40px)',
+    })
+    for (const [x, y, bw, bh, c] of [[0.02, 0.36, 0.13, 0.32, '#d7dade'], [0.33, 0.47, 0.08, 0.05, '#c3c7cc'], [0.7, 0.46, 0.08, 0.07, '#cfd2d6'], [0.72, 0.52, 0.28, 0.06, '#e2e4e7']]) {
+      box(x * w, y * h, bw * w, bh * h, { background: c, boxShadow: 'inset -6px -6px 0 rgba(0,0,0,0.08)' })
+    }
+    blur = 1.5
+  } else if (kind === 'lobby') {
+    // The lobby plaza: sky, trees, dark paving and a neon pink ring
+    scene.style.background = `linear-gradient(180deg, #5d8fb3 0px, #8fb6cf ${M + h * 0.3}px, #a9c3cf ${M + h * 0.44}px, #55595f ${M + h * 0.45}px, #3f4248 ${M + h * 0.7}px, #2c2e33 100%)`
+    for (const [x, y, r] of [[0.1, 0.33, 0.07], [0.86, 0.31, 0.065], [0.62, 0.38, 0.035]]) {
+      box((x - 0.006) * w, y * h, w * 0.012, h * 0.16, { background: '#5a3d2b' })
+      box((x - r) * w, (y - r * 1.1) * h, r * 2 * w, r * 2.2 * h, { borderRadius: '50%', background: 'radial-gradient(circle at 40% 35%, #6aa64a, #3d6e2c 70%)' })
+    }
+    box(-0.2 * w, 0.62 * h, 1.4 * w, 0.9 * h, { borderRadius: '50%', border: `${Math.max(4, h * 0.012)}px solid #ff2fb3`, boxShadow: '0 0 24px #ff2fb3, inset 0 0 24px #ff2fb3' })
+    box(0.4 * w, 0.7 * h, 0.2 * w, 0.18 * h, { background: '#14161b', border: '6px solid #ff2fb3', boxShadow: '0 0 18px #ff2fb3', transform: 'perspective(300px) rotateX(40deg)' })
+    blur = 2
+  } else if (kind === 'dark') {
+    scene.style.background = 'radial-gradient(ellipse at 50% 40%, #2a2d36 0%, #15161b 70%, #0c0d10 100%)'
+  } else if (kind === 'gradient') {
+    scene.style.background = 'linear-gradient(160deg, #7d8794 0%, #4b5260 55%, #2d313a 100%)'
+  } else if (kind === 'none') {
+    scene.style.background = 'repeating-conic-gradient(#cfcfcf 0 25%, #ffffff 0 50%) 0 0 / 24px 24px'
+  } else {
+    scene.style.background = kind
+  }
+  // The game's BlurEffect (the menu blur) and ColorCorrectionEffect
+  const fx = effects || {}
+  blur += (fx.Blur || 0) * 0.5
+  const filters = []
+  if (blur > 0) filters.push(`blur(${blur}px)`)
+  brightness += fx.Brightness || 0
+  if (brightness !== 1) filters.push(`brightness(${Math.max(0, brightness)})`)
+  if (fx.Contrast) filters.push(`contrast(${Math.max(0, 1 + fx.Contrast)})`)
+  if (fx.Saturation) filters.push(`saturate(${Math.max(0, 1 + fx.Saturation)})`)
+  scene.style.filter = filters.join(' ')
+  layer.appendChild(scene)
+  const tint = fx.Tint
+  if (tint && (tint[0] < 255 || tint[1] < 255 || tint[2] < 255)) {
+    layer.appendChild(el('div', 'fill', { background: rgba(tint, 1), mixBlendMode: 'multiply' }))
+  }
+  stage.appendChild(layer)
+}
+
+// Roblox's own health bar, top right, shown once the character is hurt
+function drawHealthBar(stage, health, w) {
+  if (!health || health.Health >= health.MaxHealth) return
+  const fraction = Math.max(0, Math.min(1, health.Health / Math.max(1, health.MaxHealth)))
+  const bar = el('div', 'abs', { left: `${w - 20 - 123}px`, top: '24px', width: '123px', height: '19px', borderRadius: '9.5px', background: 'rgba(25,27,29,0.9)' })
+  const hue = fraction > 0.5 ? 140 : Math.max(0, fraction * 2 * 140)
+  const track = el('div', 'abs', { left: '3px', top: '3px', right: '3px', bottom: '3px', borderRadius: '6.5px', background: 'rgba(120,120,120,0.9)', overflow: 'hidden' })
+  track.appendChild(el('div', 'abs', { width: `${fraction * 100}%`, height: '100%', borderRadius: '6px', background: `hsl(${hue}, 100%, 54%)` }))
+  bar.appendChild(track)
+  stage.appendChild(bar)
+}
+
+function drawTopbar(stage, style) {
+  const bar = el('div', 'abs', { width: '100%', height: '0px' })
+  const dark = 'rgba(18,18,21,0.82)'
+  if (style === 'classic') {
+    // The old 36px topbar: two square buttons
+    for (const [x, icon] of [[16, 'logo'], [60, 'chat']]) {
+      const button = el('div', 'abs', { left: `${x}px`, top: '2px', width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)' })
+      button.appendChild(icon === 'logo' ? robloxLogo(16) : chatIcon(16))
+      bar.appendChild(button)
+    }
+  } else {
+    // Today's topbar: a round Roblox button and a pill with menu and chat
+    const logo = el('div', 'abs', { left: '16px', top: '13px', width: '44px', height: '44px', borderRadius: '22px', background: dark })
+    logo.appendChild(robloxLogo(20))
+    bar.appendChild(logo)
+    const pill = el('div', 'abs', { left: '69px', top: '13px', width: '95px', height: '44px', borderRadius: '22px', background: dark })
+    const menu = el('div', 'abs', { left: '14px', top: '14px', width: '22px', height: '16px' })
+    for (const y of [0, 7, 14]) menu.appendChild(el('div', 'abs', { left: '0', top: `${y}px`, width: '22px', height: '2.4px', borderRadius: '1px', background: '#fff' }))
+    pill.appendChild(menu)
+    const chat = chatIcon(22)
+    chat.style.left = '58px'
+    chat.style.top = '12px'
+    pill.appendChild(chat)
+    bar.appendChild(pill)
+  }
+  stage.appendChild(bar)
+}
+
+function robloxLogo(size) {
+  const holder = el('div', 'abs', { left: '50%', top: '50%', width: `${size}px`, height: `${size}px`, marginLeft: `${-size / 2}px`, marginTop: `${-size / 2}px`, transform: 'rotate(15deg)', background: '#fff', borderRadius: `${size * 0.14}px` })
+  holder.appendChild(el('div', 'abs', { left: `${size * 0.36}px`, top: `${size * 0.36}px`, width: `${size * 0.28}px`, height: `${size * 0.28}px`, background: '#222' }))
+  return holder
+}
+
+function chatIcon(size) {
+  const holder = el('div', 'abs', { left: '50%', top: '50%', width: `${size}px`, height: `${size * 0.8}px` })
+  if (size < 20) { holder.style.marginLeft = `${-size / 2}px`; holder.style.marginTop = `${-size * 0.4}px` }
+  holder.appendChild(el('div', 'abs', { width: `${size}px`, height: `${size * 0.66}px`, background: '#fff', borderRadius: `${size * 0.14}px` }))
+  holder.appendChild(el('div', 'abs', { left: `${size * 0.4}px`, top: `${size * 0.55}px`, width: `${size * 0.22}px`, height: `${size * 0.22}px`, background: '#fff', transform: 'rotate(45deg)' }))
+  for (const [y, wide] of [[0.2, 0.6], [0.38, 0.4]]) {
+    holder.appendChild(el('div', 'abs', { left: `${size * (0.5 - wide / 2)}px`, top: `${size * y}px`, width: `${size * wide}px`, height: `${Math.max(1.5, size * 0.08)}px`, background: '#222', borderRadius: '1px' }))
+  }
+  return holder
+}
+
+// Entry point -------------------------------------------------------------------------
+window.renderScreen = async function renderScreen(data) {
+  const [w, h] = data.viewport
+  const stage = document.getElementById('stage')
+  stage.innerHTML = ''
+  Object.assign(stage.style, { width: `${w}px`, height: `${h}px` })
+  await document.fonts.ready
+  const warnings = []
+  await drawBackdrop(stage, data.backdrop, data.effects, w, h)
+  const guis = data.guis.filter((gui) => gui.Enabled).map((gui, index) => [gui, index])
+  guis.sort((a, b) => a[0].DisplayOrder - b[0].DisplayOrder || a[1] - b[1])
+  const inset = data.inset || 0
+  for (const [gui] of guis) {
+    const top = gui.IgnoreGuiInset ? 0 : inset
+    const layer = el('div', 'abs', { left: '0', top: `${top}px`, width: `${w}px`, height: `${h - top}px` })
+    const kids = gui.Children || []
+    const root = { Children: kids, Mods: gui.Mods, Class: 'ScreenGui', Path: gui.Name }
+    layoutChildren(root, w, h - top)
+    for (const kid of kids) placeTree(kid, IDENTITY, null, warnings, { w, h: h - top })
+    drawLayer(layer, kids, gui.ZIndexBehavior, { w, h: h - top })
+    stage.appendChild(layer)
+  }
+  if (data.topbar && data.topbar !== 'none') {
+    drawTopbar(stage, data.topbar)
+    drawHealthBar(stage, data.health, w)
+  }
+  await document.fonts.ready
+  return { warnings }
+}
+window.ready = true
+</script>
+</body>
+</html>

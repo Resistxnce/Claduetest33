@@ -1,0 +1,101 @@
+-- Tommy Gun: the drum-fed Thompson from the blocky Roblox gun picture, with
+-- a wood stock and grips, a finned barrel and a round drum under the receiver.
+local Shapes = require(script.Parent.Parent.Shapes)
+
+local box, wedge, egg, tube, disc, drum, ball, v3, rgb =
+	Shapes.box, Shapes.wedge, Shapes.egg, Shapes.tube, Shapes.disc, Shapes.drum, Shapes.ball, Shapes.v3, Shapes.rgb
+
+return {
+	Factory = { Body = rgb(50, 52, 56), Accent = rgb(96, 100, 108), Material = Enum.Material.Metal }, -- steel trim instead of a glow, like the picture
+	View = CFrame.new(0, 0.1, -0.8),
+	Muzzle = v3(0, -0.095, -1.6),
+	Support = v3(-0.02, -0.36, -0.77),
+	Parts = {
+		-- Receiver
+		box("Receiver", v3(0.23, 0.159, 0.965), v3(0, -0.147, 0.282), "Body"),
+		box("ReceiverTop", v3(0.15, 0.045, 0.965), v3(0, -0.045, 0.282), "Body"),
+		wedge("BevelRight", v3(0.965, 0.045, 0.04), v3(0.095, -0.045, 0.282), "Body", v3(0, -90, 0)),
+		wedge("BevelLeft", v3(0.965, 0.045, 0.04), v3(-0.095, -0.045, 0.282), "Body", v3(0, 90, 0)),
+		box("TriggerFrame", v3(0.24, 0.08, 0.77), v3(0, -0.2, 0.355), "Body"),
+		box("ReceiverFront", v3(0.21, 0.18, 0.3), v3(0, -0.125, -0.35), "Body"),
+		tube("FrontCap", 0.05, 0.15, v3(0, -0.095, -0.52), "Gunmetal"),
+		box("BoltSlot", v3(0.05, 0.04, 0.5), v3(0, -0.037, 0.13), "Dark"),
+		disc("KnobNeck", 0.05, 0.045, v3(0, -0.01, 0.035), "Metal"),
+		ball("Knob", 0.075, v3(0, 0.017, 0.035), "Metal"),
+		box("EjectPort", v3(0.04, 0.07, 0.2), v3(0.1, -0.11, -0.06), "Dark"),
+		box("Bolt", v3(0.04, 0.045, 0.12), v3(0.102, -0.11, -0.06), "Metal"),
+		box("Selector", v3(0.04, 0.05, 0.08), v3(-0.13, -0.2, 0.26), "Metal"),
+		box("Safety", v3(0.04, 0.05, 0.08), v3(-0.13, -0.2, 0.42), "Metal"),
+		drum("PinBack", 0.25, 0.045, v3(0, -0.2, 0.62), "Metal"),
+		drum("TriggerPin", 0.25, 0.045, v3(0, -0.2, 0.1), "Metal"),
+		drum("PinFront", 0.22, 0.045, v3(0, -0.17, -0.42), "Metal"),
+		-- Rear sight hump
+		box("Hump", v3(0.21, 0.12, 0.241), v3(0, -0.01, 0.571), "Body"),
+		drum("HumpBack", 0.21, 0.146, v3(0, -0.023, 0.691), "Body"),
+		box("RearSight", v3(0.1, 0.04, 0.06), v3(0, 0.04, 0.5), "Dark"),
+		box("RearSightDot", v3(0.04, 0.04, 0.04), v3(0, 0.052, 0.5), "Accent"),
+		-- Finned barrel and compensator
+		tube("FinCore", 0.4, 0.1, v3(0, -0.095, -0.7), "Gunmetal"),
+		tube("Fin1", 0.04, 0.13, v3(0, -0.095, -0.56), "Metal"),
+		tube("Fin2", 0.04, 0.13, v3(0, -0.095, -0.62), "Metal"),
+		tube("Fin3", 0.04, 0.13, v3(0, -0.095, -0.68), "Metal"),
+		tube("Fin4", 0.04, 0.13, v3(0, -0.095, -0.74), "Metal"),
+		tube("Fin5", 0.04, 0.13, v3(0, -0.095, -0.8), "Metal"),
+		tube("Fin6", 0.04, 0.13, v3(0, -0.095, -0.86), "Metal"),
+		tube("BarrelNeck", 0.08, 0.09, v3(0, -0.095, -0.92), "Gunmetal"),
+		tube("Barrel", 0.42, 0.08, v3(0, -0.095, -1.1), "Gunmetal"),
+		tube("SightCollar", 0.08, 0.145, v3(0, -0.095, -1.33), "Gunmetal"),
+		box("FrontSightPost", v3(0.05, 0.06, 0.06), v3(0, -0.02, -1.33), "Gunmetal"),
+		drum("FrontSightTop", 0.06, 0.06, v3(0, -0.005, -1.33), "Gunmetal"),
+		ball("FrontSightBead", 0.04, v3(0, 0.017, -1.33), "Accent"),
+		tube("Compensator", 0.22, 0.13, v3(0, -0.095, -1.48), "Body"),
+		box("Port1", v3(0.07, 0.04, 0.04), v3(0, -0.042, -1.42), "Dark"),
+		box("Port2", v3(0.07, 0.04, 0.04), v3(0, -0.042, -1.475), "Dark"),
+		box("Port3", v3(0.07, 0.04, 0.04), v3(0, -0.042, -1.53), "Dark"),
+		tube("Bore", 0.04, 0.06, v3(0, -0.095, -1.585), "Dark"),
+		-- Pistol grip
+		box("GripFrame", v3(0.175, 0.09, 0.196), v3(0, -0.295, 0.226), "Body", v3(-24, 0, 0)),
+		box("Grip", v3(0.16, 0.33, 0.186), v3(0, -0.405, 0.275), "Wood", v3(-24, 0, 0)),
+		drum("GripFinger1", 0.15, 0.05, v3(0, -0.415, 0.178), "Wood"),
+		drum("GripFinger2", 0.15, 0.05, v3(0, -0.479, 0.206), "Wood"),
+		drum("GripFinger3", 0.15, 0.05, v3(0, -0.543, 0.235), "Wood"),
+		drum("GripScrew", 0.17, 0.045, v3(0, -0.424, 0.305), "Metal"),
+		-- Trigger guard and trigger
+		box("GuardBottom", v3(0.07, 0.045, 0.225), v3(0, -0.357, 0.087), "Body"),
+		box("GuardFront", v3(0.07, 0.15, 0.045), v3(0, -0.302, -0.005), "Body"),
+		box("Trigger", v3(0.04, 0.09, 0.04), v3(0, -0.28, 0.09), "Metal", v3(-15, 0, 0)),
+		-- Drum magazine
+		box("DrumNeck", v3(0.13, 0.08, 0.16), v3(0, -0.215, -0.29), "Gunmetal"),
+		drum("Drum", 0.24, 0.54, v3(0, -0.47, -0.29), "Gunmetal"),
+		drum("DrumFace", 0.255, 0.47, v3(0, -0.47, -0.29), "Dark"),
+		drum("DrumRing", 0.265, 0.38, v3(0, -0.47, -0.29), "Gunmetal"),
+		drum("DrumInner", 0.275, 0.3, v3(0, -0.47, -0.29), "Dark"),
+		drum("DrumHub", 0.285, 0.15, v3(0, -0.47, -0.29), "Metal"),
+		drum("DrumHubGlow", 0.295, 0.09, v3(0, -0.47, -0.29), "Accent"),
+		box("DrumKey", v3(0.04, 0.11, 0.04), v3(0.16, -0.47, -0.29), "Metal"),
+		drum("DrumRivet1", 0.28, 0.045, v3(0, -0.35, -0.17), "Metal"),
+		drum("DrumRivet2", 0.28, 0.045, v3(0, -0.35, -0.41), "Metal"),
+		drum("DrumRivet3", 0.28, 0.045, v3(0, -0.59, -0.41), "Metal"),
+		drum("DrumRivet4", 0.28, 0.045, v3(0, -0.59, -0.17), "Metal"),
+		-- Front grip
+		box("ForegripMount", v3(0.15, 0.087, 0.25), v3(0, -0.173, -0.825), "Wood"),
+		wedge("ForegripNose", v3(0.15, 0.087, 0.07), v3(0, -0.173, -0.985), "Wood", v3(0, 0, 180)),
+		tube("ForegripClamp", 0.05, 0.12, v3(0, -0.095, -0.93), "Gunmetal"),
+		box("Foregrip", v3(0.15, 0.37, 0.19), v3(0, -0.332, -0.776), "Wood", v3(-28, 0, 0)),
+		drum("ForegripFinger1", 0.14, 0.05, v3(0, -0.332, -0.883), "Wood"),
+		drum("ForegripFinger2", 0.14, 0.05, v3(0, -0.403, -0.846), "Wood"),
+		drum("ForegripFinger3", 0.14, 0.05, v3(0, -0.474, -0.808), "Wood"),
+		box("ForegripCap", v3(0.155, 0.04, 0.195), v3(0, -0.482, -0.696), "Wood", v3(-28, 0, 0)),
+		-- Stock
+		box("StockComb", v3(0.19, 0.208, 0.625), v3(0, -0.316, 1.377), "Wood"),
+		box("StockButt", v3(0.19, 0.315, 0.19), v3(0, -0.568, 1.595), "Wood"),
+		wedge("StockToe", v3(0.19, 0.04, 0.19), v3(0, -0.745, 1.595), "Wood", v3(0, 0, 180)),
+		box("StockBellyFill", v3(0.19, 0.1, 0.45), v3(0, -0.46, 1.275), "Wood"),
+		wedge("StockBelly", v3(0.19, 0.215, 0.45), v3(0, -0.618, 1.275), "Wood", v3(0, 0, 180)),
+		box("StockWrist", v3(0.17, 0.15, 0.47), v3(0, -0.3, 0.835), "Wood"),
+		wedge("StockWristSlope", v3(0.17, 0.137, 0.45), v3(0, -0.444, 0.845), "Wood", v3(0, 0, 180)),
+		wedge("StockNose", v3(0.17, 0.15, 0.14), v3(0, -0.3, 0.55), "Wood", v3(0, 0, 180)),
+		box("ButtPlate", v3(0.2, 0.56, 0.04), v3(0, -0.488, 1.7), "Gunmetal"),
+		box("SlingStud", v3(0.05, 0.05, 0.07), v3(0, -0.635, 1.3), "Metal", v3(24, 0, 0)),
+	},
+}
