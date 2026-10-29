@@ -13,6 +13,10 @@ the game later:
 - **Environment:** 22 new map props written like `Kit.luau`, plus new maps
   that use them.
 
+- **Gunplay and feel:** recoil, aiming down sights, reload/bolt/pump animations, gun
+  sounds, sharper tracers and impacts, a slide, landing dips and a lobby camera. These
+  are new client modules plus small hooks, listed in [docs/hooks](docs/hooks).
+
 Everything is Luau that builds the models from Parts. The files sit at the
 same paths as in the game's Rojo project. [INSTALL.md](INSTALL.md) lists what
 to copy and the few hook lines to add.
@@ -70,6 +74,15 @@ Esports Arena, LAN Cafe, Anti-Cheat HQ and Ban Court, from where the player spaw
 Gamer Bedroom (giant scale), Streamer House, Dev Studio and Classic Place:
 
 ![More maps](previews/maps_2.png)
+
+## Gunplay
+
+First-person poses: hip, aimed, shooting, reloading, and the bolt and pump:
+
+![Gunplay poses](previews/gunplay_poses.png)
+
+The hooks for shooting, moving and the lobby camera are in
+[docs/hooks/GUNPLAY.md](docs/hooks/GUNPLAY.md) and [docs/hooks/FEEL.md](docs/hooks/FEEL.md).
 
 ## Previews
 

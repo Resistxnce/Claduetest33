@@ -113,6 +113,43 @@ require(script.Parent.LobbyNpcs).start()
   rank's `Maps` in `Config.Arenas` to `{ "EsportsArena" }` (or `LanCafe`,
   `AntiCheatHQ`, `BanCourt`).
 
+## 4. Gunplay and movement feel
+
+Do this after steps 1 to 3 work. It changes how shooting and moving feel:
+
+- **Shooting:** recoil, aiming down sights (right click), reload/bolt/pump animations,
+  gun sounds per class, and sharper tracers and impacts.
+- **Moving:** a slide (C or Left Ctrl), landing dips, the lobby camera glide, and lobby
+  lighting.
+
+Copy these into the game's `src/`, keeping the paths:
+
+| From this repo | What it is |
+|---|---|
+| `src/client/GunFeel.luau` | Recoil, aiming down sights, scope zoom, shot/reload sound timing, hit feedback |
+| `src/client/GunProfiles.luau` | All the gun feel numbers, per class and per gun (tweak here) |
+| `src/client/ViewmodelFeel.luau` | First-person poses: aiming, kick, equip, reload/bolt/pump, flash |
+| `src/client/GunSounds.luau` | Layered gun sounds, with slots for Creator Store ids |
+| `src/shared/GunEffects.luau` | Tracers, impacts per material, bullet holes, shells, explosions |
+| `src/client/MoveFeel.luau` | Slide, momentum, camera bob and lean, landings, footsteps |
+| `src/client/LobbyCam.luau` | The lobby camera glide and the round drop-in |
+| `src/client/AtmosphereFeel.luau` | Lobby zones, per-map light extras, the lobby/round dip |
+| `src/client/CameraFx.luau` | Replaces the game's CameraFx if it has one (same functions, plus extras) |
+
+Then add the hooks:
+
+- [docs/hooks/GUNPLAY.md](docs/hooks/GUNPLAY.md): `Gun.luau`, `Viewmodel.luau` and `Effects.luau`
+- [docs/hooks/FEEL.md](docs/hooks/FEEL.md): `Main.client.luau`, `Movement.luau` and `Atmosphere.luau`
+
+Every hooked line has a `feel:` comment, so `grep -rn "feel:" src` lists them all.
+`docs/hooks/patches/` has the same changes as diffs against the older files they were
+written on. Newer files have moved some lines, so add each hook by hand where the diff
+doesn't apply. Then in Studio:
+
+- Set **Lighting > Technology** to **Future**.
+- Shoot every gun, aim with right click, reload, and slide while shooting.
+- Check every hack still works.
+
 ## Notes
 
 - `ConfigExtra.apply` skips any gun id, bot type, theme or map id that Config

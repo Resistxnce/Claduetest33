@@ -1,0 +1,274 @@
+--- a/src/client/Gun.luau
++++ b/src/client/Gun.luau
+@@ -16,6 +16,8 @@
+ local Toggles = require(script.Parent.Toggles)
+ local Targets = require(script.Parent.Targets)
+ local Viewmodel = require(script.Parent.Viewmodel)
++-- feel: recoil, aiming down sights, gun sounds and shot effects live in GunFeel
++local GunFeel = require(script.Parent.GunFeel)
+ 
+ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+ local player = Players.LocalPlayer
+@@ -24,7 +26,7 @@
+ 
+ local MAGIC_COLOR = Color3.fromRGB(190, 80, 255)
+ local ROCKET_COLOR = Color3.fromRGB(255, 150, 60)
+-local CONFETTI = { Color3.fromRGB(255, 46, 99), Color3.fromRGB(255, 220, 60), Color3.fromRGB(60, 200, 255), Color3.fromRGB(80, 225, 120) }
++local CONFETTI = GunFeel.CONFETTI -- feel: kill pixels in your ESP color (was pink, yellow, cyan, green)
+ 
+ local triggerHeld = false
+ local lastShot = 0
+@@ -66,6 +68,8 @@
+ 	if scoped then
+ 		spread *= 0.2
+ 	end
++	-- feel: aiming down sights tightens the spread a little
++	spread *= GunFeel.spreadScale(weapon)
+ 	return math.min(spec.Max + spec.Moving, spread)
+ end
+ 
+@@ -82,7 +86,7 @@
+ 	reloading = true
+ 	reloadId += 1
+ 	local id = reloadId
+-	Effects.sound("Reload")
++	GunFeel.onReload(weapon, ammo) -- feel: reload sounds timed with the animation (was Effects.sound("Reload"))
+ 	Viewmodel.startReload(weapon.Reload)
+ 	task.delay(weapon.Reload, function()
+ 		if reloadId == id then
+@@ -99,6 +103,7 @@
+ 	bloom = 0
+ 	spin = 0
+ 	Viewmodel.cancelReload()
++	GunFeel.onRefill() -- feel: cancel pending reload and bolt sounds
+ end
+ 
+ -- Turns a direction by a random amount inside a cone
+@@ -135,7 +140,7 @@
+ 		end
+ 	end
+ 	if result then
+-		return result.Position, result.Normal, hitEnemy
++		return result.Position, result.Normal, hitEnemy, result.Instance, result.Material -- feel: also what was hit, for material impacts
+ 	end
+ 	return ray.Origin + direction * range, nil, false
+ end
+@@ -153,27 +158,25 @@
+ 	local range = weapon.Range or Config.Gun.Range
+ 	local shots = {}
+ 	for _ = 1, weapon.Pellets or 1 do
+-		local target, normal, hitEnemy = aim(camera, range)
++		local target, normal, hitEnemy, hitPart, hitMaterial = aim(camera, range) -- feel: hitPart, hitMaterial
+ 		table.insert(shots, target)
+ 		if weapon.Splash then
+ 			Effects.tracer(muzzle, target, ROCKET_COLOR, 0.25)
+ 			Effects.explosion(target, weapon.Splash)
+ 		else
+-			Effects.tracer(muzzle, target, Toggles.tracerColor())
++			GunFeel.tracer(muzzle, target, Toggles.tracerColor(), weapon) -- feel: crisp tracer (was Effects.tracer)
+ 			if normal then
+-				Effects.impact(target, normal.Unit, if hitEnemy then "Enemy" else "World")
++				Effects.impact(target, normal.Unit, if hitEnemy then "Enemy" else "World", hitPart, hitMaterial) -- feel: hitPart and hitMaterial pick the impact
+ 			end
+ 		end
+ 	end
+-	Effects.sound("Shot")
++	-- feel: the shot sound moved to GunFeel.onShot below (was Effects.sound("Shot"))
+ 	Remotes.Fire:FireServer(shots)
+ 	Viewmodel.kick(math.clamp(weapon.Recoil / 2, 0.5, 2.5))
+ 	bloom = math.min(weapon.Spread.Max, bloom + weapon.Spread.PerShot)
+-
+-	if not Toggles.isOn("NoRecoil") then
+-		local recoil = math.rad(weapon.Recoil * (if scoped then 0.5 else 1))
+-		camera.CFrame *= CFrame.Angles(recoil, (math.random() - 0.5) * recoil * 0.5, 0)
+-	end
++	-- feel: the old instant camera.CFrame recoil kick was removed; GunFeel.onShot kicks through CameraFx.
++	-- feel: shot sound, recoil, smoke, shells, bolt/pump, after the shot has gone to the server
++	GunFeel.onShot(weapon, scoped, fireInterval(), shots, muzzle, ammo)
+ end
+ 
+ -- Fires one shot if the gun is ready. Triggerbot calls this too.
+@@ -218,6 +221,16 @@
+ 	return triggerHeld
+ end
+ 
++-- feel: whether you're aiming down sights (right click), for the HUD
++function Gun.isAiming()
++	return GunFeel.isAiming()
++end
++
++-- feel: for the on-screen AIM button on phones (aims down sights, or scopes)
++function Gun.setAimHeld(held)
++	GunFeel.setAimHeld(held)
++end
++
+ -- For the on-screen fire button on phones
+ function Gun.setTrigger(held)
+ 	triggerHeld = held
+@@ -225,6 +238,7 @@
+ 
+ local function onHitConfirm(headshot, killed, damage, position, magic)
+ 	Hud.hitmarker(headshot, killed)
++	GunFeel.onHitConfirm(headshot, killed, damage, position) -- feel: headshot ding, kill thump, kill camera punch
+ 	if position then
+ 		Hud.damageNumber(position, damage, headshot, killed)
+ 		if killed then
+@@ -241,12 +255,17 @@
+ 
+ -- isMenuOpen keeps right click from scoping while the cheat menu is open
+ function Gun.start(isMenuOpen)
++	GunFeel.start(isMenuOpen) -- feel: start GunFeel
+ 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+ 		if gameProcessed then
+ 			return
+ 		end
+ 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+ 			triggerHeld = true
++			-- feel: a click if you pull the trigger mid-reload
++			if reloading then
++				GunFeel.dryFire() -- feel: dry-fire click
++			end
+ 		elseif input.KeyCode == Enum.KeyCode.R then
+ 			Gun.reload()
+ 		end
+@@ -261,9 +280,9 @@
+ 		local weapon = Gun.weapon()
+ 		scoped = weapon.Scope ~= nil
+ 			and player:GetAttribute("InRound") == true
+-			and not isMenuOpen()
++			and not (isMenuOpen and isMenuOpen()) -- feel: Main may call Gun.start() without isMenuOpen
+ 			and not reloading
+-			and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
++			and (UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) or GunFeel.aimHeld()) -- feel: or the phone AIM button
+ 		Viewmodel.setHidden(scoped)
+ 		Hud.setScoped(scoped)
+ 
+@@ -274,6 +293,8 @@
+ 			spin = 0
+ 		end
+ 		Viewmodel.setSpin(spin)
++		-- feel: aim down sights, scope zoom, Minigun whine, ammo for the first-person gun
++		GunFeel.update(dt, weapon, scoped, reloading, spin, ammo, infiniteAmmo())
+ 
+ 		if triggerHeld then
+ 			Gun.tryShoot()
+--- a/src/client/Viewmodel.luau
++++ b/src/client/Viewmodel.luau
+@@ -11,6 +11,9 @@
+ local Shared = ReplicatedStorage:WaitForChild("Shared")
+ local Config = require(Shared:WaitForChild("Config"))
+ local GunModels = require(Shared:WaitForChild("GunModels"))
++local MoveFeel = require(script.Parent.MoveFeel) -- feel: slide pose and run-pace bob
++-- feel: aiming down sights, kick springs, equip, jump/land, lean, reload and bolt/pump motion
++local ViewmodelFeel = require(script.Parent.ViewmodelFeel)
+ 
+ local player = Players.LocalPlayer
+ 
+@@ -93,6 +96,7 @@
+ 	flashLight.Brightness = 4
+ 	flashLight.Enabled = false
+ 	flashLight.Parent = flashPart
++	ViewmodelFeel.onBuild(model, pieces, weaponId, muzzleOffset, flashPart, flashLight) -- feel: find the magazine, bolt and sights
+ end
+ 
+ local function equippedGun()
+@@ -126,6 +130,7 @@
+ 
+ function Viewmodel.kick(strength)
+ 	kick = math.min(kick + (strength or 1), 2.5)
++	ViewmodelFeel.kick() -- feel: spring kick, star flash, slide/cylinder
+ 	if not flashPart then
+ 		return
+ 	end
+@@ -141,10 +146,12 @@
+ function Viewmodel.startReload(duration)
+ 	reloadStart = os.clock()
+ 	reloadDuration = duration
++	ViewmodelFeel.startReload(duration) -- feel: magazine out and in
+ end
+ 
+ function Viewmodel.cancelReload()
+ 	reloadStart = nil
++	ViewmodelFeel.cancelReload() -- feel: stop the reload animation
+ end
+ 
+ local function update(dt)
+@@ -154,6 +161,7 @@
+ 	if not show then
+ 		model.Parent = nil
+ 		lastPitch = nil
++		ViewmodelFeel.onHidden(hidden) -- feel: raise the gun again when it comes back (not after a scope)
+ 		return
+ 	end
+ 
+@@ -185,11 +193,14 @@
+ 	local character = player.Character
+ 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+ 	local moving = humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.1 and humanoid.FloorMaterial ~= Enum.Material.Air
++	moving = moving and not MoveFeel.isSliding() -- feel: no running bob while sliding
+ 	bobAmount += ((if moving then 1 else 0) - bobAmount) * math.min(1, dt * 8)
+ 	if moving then
+-		bobTime += dt * (humanoid.WalkSpeed / 16) * 9
++		-- feel: was `bobTime += dt * (humanoid.WalkSpeed / 16) * 9`; bob at run pace (not slide speed), at most about 5 bobs a second
++		bobTime += dt * (math.min(humanoid.WalkSpeed, MoveFeel.runSpeed(), 28) / 16) * 9
+ 	end
+ 	local bob = CFrame.new(math.sin(bobTime) * 0.045 * bobAmount, -math.abs(math.cos(bobTime)) * 0.04 * bobAmount, 0)
++	bob *= MoveFeel.viewmodelPose() -- feel: the gun lowers and cants while sliding
+ 	local breathe = CFrame.new(0, math.sin(os.clock() * 1.6) * 0.012, 0)
+ 
+ 	kick *= math.max(0, 1 - dt * 14)
+@@ -210,13 +221,17 @@
+ 	local spin = CFrame.Angles(0, 0, spinAngle)
+ 	local rainbow = Config.getSkin(skinId).Rainbow
+ 
+-	lastRoot = cameraCFrame * BASE_OFFSET * viewOffset * bob * breathe * sway * recoil * reload
++	-- feel: ViewmodelFeel blends hip and aim-down-sights poses and adds the kick springs, equip, jump/land, lean
++	-- and reload/bolt poses; it replaces the old `recoil` and `reload` poses above
++	-- (was: lastRoot = cameraCFrame * BASE_OFFSET * viewOffset * bob * breathe * sway * recoil * reload)
++	lastRoot = cameraCFrame * ViewmodelFeel.root(dt, BASE_OFFSET * viewOffset, bob, breathe, sway)
+ 	for index, item in pieces do
+ 		item.Part.CFrame = lastRoot * (if item.Spins then spin * item.Offset else item.Offset)
+ 		if rainbow and item.Part:GetAttribute("Role") == "Body" then
+ 			item.Part.Color = Color3.fromHSV((os.clock() * 0.2 + index * 0.07) % 1, 0.8, 1)
+ 		end
+ 	end
++	ViewmodelFeel.placeParts(lastRoot) -- feel: magazine, bolt, pump, left hand, flash star, optic fade
+ end
+ 
+ function Viewmodel.start()
+--- a/src/shared/Effects.luau
++++ b/src/shared/Effects.luau
+@@ -6,6 +6,8 @@
+ local TweenService = game:GetService("TweenService")
+ 
+ local Config = require(script.Parent.Config)
++-- feel: richer client-side impacts and explosions for your own gun
++local GunEffects = require(script.Parent.GunEffects)
+ 
+ local Effects = {}
+ 
+@@ -89,6 +91,10 @@
+ 		TweenService:Create(ball, TweenInfo.new(0.35, Enum.EasingStyle.Quad), { Size = Vector3.one * size, Transparency = 1 }):Play()
+ 		Debris:AddItem(ball, 0.4)
+ 	end
++	-- feel: a shockwave ring, embers and smoke on the client
++	if RunService:IsClient() then
++		GunEffects.explosion(position, radius)
++	end
+ end
+ 
+ -- Fires a one-off burst of particles at a point. Each spec is a table of
+@@ -128,7 +134,12 @@
+ 
+ -- Where a bullet lands: sparks and dust plus a bullet hole on walls, or a
+ -- red spray on an enemy
+-function Effects.impact(position, normal, kind)
++function Effects.impact(position, normal, kind, part, material) -- feel: part and material (optional) are what was hit
++	-- feel: on the client, impacts match the surface (sparks on metal, dust on concrete...) with pooled holes
++	if RunService:IsClient() then
++		GunEffects.impact(position, normal, kind, part, material)
++		return
++	end
+ 	local facing = CFrame.lookAt(position, position + normal)
+ 	if kind == "Enemy" then
+ 		burst(facing, {
