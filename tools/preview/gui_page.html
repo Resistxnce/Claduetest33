@@ -5,8 +5,9 @@
   page and the JSON); window.renderScreen(data) draws one screen.
 
   Layout follows Roblox's rules: UDim2 against the parent's size, AnchorPoint,
-  UIPadding, UIListLayout / UIGridLayout / UIPageLayout, AutomaticSize,
-  ScrollingFrame canvases, size and aspect constraints, UIScale and Rotation.
+  UIPadding, UIListLayout / UIGridLayout / UIPageLayout (with UIFlexItem),
+  AutomaticSize, ScrollingFrame canvases, size and aspect constraints, UIScale
+  and Rotation.
   Drawing covers backgrounds, borders, UICorner, UIStroke, UIGradient, text
   (Roblox fonts mapped to installed ones, TextScaled, wrapping, RichText,
   strokes), ZIndex in both ZIndexBehavior modes, ClipsDescendants and
@@ -431,6 +432,17 @@ function alignOffset(align, free) {
   return 0
 }
 
+// How much of a list's free space a child takes (grow) or gives back (shrink), from its UIFlexItem
+function flexRatios(kid) {
+  const item = mods(kid).UIFlexItem
+  if (!item) return { grow: 0, shrink: 0 }
+  if (item.FlexMode === 'Fill') return { grow: 1, shrink: 1 }
+  if (item.FlexMode === 'Grow') return { grow: 1, shrink: 0 }
+  if (item.FlexMode === 'Shrink') return { grow: 0, shrink: 1 }
+  if (item.FlexMode === 'Custom') return { grow: Math.max(0, item.GrowRatio || 0), shrink: Math.max(0, item.ShrinkRatio || 0) }
+  return { grow: 0, shrink: 0 }
+}
+
 function placeList(kids, list, areaW, areaH) {
   const sorted = sortKids(kids, list.SortOrder)
   const vertical = list.FillDirection !== 'Horizontal'
@@ -467,7 +479,21 @@ function placeList(kids, list, areaW, areaH) {
     let total = items.reduce((sum, kid) => sum + mainOf(kid), 0) + Math.max(0, items.length - 1) * gap
     let spacing = gap
     let start = 0
-    const free = mainSize - total
+    let free = mainSize - total
+    // UIFlexItem: items share out the free space (or give some back) by their ratios
+    const ratios = items.map(flexRatios)
+    const growTotal = ratios.reduce((sum, r) => sum + r.grow, 0)
+    const shrinkTotal = ratios.reduce((sum, r) => sum + r.shrink, 0)
+    if ((free > 0.01 && growTotal > 0) || (free < -0.01 && shrinkTotal > 0)) {
+      items.forEach((kid, index) => {
+        const share = free > 0 ? (free * ratios[index].grow) / growTotal : (free * ratios[index].shrink) / shrinkTotal
+        if (!share) return
+        if (vertical) resize(kid, kid.w, Math.max(0, kid.h + share / kid.s))
+        else resize(kid, Math.max(0, kid.w + share / kid.s), kid.h)
+      })
+      total = items.reduce((sum, kid) => sum + mainOf(kid), 0) + Math.max(0, items.length - 1) * gap
+      free = mainSize - total
+    }
     if (flex === 'Fill' && free > 0) {
       const extra = free / items.length
       for (const kid of items) {
