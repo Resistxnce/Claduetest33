@@ -68,8 +68,11 @@ function boot() {
     stage.classList.toggle('vertical', vertical);
     canvas.resize();
   };
-  window.addEventListener('resize', fitStage);
-  window.addEventListener('orientationchange', fitStage);
+  // Re-layout is cheap but re-rendering the static layer is not; debounce window resizes.
+  let resizeTimer = 0;
+  const fitStageDebounced = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitStage, 120); };
+  window.addEventListener('resize', fitStageDebounced);
+  window.addEventListener('orientationchange', fitStageDebounced);
   state.addEventListener('option', (e) => { if (e.detail.key === 'orientation' || e.detail.key === 'view') fitStage(); });
   fitStage();
 

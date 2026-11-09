@@ -28,8 +28,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // Fender-style six-in-line headstock (u 0 = tip, 1 = nut; v 0 = treble edge,
 // the nut occupies v 0 .. 0.835, the bass-side edge bulges to v = 1).
 const HEAD_OUTLINE = [
-  [1.00, 0.00], [0.70, 0.00], [0.40, 0.03], [0.16, 0.10], [0.03, 0.22], [0.00, 0.38], [0.04, 0.54],
-  [0.13, 0.70], [0.24, 0.88], [0.36, 0.98], [0.52, 1.00], [0.70, 0.965], [0.88, 0.90], [1.00, 0.835],
+  [1.00, 0.00], [0.60, 0.00], [0.30, 0.035], [0.12, 0.10], [0.03, 0.22], [0.00, 0.40], [0.02, 0.60],
+  [0.06, 0.80], [0.12, 0.95], [0.20, 1.00], [0.30, 0.98], [0.50, 0.93], [0.75, 0.88], [1.00, 0.835],
 ];
 const HEAD_BASS_EDGE = HEAD_OUTLINE.slice(5).sort((a, b) => a[0] - b[0]);
 /** v of the bass-side headstock edge at u (linear interpolation along the outline). */
@@ -105,8 +105,8 @@ export function computeLayout({ length: W, cross: H, view, fretCount = 12 }) {
   // Fender headstock); post 0 (nearest the tip) takes the high E, post 5 the low E.
   const posts = [];
   for (let k = 0; k < STRING_COUNT; k++) {
-    const u = 0.12 + k * 0.14;
-    const v = headEdgeV(u) - 0.15;
+    const u = 0.17 + k * 0.13;
+    const v = headEdgeV(u) - 0.16;
     posts.push({ x: head.x0 + (head.x1 - head.x0) * u, y: head.y0 + (head.y1 - head.y0) * v });
   }
 
@@ -372,7 +372,7 @@ export class GuitarCanvas {
     const sp = this.layout.spacing(this.layout.strum.xm);
     v.amp = clamp(sp * (0.12 + 0.42 * velocity), 1.5, sp * 0.52);
     v.t0 = performance.now();
-    v.tau = 1.1 + 0.9 * (1 - string / 5); // thick strings swing longer
+    v.tau = 0.7 + 0.55 * (1 - string / 5); // thick strings swing longer
     v.freq = 5.5 + (5 - string) * 1.4;
     v.phase = Math.random() * Math.PI * 2;
     this.pressed[string] = v.t0;
@@ -402,7 +402,7 @@ export class GuitarCanvas {
 
   frame(now) {
     this.rafId = 0;
-    const animating = this.vib.some((v, i) => this.currentAmp(i, now) > 0.15) || this.pressed.some((t) => now - t < 400);
+    const animating = this.vib.some((v, i) => this.currentAmp(i, now) > 0.4) || this.pressed.some((t) => now - t < 2600) || this.strumHint;
     if (this.dirty || animating) {
       this.render(now);
       this.dirty = false;
@@ -465,11 +465,12 @@ export class GuitarCanvas {
     ctx.fillStyle = g;
     ctx.fillRect(-10, -10, W + 20, H + 20);
     // Soft floor shadow under the instrument
-    ctx.save();
-    ctx.filter = 'blur(18px)';
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(this.layout.nutX - 20, this.layout.cy - H * 0.2, W, H * 0.5);
-    ctx.restore();
+    const sh = ctx.createRadialGradient(W * 0.55, H * 0.55, H * 0.05, W * 0.55, H * 0.55, W * 0.5);
+    sh.addColorStop(0, 'rgba(0,0,0,0.5)');
+    sh.addColorStop(0.5, 'rgba(0,0,0,0.25)');
+    sh.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sh;
+    ctx.fillRect(-10, -10, W + 20, H + 20);
   }
 
   bodyPoint([u, v]) {
@@ -483,10 +484,12 @@ export class GuitarCanvas {
     const pts = BODY_OUTLINE.map((p) => this.bodyPoint(p));
     // Shadow
     ctx.save();
-    ctx.translate(6, 10);
-    ctx.filter = 'blur(10px)';
+    ctx.shadowColor = 'rgba(0,0,0,0.65)';
+    ctx.shadowBlur = 24;
+    ctx.shadowOffsetX = 6;
+    ctx.shadowOffsetY = 12;
     smoothPath(ctx, pts, true);
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillStyle = '#4a2a16';
     ctx.fill();
     ctx.restore();
     // Sunburst finish
@@ -585,13 +588,15 @@ export class GuitarCanvas {
     const h = L.head;
     const pts = HEAD_OUTLINE.map(([u, v]) => ({ x: h.x0 + (h.x1 - h.x0) * u, y: h.y0 + (h.y1 - h.y0) * v }));
     ctx.save();
-    ctx.translate(3, 5);
-    ctx.filter = 'blur(6px)';
-    smoothPath(ctx, pts, true);
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 6;
+    smoothPath(ctx, pts, true, 0.35);
+    ctx.fillStyle = '#c9a15a';
     ctx.fill();
     ctx.restore();
-    smoothPath(ctx, pts, true);
+    smoothPath(ctx, pts, true, 0.35);
     const g = ctx.createLinearGradient(0, h.y0, 0, h.y1);
     g.addColorStop(0, '#e3c784');
     g.addColorStop(0.5, '#cfa75e');
@@ -1002,10 +1007,11 @@ export class GuitarCanvas {
       if (flashAge < 350 && this.pressed[i] > 0) {
         const a = 1 - flashAge / 350;
         ctx.save();
-        ctx.globalAlpha = a * 0.7;
+        ctx.globalAlpha = a * 0.55;
         ctx.strokeStyle = '#fde68a';
         ctx.lineWidth = width + 3;
-        ctx.filter = 'blur(2px)';
+        ctx.shadowColor = '#fde68a';
+        ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.moveTo(xVib0, L.stringY(i, xVib0));
         ctx.lineTo(xEnd, L.stringY(i, xEnd));
@@ -1082,9 +1088,11 @@ export class GuitarCanvas {
       ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
       // pressed glow on the string
       ctx.save();
-      ctx.globalAlpha = 0.35; ctx.filter = 'blur(4px)';
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath(); ctx.arc(c.x, c.y, r * 1.35, 0, Math.PI * 2); ctx.fill();
+      const glow = ctx.createRadialGradient(c.x, c.y, r * 0.9, c.x, c.y, r * 1.7);
+      glow.addColorStop(0, 'rgba(251,191,36,0.4)');
+      glow.addColorStop(1, 'rgba(251,191,36,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(c.x, c.y, r * 1.7, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
       if (showName) {
         const note = st.fretboard.noteAt(f.string, Math.max(f.fret, st.capo), { flats: st.options.flats });
@@ -1161,6 +1169,5 @@ export class GuitarCanvas {
     ctx.stroke();
     ctx.restore();
     this.text(ctx, (st.x0 + st.x1) / 2, y1 + sp * 0.7, 'strum here', { font: '600 11px system-ui, sans-serif', color: `rgba(253,230,138,${0.5 + 0.4 * pulse})` });
-    if (this.rafId === 0) this.rafId = requestAnimationFrame(this.frame);
   }
 }
