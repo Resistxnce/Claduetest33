@@ -312,10 +312,14 @@ export function chordVoicings(rootPc, qualityId, openMidi, { maxResults = 4 } = 
   if (sameTuning(openMidi, STANDARD_OPEN_MIDI)) {
     const key = `${pitchClass(rootPc)}:${qualityId}`;
     for (const v of OPEN_VOICINGS[key] || []) out.push({ ...v, frets: [...v.frets], fingers: [...v.fingers], curated: true });
+    // Movable shapes: lowest position first (the familiar 2nd-fret Bm before the 7th-fret one).
+    const shapes = [];
     for (const shape of MOVABLE_SHAPES.filter((s) => s.quality === qualityId)) {
       const v = shapeToVoicing(shape, rootPc, openMidi);
-      if (v) out.push({ ...v, curated: true });
+      if (v) shapes.push({ ...v, curated: true });
     }
+    shapes.sort((a, b) => voicingBaseFret(a) - voicingBaseFret(b) || voicingMaxFret(a) - voicingMaxFret(b));
+    out.push(...shapes);
   }
   const seen = new Set(out.map((v) => v.frets.join(',')));
   const valid = out.filter((v) => validateVoicing(v, rootPc, qualityId, openMidi).length === 0);

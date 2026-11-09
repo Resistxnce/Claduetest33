@@ -59,7 +59,14 @@ string[0..5] (AudioWorklet) ─┬─► stringMix ─► pickup EQ ─► preGa
 
 ## Testing
 
-* `npm test` — `node --test` unit tests for theory and the voicing library.
-* `npm run test:e2e` — Playwright (pre-installed Chromium) drives the real page:
-  renders, multi-touch fretting, strums, tuning changes, and an offline audio
-  render that measures the synthesized pitch of every string against theory.
+* `npm test` — `node --test` unit tests: `tests/theory.test.js` (note math,
+  tunings, fretboard, scales, chords), `tests/spec-theory.test.js` (an
+  independent suite derived from the specification, with its own expectation
+  helpers) and `tests/chords.test.js` (curated voicing library validation).
+* `npm run test:e2e` — `tests/e2e/run.mjs` runs `ui.mjs` (Playwright drives the
+  real page: power on, fret + slide, strum, keyboard, multi-touch, tuning,
+  chord hold, presets, phone layouts, screenshots in `tests/e2e/output/`) and
+  `audio-pitch.mjs` (renders every string/fret through the real engine in an
+  `OfflineAudioContext` via `audio-harness.html` and measures the synthesized
+  fundamental, release, dynamics, slides and per-preset levels).
+* `.github/workflows/ci.yml` runs both on every push and pull request.
