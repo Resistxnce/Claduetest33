@@ -12,7 +12,7 @@
  * The engine is theory-agnostic: callers pass frequencies and vibrating
  * length fractions (which the processor needs for pickup/pick positions).
  */
-import { makeDistortionCurve, makeReverbImpulse, expMap, clamp, setParamSmooth } from './effects.js';
+import { makeDistortionCurve, makeSoftLimiterCurve, makeReverbImpulse, expMap, clamp, setParamSmooth } from './effects.js';
 import { PRESETS, getPreset } from './presets.js';
 
 export const STRING_COUNT = 6;
@@ -186,6 +186,11 @@ export class GuitarAudioEngine extends EventTarget {
     this.shaper.oversample = '4x';
     this.shaper.curve = makeDistortionCurve(0);
     this.postGain = ctx.createGain();
+    // Asymmetric clipping leaves a DC component behind; remove it.
+    this.postHighpass = ctx.createBiquadFilter();
+    this.postHighpass.type = 'highpass';
+    this.postHighpass.frequency.value = 28;
+    this.postHighpass.Q.value = 0.7;
 
     // Tone and cabinet
     this.toneFilter = ctx.createBiquadFilter();
@@ -206,14 +211,19 @@ export class GuitarAudioEngine extends EventTarget {
     this.delay = this.buildDelay();
     this.reverb = this.buildReverb();
 
-    // Master
+    // Master: volume → gentle glue compressor → soft safety limiter
     this.master = ctx.createGain();
     this.limiter = ctx.createDynamicsCompressor();
-    this.limiter.threshold.value = -9;
-    this.limiter.knee.value = 10;
-    this.limiter.ratio.value = 6;
-    this.limiter.attack.value = 0.002;
-    this.limiter.release.value = 0.12;
+    this.limiter.threshold.value = -14;
+    this.limiter.knee.value = 18;
+    this.limiter.ratio.value = 3;
+    this.limiter.attack.value = 0.004;
+    this.limiter.release.value = 0.2;
+    this.safetyIn = ctx.createGain();
+    this.safetyIn.gain.value = 0.5;
+    this.safety = ctx.createWaveShaper();
+    this.safety.curve = makeSoftLimiterCurve();
+    this.safety.oversample = '2x';
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 1024;
     this.analyser.smoothingTimeConstant = 0.6;
@@ -227,6 +237,7 @@ export class GuitarAudioEngine extends EventTarget {
     node = node.connect(this.preGain);
     node = node.connect(this.shaper);
     node = node.connect(this.postGain);
+    node = node.connect(this.postHighpass);
     node = node.connect(this.toneFilter);
     node = node.connect(this.cabLow);
     node = node.connect(this.cabPresence);
@@ -234,7 +245,7 @@ export class GuitarAudioEngine extends EventTarget {
     this.chorus.output.connect(this.delay.input);
     this.delay.output.connect(this.reverb.input);
     this.reverb.output.connect(this.master);
-    this.master.connect(this.limiter).connect(this.analyser).connect(ctx.destination);
+    this.master.connect(this.limiter).connect(this.safetyIn).connect(this.safety).connect(this.analyser).connect(ctx.destination);
   }
 
   buildChorus() {
@@ -326,9 +337,11 @@ export class GuitarAudioEngine extends EventTarget {
         setParamSmooth(this.toneFilter.frequency, expMap(420, 12000, v), ctx, 0.03);
         break;
       case 'gain': {
+        // Pre-gain drives the saturation stage; post-gain roughly matches loudness
+        // (a saturated signal has a much higher RMS than a clean one).
         const drive = 1 + v * v * 60;
         setParamSmooth(this.preGain.gain, drive, ctx);
-        setParamSmooth(this.postGain.gain, 1 / Math.pow(drive, 0.72), ctx);
+        setParamSmooth(this.postGain.gain, Math.pow(drive, -0.28), ctx);
         break;
       }
       case 'distortion':

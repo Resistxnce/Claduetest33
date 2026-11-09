@@ -120,9 +120,10 @@ window.renderNote = async function renderNote(o) {
   const ctx = new OfflineAudioContext(2, Math.floor(sampleRate * duration), sampleRate);
   const engine = new GuitarAudioEngine();
   await engine.init(ctx);
-  // Dry, uncoloured path for measurement unless a preset is requested.
+  // Dry, uncoloured path for measurement unless a preset is requested (then
+  // only explicit overrides in o.params are applied on top of the preset).
   if (o.preset) engine.setPreset(o.preset);
-  const params = { reverb: 0, delay: 0, chorus: 0, gain: 0, distortion: 0, tone: 1, volume: 0.8, ...(o.params || {}) };
+  const params = o.preset ? { ...(o.params || {}) } : { reverb: 0, delay: 0, chorus: 0, gain: 0, distortion: 0, tone: 1, volume: 0.8, ...(o.params || {}) };
   for (const [k, v] of Object.entries(params)) engine.setParam(k, v);
   if (o.pickup) engine.setPickupSelector(o.pickup);
   if (o.body) engine.applyBody(o.body);

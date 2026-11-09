@@ -25,6 +25,22 @@ const lerp = (a, b, t) => a + (b - a) * t;
 /* Layout                                                                     */
 /* -------------------------------------------------------------------------- */
 
+// Fender-style six-in-line headstock (u 0 = tip, 1 = nut; v 0 = treble edge,
+// the nut occupies v 0 .. 0.835, the bass-side edge bulges to v = 1).
+const HEAD_OUTLINE = [
+  [1.00, 0.00], [0.70, 0.00], [0.40, 0.03], [0.16, 0.10], [0.03, 0.22], [0.00, 0.38], [0.04, 0.54],
+  [0.13, 0.70], [0.24, 0.88], [0.36, 0.98], [0.52, 1.00], [0.70, 0.965], [0.88, 0.90], [1.00, 0.835],
+];
+const HEAD_BASS_EDGE = HEAD_OUTLINE.slice(5).sort((a, b) => a[0] - b[0]);
+/** v of the bass-side headstock edge at u (linear interpolation along the outline). */
+function headEdgeV(u) {
+  for (let i = 1; i < HEAD_BASS_EDGE.length; i++) {
+    const [u0, v0] = HEAD_BASS_EDGE[i - 1], [u1, v1] = HEAD_BASS_EDGE[i];
+    if (u <= u1) return v0 + (v1 - v0) * ((u - u0) / Math.max(1e-6, u1 - u0));
+  }
+  return HEAD_BASS_EDGE[HEAD_BASS_EDGE.length - 1][1];
+}
+
 /**
  * Compute every geometric quantity needed for drawing and hit-testing.
  * @param {object} o
@@ -38,9 +54,9 @@ export function computeLayout({ length: W, cross: H, view, fretCount = 12 }) {
   const N = full ? 22 : fretCount;
   let nutX, L, bridgeX, headLen;
   if (full) {
-    headLen = W * 0.125;
-    nutX = W * 0.138;
-    bridgeX = W * 0.885;
+    headLen = W * 0.15;
+    nutX = W * 0.162;
+    bridgeX = W * 0.89;
     L = bridgeX - nutX;
   } else {
     headLen = W * 0.028;
@@ -66,8 +82,8 @@ export function computeLayout({ length: W, cross: H, view, fretCount = 12 }) {
   const strum = full
     ? { x0: fbEndX + L * 0.012, x1: bridgeX - L * 0.012 }
     : { x0: W * 0.80, x1: W * 0.985 };
-  strum.y0 = stringY(5, strum.x0) - spacing(strum.x0) * 0.9;
-  strum.y1 = stringY(0, strum.x1) + spacing(strum.x1) * 0.9;
+  strum.y0 = stringY(5, strum.x0) - spacing(strum.x0) * 1.6;
+  strum.y1 = stringY(0, strum.x1) + spacing(strum.x1) * 1.6;
   strum.xm = (strum.x0 + strum.x1) / 2;
 
   const body = full ? {
@@ -77,17 +93,21 @@ export function computeLayout({ length: W, cross: H, view, fretCount = 12 }) {
     y1: H * 0.985,
   } : null;
 
+  // Headstock box: the nut spans v = 0 .. 0.835 of it; the Fender-style hook
+  // bulges past the nut on the bass side (large y).
   const head = {
-    x0: full ? W * 0.006 : -W * 0.05,
+    x0: full ? W * 0.008 : -W * 0.05,
     x1: nutX,
-    y0: cy - fbHalfNut * 1.08,
-    y1: cy + fbHalfNut * 1.55,
+    y0: cy - fbHalfNut * 1.02,
+    y1: cy + fbHalfNut * 1.4,
   };
-  // Tuner posts: six in a line near the bass-side edge (Fender style).
+  // Tuner posts: six in a line that follows the bass-side edge (as on a real
+  // Fender headstock); post 0 (nearest the tip) takes the high E, post 5 the low E.
   const posts = [];
   for (let k = 0; k < STRING_COUNT; k++) {
-    const u = 0.14 + k * 0.126;
-    posts.push({ x: head.x0 + (head.x1 - head.x0) * u, y: cy + fbHalfNut * 0.98 - k * fbHalfNut * 0.035 });
+    const u = 0.12 + k * 0.14;
+    const v = headEdgeV(u) - 0.15;
+    posts.push({ x: head.x0 + (head.x1 - head.x0) * u, y: head.y0 + (head.y1 - head.y0) * v });
   }
 
   const pickups = full ? ['neck', 'middle', 'bridge'].map((name) => {
@@ -168,11 +188,7 @@ const PICKGUARD_OUTLINE = [
   [0.64, 0.17], [0.72, 0.13], [0.76, 0.22], [0.75, 0.35], [0.72, 0.52], [0.70, 0.70], [0.66, 0.86],
   [0.55, 0.91], [0.42, 0.85], [0.30, 0.84], [0.17, 0.92], [0.08, 0.86], [0.08, 0.73], [0.15, 0.63], [0.19, 0.58],
 ];
-// Fender-style six-in-line headstock (u 0 = tip, 1 = nut; v 0 = treble edge).
-const HEAD_OUTLINE = [
-  [1.00, 0.24], [0.84, 0.14], [0.56, 0.03], [0.28, 0.0], [0.07, 0.10], [0.0, 0.28], [0.05, 0.50],
-  [0.18, 0.74], [0.38, 0.93], [0.62, 0.95], [0.86, 0.85], [1.00, 0.74],
-];
+
 
 const STRING_COLORS = {
   wound: ['#c9b88a', '#8f7d55'],
@@ -586,30 +602,35 @@ export class GuitarCanvas {
     ctx.lineWidth = 1.2;
     ctx.stroke();
     if (!L.full) return;
+    const hw = h.x1 - h.x0, hh = h.y1 - h.y0;
     // Logo
-    this.text(ctx, h.x0 + (h.x1 - h.x0) * 0.5, h.y0 + (h.y1 - h.y0) * 0.3, 'Fable', { font: 'italic 700 15px Georgia, serif', color: 'rgba(40,24,8,0.85)' });
-    this.text(ctx, h.x0 + (h.x1 - h.x0) * 0.5, h.y0 + (h.y1 - h.y0) * 0.3 + 14, 'STRATOCASTER STYLE', { font: '600 6px system-ui, sans-serif', color: 'rgba(40,24,8,0.6)' });
-    // String tree
-    ctx.fillStyle = '#c0c0c0';
-    ctx.beginPath(); ctx.arc(h.x0 + (h.x1 - h.x0) * 0.55, L.stringY(5, L.nutX) - 2, 3, 0, Math.PI * 2); ctx.fill();
-    // Tuners: buttons outside the bass edge, posts on the face.
+    this.text(ctx, h.x0 + hw * 0.5, h.y0 + hh * 0.2, 'Fable', { font: `italic 700 ${Math.max(11, hh * 0.09)}px Georgia, serif`, color: 'rgba(40,24,8,0.85)' });
+    this.text(ctx, h.x0 + hw * 0.5, h.y0 + hh * 0.2 + Math.max(10, hh * 0.07), 'STRATOCASTER STYLE', { font: `600 ${Math.max(5, hh * 0.03)}px system-ui, sans-serif`, color: 'rgba(40,24,8,0.6)' });
+    // String tree holding the two thin strings down
+    const treeX = h.x0 + hw * 0.42;
+    ctx.fillStyle = '#d0d0d0';
+    ctx.beginPath(); ctx.arc(treeX, (L.stringY(5, L.nutX) + L.stringY(4, L.nutX)) / 2 - hh * 0.02, 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#6a6a6a';
+    ctx.beginPath(); ctx.arc(treeX, (L.stringY(5, L.nutX) + L.stringY(4, L.nutX)) / 2 - hh * 0.02, 1.4, 0, Math.PI * 2); ctx.fill();
+    // Tuners: posts on the face, shafts through the head to buttons on the bass edge.
+    const btnLen = Math.max(14, hh * 0.1), btnW = Math.max(7, hh * 0.05);
     for (const p of L.posts) {
-      // Shaft to the button
+      const u = (p.x - h.x0) / hw;
+      const edgeY = h.y0 + hh * headEdgeV(u) - 2;
       ctx.strokeStyle = '#8c8c8c';
       ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, h.y1 + 6); ctx.stroke();
-      // Button (chrome)
-      const bg = ctx.createLinearGradient(p.x - 8, h.y1, p.x + 8, h.y1 + 22);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, edgeY + 4); ctx.stroke();
+      const bg = ctx.createLinearGradient(p.x - btnW, edgeY, p.x + btnW, edgeY + btnLen);
       bg.addColorStop(0, '#f5f5f5'); bg.addColorStop(0.5, '#a8a8a8'); bg.addColorStop(1, '#e6e6e6');
       ctx.fillStyle = bg;
-      roundRect(ctx, p.x - 6, h.y1 + 2, 12, 22, 4);
+      roundRect(ctx, p.x - btnW / 2, edgeY + 2, btnW, btnLen, btnW / 3);
       ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.stroke();
       // Post + bushing
       ctx.fillStyle = '#9d9d9d';
-      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(4.5, hh * 0.028), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#e9e9e9';
-      ctx.beginPath(); ctx.arc(p.x, p.y, 3.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2.5, hh * 0.016), 0, Math.PI * 2); ctx.fill();
     }
   }
 
@@ -1130,14 +1151,16 @@ export class GuitarCanvas {
     const L = this.layout;
     const st = L.strum;
     const pulse = 0.5 + 0.5 * Math.sin(now / 500);
+    const sp = L.spacing(st.xm);
+    const y0 = L.stringY(5, st.xm) - sp * 0.8, y1 = L.stringY(0, st.xm) + sp * 0.8;
     ctx.save();
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = `rgba(253,230,138,${0.25 + 0.25 * pulse})`;
     ctx.lineWidth = 1.5;
-    roundRect(ctx, st.x0, st.y0, st.x1 - st.x0, st.y1 - st.y0, 12);
+    roundRect(ctx, st.x0, y0, st.x1 - st.x0, y1 - y0, 12);
     ctx.stroke();
     ctx.restore();
-    this.text(ctx, (st.x0 + st.x1) / 2, st.y1 + L.spacing(st.xm) * 0.9, 'strum here', { font: '600 11px system-ui, sans-serif', color: `rgba(253,230,138,${0.5 + 0.4 * pulse})` });
+    this.text(ctx, (st.x0 + st.x1) / 2, y1 + sp * 0.7, 'strum here', { font: '600 11px system-ui, sans-serif', color: `rgba(253,230,138,${0.5 + 0.4 * pulse})` });
     if (this.rafId === 0) this.rafId = requestAnimationFrame(this.frame);
   }
 }

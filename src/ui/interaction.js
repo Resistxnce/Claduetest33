@@ -262,6 +262,11 @@ export class Player {
     const dt = Math.max(1, now - rec.t);
     const dist = Math.hypot(g.x - rec.x, g.y - rec.y);
     const speed = dist / dt; // px per ms
+    if (rec.zone === 'none' || rec.zone === 'neck' || rec.zone === 'nut') {
+      // A drag that started off the strings and enters the strum zone becomes a strum.
+      const hit = this.canvas.hitTest(g.x, g.y);
+      if (hit.zone === 'strum') rec.zone = 'strum';
+    }
     switch (rec.zone) {
       case 'fretboard': {
         const hit = this.canvas.hitTest(g.x, g.y);
@@ -328,8 +333,16 @@ export class Player {
     return t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   }
 
+  /** Focused buttons/knobs own Space, Enter and the arrow keys. */
+  focusedControl(e) {
+    const t = e.target;
+    return t && typeof t.closest === 'function' && t.closest('button, [role="slider"], select, input, a, summary, dialog');
+  }
+
   onKeyDown(e) {
     if (this.isTyping(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    const navKey = e.code === 'Space' || e.key === 'Enter' || e.key.startsWith('Arrow');
+    if (navKey && this.focusedControl(e)) return;
     if (/^[1-6]$/.test(e.key)) {
       this.ensureAudio();
       const string = 6 - Number(e.key); // key 1 = high E

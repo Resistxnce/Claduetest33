@@ -11,19 +11,37 @@ export const dbToGain = (db) => Math.pow(10, db / 20);
 export const gainToDb = (g) => 20 * Math.log10(Math.max(1e-9, g));
 
 /**
- * Asymmetric soft-clipping transfer curve. `amount` 0 is practically linear;
- * 1 approaches hard clipping. A small bias adds even harmonics for a
- * tube-like character.
+ * Soft-clipping transfer curve for the amp stage. `amount` 0 is a gentle tube
+ * style saturation; 1 approaches hard clipping. The negative half-wave uses a
+ * slightly softer knee than the positive one, which adds the even harmonics of
+ * an asymmetric tube stage while keeping the curve bounded in [-1, 1] (no
+ * DC offset or gain blow-up at high drive).
  */
 export function makeDistortionCurve(amount, samples = 4096) {
   const a = clamp(amount, 0, 1);
-  const k = 0.6 + Math.pow(a, 1.5) * 38;
-  const bias = 0.09 * a;
+  const kPos = 1.6 + Math.pow(a, 1.5) * 36;
+  const kNeg = kPos * (1 - 0.35 * a);
+  const nPos = Math.tanh(kPos), nNeg = Math.tanh(kNeg);
   const curve = new Float32Array(samples);
-  const norm = Math.tanh(k * (1 + bias)) - Math.tanh(k * bias);
   for (let i = 0; i < samples; i++) {
     const x = (i / (samples - 1)) * 2 - 1;
-    curve[i] = (Math.tanh(k * (x + bias)) - Math.tanh(k * bias)) / norm;
+    curve[i] = x >= 0 ? Math.tanh(kPos * x) / nPos : Math.tanh(kNeg * x) / nNeg;
+  }
+  return curve;
+}
+
+/**
+ * Transparent safety limiter curve. Fed through a 0.5 gain so the shaper's
+ * [-1, 1] domain covers ±2: linear up to ±0.5, then a smooth tanh knee that
+ * never exceeds ±1.
+ */
+export function makeSoftLimiterCurve(samples = 4096) {
+  const curve = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    const x = ((i / (samples - 1)) * 2 - 1) * 2; // -2 .. 2
+    const ax = Math.abs(x);
+    const y = ax <= 0.5 ? ax : 0.5 + 0.5 * Math.tanh((ax - 0.5) / 0.5);
+    curve[i] = Math.sign(x) * y;
   }
   return curve;
 }

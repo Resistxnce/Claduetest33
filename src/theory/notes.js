@@ -78,8 +78,10 @@ export function enharmonicEquivalent(name) {
  * unicode accidentals (♯ ♭) and double accidentals ("C##4", "Dbb4").
  */
 export function parseNote(name) {
-  const m = /^\s*([A-Ga-g])((?:#|b|♯|♭|x){0,2})\s*(-?\d+)\s*$/.exec(name);
+  // Accidentals must be homogeneous: #, ##, x, b, bb (ASCII or unicode).
+  const m = /^\s*([A-Ga-g])(#{1,2}|♯{1,2}|x|b{1,2}|♭{1,2})?\s*(-?\d+)\s*$/.exec(name);
   if (!m) throw new Error(`Invalid note name: ${name}`);
+  m[2] = m[2] || '';
   const letter = m[1].toUpperCase();
   let accidental = 0;
   for (const ch of m[2]) {

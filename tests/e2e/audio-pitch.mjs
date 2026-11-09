@@ -67,7 +67,23 @@ try {
   const slid = await page.evaluate((o) => window.renderNote(o), { frequency: 110, string: 1, duration: 2.2, analysisStart: 1.2, analysisEnd: 2.1, events: [{ type: 'pitch', at: 0.6, frequency: 123.47, glide: 0.08, lengthFraction: 0.891 }] });
   console.log(`slide: measured ${slid.measured.toFixed(2)} Hz after glide to 123.47 Hz`);
   assert(Math.abs(1200 * Math.log2(slid.measured / 123.47)) < TOLERANCE_CENTS, 'slide should land on target pitch');
-  console.log('\nAUDIO PITCH TESTS PASSED');
+  // Every amp preset must produce sound for a full open strum without clipping,
+  // and the distorted presets must actually add harmonics.
+  const strumEvents = [1, 2, 3, 4, 5].map((s, i) => ({ type: 'pluck', string: s, at: 0.05 + (i + 1) * 0.015, velocity: 0.9, frequency: [82.41, 110, 146.83, 196, 246.94, 329.63][s], lengthFraction: 1 }));
+  const presetResults = {};
+  for (const preset of ['clean', 'overdrive', 'distortion', 'acoustic', 'chorus', 'lead']) {
+    const r = await page.evaluate((o) => window.renderNote(o), { frequency: 82.41, string: 0, velocity: 0.9, duration: 1.6, preset, params: {}, events: strumEvents, analysisStart: 0.4, analysisEnd: 1.2 });
+    presetResults[preset] = r;
+    console.log(`preset ${preset.padEnd(10)} peak ${r.peak.toFixed(3)} rms(0.06-0.26) ${r.rmsEarly.toFixed(3)} late ${r.rmsLate.toFixed(4)}`);
+    assert(r.peak < 1.0, `${preset} clips`);
+    assert(r.rmsEarly > 0.02, `${preset} is nearly silent`);
+  }
+  // Saturation compresses dynamics: a distorted strum sustains far more evenly than a clean one.
+  const sustain = (r) => r.rmsLate / r.rmsEarly;
+  console.log(`sustain ratio (late/early): clean ${sustain(presetResults.clean).toFixed(2)} distortion ${sustain(presetResults.distortion).toFixed(2)}`);
+  assert(sustain(presetResults.distortion) > sustain(presetResults.clean) * 1.3, 'distortion should compress/sustain more than clean');
+  assert(sustain(presetResults.overdrive) > sustain(presetResults.clean), 'overdrive should sustain more than clean');
+  console.log('\nAUDIO TESTS PASSED');
 } finally {
   await browser.close();
   server.stop();
