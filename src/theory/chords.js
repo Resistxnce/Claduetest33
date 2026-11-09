@@ -5,7 +5,8 @@
  *   frets:   six entries, low string (index 0) to high string (index 5);
  *            -1 = muted ('x'), 0 = open, n = fret number.
  *   fingers: six entries, 0 = open/muted, 1..4 = index..pinky, 'T' = thumb.
- *   barre:   optional { fret, from, to } (string indices, inclusive).
+ *   barre:   optional { fret, from, to } (string indices, inclusive), or an
+ *            array of such objects when two fingers each barre several strings.
  *   name:    optional human description, e.g. "Open C" or "E shape barre".
  *
  * Pitch content is always derived from the active tuning, never hard-coded.
@@ -171,9 +172,16 @@ function shapeToVoicing(shape, rootPc, openMidi) {
     shape: shape.name,
   };
   if (shape.barre) {
-    voicing.barre = { fret: shape.barre.fret + rootFret, from: shape.barre.from, to: shape.barre.to };
+    voicing.barre = voicingBarres(shape).map((b) => ({ fret: b.fret + rootFret, from: b.from, to: b.to }));
+    if (voicing.barre.length === 1) voicing.barre = voicing.barre[0];
   }
   return voicing;
+}
+
+/** Barres of a voicing as an array (the `barre` field may be one object, an array, or absent). */
+export function voicingBarres(voicing) {
+  if (!voicing.barre) return [];
+  return Array.isArray(voicing.barre) ? voicing.barre : [voicing.barre];
 }
 
 /**
