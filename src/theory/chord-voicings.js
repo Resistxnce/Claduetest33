@@ -7,8 +7,8 @@
  *   -1 = muted string, 0 = open string. fingers: 0 = none, 1 index, 2 middle,
  *   3 ring, 4 pinky, 'T' thumb.
  *
- * MOVABLE_SHAPES: barre/closed shapes relative to the root fret.
- *   { quality, rootString, frets (relative to root fret, -1 muted), fingers,
+ * MOVABLE_SHAPES: closed (barre / jazz) shapes that transpose to any root.
+ *   { quality, rootString, frets (relative, -1 muted), fingers,
  *     barre?: {fret: relative, from, to} | [..], name }
  *   Frets are relative to the shape's lowest fretted fret (which is 0).
  *   frets[rootString] is where the root sits inside the shape: 0 for classic
@@ -18,18 +18,33 @@
 
 /*
  * Conventions used below:
- *   - Voicings are listed most common first.
+ *   - Card order is decided by chordVoicings() (chords.js), not by this file
+ *     alone: the OPEN_VOICINGS entries of a chord come first, in the order
+ *     listed here (most common first); the MOVABLE_SHAPES instances follow,
+ *     sorted by position (lowest base fret first, then lowest top fret).
+ *     The order of MOVABLE_SHAPES only breaks ties between shapes that land
+ *     on the same base fret and top fret.
+ *   - The first card of every chord is strummable straight across: it has no
+ *     muted string between two sounding strings. A grip that mutes an inner
+ *     string (jazz forms with the A string damped, 3x0013, ...) is therefore
+ *     never the first OPEN_VOICINGS entry, and as a movable shape it is only
+ *     kept when a fully strummable shape always sorts before it (same base
+ *     fret and top fret, listed earlier) or the roots where it would lead
+ *     have an OPEN_VOICINGS entry.
+ *   - One card per fret pattern: chordVoicings() drops any later voicing
+ *     that repeats the frets of an earlier one, so each fret pattern is
+ *     listed once, with its most conventional fingering.
  *   - A finger that presses more than one string is always declared in `barre`.
  *   - The bass (lowest sounding string) is the chord root unless the voicing
  *     carries `bass: <pitchClass>` (deliberate slash chord, e.g. C/G).
  *   - Pitch classes: C 0, C# 1, D 2, D# 3, E 4, F 5, F# 6, G 7, G# 8, A 9, A# 10, B 11.
- *   - Everything stays below fret 8. Closed voicings that a MOVABLE_SHAPE
- *     already produces for the same root (F barre = E shape at fret 1, Bm =
- *     Am shape at fret 2, fretted power chords, ...) are NOT repeated here:
- *     chordVoicings() concatenates both lists, so a repeat would show up as
- *     a duplicate card. Closed voicings appear here only when the shape
- *     cannot be expressed as a movable shape (a string below the root fret,
- *     e.g. C9 x32333) or needs an open string (Dadd9 x54230).
+ *   - Everything in OPEN_VOICINGS stays below fret 8. A closed voicing that a
+ *     MOVABLE_SHAPE already produces for the same root (F barre = E shape at
+ *     fret 1, Bm = Am shape at fret 2, C9 x32333 = the A-string 9th shape at
+ *     fret 3, fretted power chords, ...) is NOT repeated here. Closed
+ *     voicings appear here only when they need an open string (Dadd9
+ *     x54230) or are the small four-string form that should lead a chord
+ *     whose lowest shape is a jazz grip (F#maj7 xx4321).
  */
 export const OPEN_VOICINGS = {
   /* ---------------------------------------------------------------- major */
@@ -39,7 +54,6 @@ export const OPEN_VOICINGS = {
   ],
   '9:maj': [ // A
     { frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0], name: 'Open A' },
-    { frets: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 1, 1, 0], barre: { fret: 2, from: 2, to: 4 }, name: 'Open A (index barre)' },
   ],
   '7:maj': [ // G
     { frets: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], name: 'Open G' },
@@ -63,14 +77,15 @@ export const OPEN_VOICINGS = {
   ],
   '4:min': [ // Em
     { frets: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], name: 'Open Em' },
-    { frets: [0, 2, 2, 0, 0, 0], fingers: [0, 1, 2, 0, 0, 0], name: 'Open Em (index/middle)' },
   ],
   '2:min': [ // Dm
     { frets: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1], name: 'Open Dm' },
   ],
   /* ---------------------------------------------------------- power chords */
   /* Fretted power chords (G5 355xxx, C5 x355xx, A5 577xxx, ...) come from the
-   * movable '5' shapes; only forms with open strings live here. */
+   * movable '5' shapes; only forms with open strings live here. The open G5
+   * 3x0033 mutes the A string between sounding strings and would be the
+   * first G5 card, so G5 is left to the 355xxx shape. */
   '4:5': [ // E5
     { frets: [0, 2, 2, -1, -1, -1], fingers: [0, 1, 3, 0, 0, 0], name: 'E5' },
     { frets: [0, 2, -1, -1, -1, -1], fingers: [0, 1, 0, 0, 0, 0], name: 'E5 (two strings)' },
@@ -80,9 +95,6 @@ export const OPEN_VOICINGS = {
   ],
   '2:5': [ // D5
     { frets: [-1, -1, 0, 2, 3, -1], fingers: [0, 0, 0, 1, 3, 0], name: 'D5' },
-  ],
-  '7:5': [ // G5
-    { frets: [3, -1, 0, 0, 3, 3], fingers: [2, 0, 0, 0, 3, 4], name: 'G5 (open)' },
   ],
   /* ---------------------------------------------------------- dominant 7th */
   '4:7': [ // E7
@@ -114,8 +126,7 @@ export const OPEN_VOICINGS = {
     { frets: [-1, 0, 2, 1, 2, 0], fingers: [0, 0, 2, 1, 3, 0], name: 'Open Amaj7' },
   ],
   '2:maj7': [ // Dmaj7
-    { frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 0, 1, 1, 1], barre: { fret: 2, from: 3, to: 5 }, name: 'Open Dmaj7 (barre)' },
-    { frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 0, 1, 2, 3], name: 'Open Dmaj7 (three fingers)' },
+    { frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 0, 1, 1, 1], barre: { fret: 2, from: 3, to: 5 }, name: 'Open Dmaj7' },
   ],
   '4:maj7': [ // Emaj7
     { frets: [0, 2, 1, 1, 0, 0], fingers: [0, 3, 1, 2, 0, 0], name: 'Open Emaj7' },
@@ -127,6 +138,15 @@ export const OPEN_VOICINGS = {
   '7:maj7': [ // Gmaj7
     { frets: [3, 2, 0, 0, 0, 2], fingers: [3, 2, 0, 0, 0, 1], name: 'Open Gmaj7' },
     { frets: [-1, -1, 5, 4, 3, 2], fingers: [0, 0, 4, 3, 2, 1], name: 'Gmaj7 (four strings)' },
+  ],
+  /* The Fmaj7 form xx3210 one and three frets up. Listed per root (not as a
+   * movable shape) so that it leads F#maj7 and G#maj7, whose lowest shape is
+   * the jazz grip with the A string muted (2x332x). */
+  '6:maj7': [ // F#maj7
+    { frets: [-1, -1, 4, 3, 2, 1], fingers: [0, 0, 4, 3, 2, 1], name: 'F#maj7 (four strings)' },
+  ],
+  '8:maj7': [ // G#maj7
+    { frets: [-1, -1, 6, 5, 4, 3], fingers: [0, 0, 4, 3, 2, 1], name: 'G#maj7 (four strings)' },
   ],
   /* ------------------------------------------------------------- minor 7th */
   '9:m7': [ // Am7
@@ -146,8 +166,7 @@ export const OPEN_VOICINGS = {
   ],
   /* -------------------------------------------------------------- sus2 */
   '9:sus2': [ // Asus2
-    { frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 0, 2, 3, 0, 0], name: 'Open Asus2' },
-    { frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 0, 1, 2, 0, 0], name: 'Open Asus2 (index/middle)' },
+    { frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 0, 1, 2, 0, 0], name: 'Open Asus2' },
   ],
   '2:sus2': [ // Dsus2
     { frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 0, 1, 3, 0], name: 'Open Dsus2' },
@@ -160,6 +179,9 @@ export const OPEN_VOICINGS = {
   ],
   '0:sus2': [ // Csus2
     { frets: [-1, 3, 0, 0, 1, 3], fingers: [0, 2, 0, 0, 1, 3], name: 'Open Csus2' },
+  ],
+  '5:sus2': [ // Fsus2
+    { frets: [-1, -1, 3, 0, 1, 1], fingers: [0, 0, 3, 0, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Open Fsus2' },
   ],
   /* -------------------------------------------------------------- sus4 */
   '9:sus4': [ // Asus4
@@ -175,6 +197,12 @@ export const OPEN_VOICINGS = {
     { frets: [3, 3, 0, 0, 1, 3], fingers: [2, 3, 0, 0, 1, 4], name: 'Open Gsus4' },
     { frets: [3, -1, 0, 0, 1, 3], fingers: [2, 0, 0, 0, 1, 3], name: 'Open Gsus4 (A muted)' },
   ],
+  '0:sus4': [ // Csus4
+    { frets: [-1, 3, 3, 0, 1, 1], fingers: [0, 3, 4, 0, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Open Csus4' },
+  ],
+  '5:sus4': [ // Fsus4  (the full barre 133311 is the 'Esus4 shape' at fret 1)
+    { frets: [-1, -1, 3, 3, 1, 1], fingers: [0, 0, 3, 4, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Small Fsus4' },
+  ],
   /* -------------------------------------------------------------- 7sus4 */
   '4:7sus4': [ // E7sus4
     { frets: [0, 2, 0, 2, 0, 0], fingers: [0, 2, 0, 3, 0, 0], name: 'Open E7sus4' },
@@ -185,13 +213,18 @@ export const OPEN_VOICINGS = {
   '2:7sus4': [ // D7sus4
     { frets: [-1, -1, 0, 2, 1, 3], fingers: [0, 0, 0, 2, 1, 3], name: 'Open D7sus4' },
   ],
+  '7:7sus4': [ // G7sus4
+    { frets: [3, 3, 0, 0, 1, 1], fingers: [2, 3, 0, 0, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Open G7sus4' },
+    { frets: [3, -1, 0, 0, 1, 1], fingers: [2, 0, 0, 0, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Open G7sus4 (A muted)' },
+  ],
   /* -------------------------------------------------------------- add9 */
   '0:add9': [ // Cadd9
     { frets: [-1, 3, 2, 0, 3, 0], fingers: [0, 2, 1, 0, 3, 0], name: 'Open Cadd9' },
     { frets: [-1, 3, 2, 0, 3, 3], fingers: [0, 2, 1, 0, 3, 4], name: 'Open Cadd9 (G on top)' },
   ],
   '7:add9': [ // Gadd9
-    { frets: [3, -1, 0, 2, 0, 3], fingers: [2, 0, 0, 1, 0, 3], name: 'Open Gadd9' },
+    { frets: [3, 2, 0, 2, 0, 3], fingers: [3, 1, 0, 2, 0, 4], name: 'Open Gadd9' },
+    { frets: [3, -1, 0, 2, 0, 3], fingers: [2, 0, 0, 1, 0, 3], name: 'Open Gadd9 (A muted)' },
     { frets: [3, 0, 0, 2, 0, 3], fingers: [2, 0, 0, 1, 0, 3], name: 'Open Gadd9 (open A)' },
   ],
   '4:add9': [ // Eadd9
@@ -250,6 +283,9 @@ export const OPEN_VOICINGS = {
   '9:dim7': [ // Adim7
     { frets: [-1, 0, 1, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4], name: 'Open Adim7' },
   ],
+  '10:dim7': [ // A#dim7  (the A-string shape x2313x one fret down: its G string is open)
+    { frets: [-1, 1, 2, 0, 2, 0], fingers: [0, 1, 2, 0, 3, 0], name: 'Open A#dim7' },
+  ],
   /* -------------------------------------------------------------- m7b5 */
   '2:m7b5': [ // Dm7b5
     { frets: [-1, -1, 0, 1, 1, 1], fingers: [0, 0, 0, 1, 1, 1], barre: { fret: 1, from: 3, to: 5 }, name: 'Open Dm7♭5' },
@@ -271,9 +307,8 @@ export const OPEN_VOICINGS = {
     { frets: [3, 2, 1, 0, 0, 3], fingers: [3, 2, 1, 0, 0, 4], name: 'Open Gaug' },
   ],
   /* -------------------------------------------------------------- 9th */
-  /* The classic A-string-root 9th (C9 x32333: 3rd on the D string one fret
-   * BELOW the root) cannot be a movable shape here, so its low positions are
-   * listed per root. */
+  /* C9 x32333, D9 x54555, B9 x21222 ... are the 'A-string root' shape and are
+   * not repeated here. */
   '9:9': [ // A9
     { frets: [-1, 0, 2, 4, 2, 3], fingers: [0, 0, 1, 3, 1, 2], barre: { fret: 2, from: 2, to: 4 }, name: 'Open A9' },
   ],
@@ -282,12 +317,6 @@ export const OPEN_VOICINGS = {
   ],
   '7:9': [ // G9
     { frets: [3, 2, 0, 2, 0, 1], fingers: [4, 2, 0, 3, 0, 1], name: 'Open G9' },
-  ],
-  '0:9': [ // C9
-    { frets: [-1, 3, 2, 3, 3, 3], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 3, from: 3, to: 5 }, name: 'C9' },
-  ],
-  '2:9': [ // D9
-    { frets: [-1, 5, 4, 5, 5, 5], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 5, from: 3, to: 5 }, name: 'D9' },
   ],
   /* -------------------------------------------------------------- maj9 */
   '0:maj9': [ // Cmaj9
@@ -300,6 +329,9 @@ export const OPEN_VOICINGS = {
   '9:maj9': [ // Amaj9
     { frets: [-1, 0, 2, 4, 2, 4], fingers: [0, 0, 1, 3, 2, 4], name: 'Open Amaj9' },
   ],
+  '5:maj9': [ // Fmaj9  (Am7 x02010 over an F bass)
+    { frets: [1, 0, 2, 0, 1, 0], fingers: [1, 0, 3, 0, 2, 0], name: 'Open Fmaj9' },
+  ],
   /* -------------------------------------------------------------- m9 */
   '4:m9': [ // Em9
     { frets: [0, 2, 2, 0, 3, 2], fingers: [0, 1, 2, 0, 4, 3], name: 'Open Em9' },
@@ -309,20 +341,28 @@ export const OPEN_VOICINGS = {
     { frets: [-1, 0, 2, 4, 1, 3], fingers: [0, 0, 2, 4, 1, 3], name: 'Open Am9' },
     { frets: [-1, 0, 5, 5, 0, 0], fingers: [0, 0, 1, 1, 0, 0], barre: { fret: 5, from: 2, to: 3 }, name: 'Am9 (open B and E)' },
   ],
-  '0:m9': [ // Cm9 (the 3rd sits below the root fret, so not a movable shape)
-    { frets: [-1, 3, 1, 3, 3, 3], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 3, from: 3, to: 5 }, name: 'Cm9' },
-  ],
-  '2:m9': [ // Dm9
-    { frets: [-1, 5, 3, 5, 5, 5], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 5, from: 3, to: 5 }, name: 'Dm9' },
+  /* Cm9 x31333, Dm9 x53555 ... are the 'A-string root' shape; for B its D
+   * string is open, which a closed shape cannot be. */
+  '11:m9': [ // Bm9
+    { frets: [-1, 2, 0, 2, 2, 2], fingers: [0, 1, 0, 2, 3, 4], name: 'Open Bm9' },
   ],
 };
 
 /*
- * Movable shapes. Relative frets: 0 = the root fret, n = n frets above it,
- * -1 = muted. Names are unique within a quality (the voicing generator copies
- * the name into each instantiated voicing).
+ * Movable shapes. Relative frets: 0 = the lowest fretted fret of the shape,
+ * n = n frets above it, -1 = muted. The root is at frets[rootString]: 0 for
+ * the barre forms, more when another string is fretted below the root.
+ * Names are unique within a quality (chordVoicings copies the name into each
+ * instantiated voicing).
  *
- * Interval offsets of each string relative to a root on:
+ * chordVoicings() sorts the instances of a chord by position, so the order
+ * below only decides ties (same base fret and same top fret). It matters in
+ * one case: a grip that mutes an inner string must come AFTER a fully
+ * strummable shape that lands on the same frets (m6, 6, aug), otherwise the
+ * muted grip would be the first card.
+ *
+ * Interval (semitones above the root) of each string at the SAME fret as a
+ * root on:
  *   string 0 (E): [0, 5, 10, 3, 7, 0]
  *   string 1 (A): [7, 0, 5, 10, 2, 7]
  *   string 2 (D): [2, 7, 0, 5, 9, 2]
@@ -346,7 +386,6 @@ export const MOVABLE_SHAPES = [
   /* ---------------------------------------------------------- dominant 7th */
   { quality: '7', rootString: 0, frets: [0, 2, 0, 1, 0, 0], fingers: [1, 3, 1, 2, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'E7 shape' },
   { quality: '7', rootString: 0, frets: [0, 2, 0, 1, 3, 0], fingers: [1, 3, 1, 2, 4, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'E7 shape (7th on B string)' },
-  { quality: '7', rootString: 0, frets: [0, -1, 0, 1, 0, -1], fingers: [1, 0, 2, 4, 3, 0], name: 'E-string root (four strings)' },
   { quality: '7', rootString: 1, frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 1, 3, 1, 4, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'A7 shape' },
   { quality: '7', rootString: 1, frets: [-1, 0, 2, 0, 2, -1], fingers: [0, 1, 3, 1, 4, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'A7 shape (four strings)' },
   { quality: '7', rootString: 2, frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4], name: 'D7 shape' },
@@ -357,17 +396,23 @@ export const MOVABLE_SHAPES = [
   { quality: 'maj7', rootString: 1, frets: [-1, 0, 2, 1, 2, 0], fingers: [0, 1, 3, 2, 4, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Amaj7 shape' },
   { quality: 'maj7', rootString: 2, frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 1, 3, 3, 3], barre: { fret: 2, from: 3, to: 5 }, name: 'Dmaj7 shape' },
   /* ------------------------------------------------------------- minor 7th */
+  /* The jazz grips with the A string muted (F7 1x121x, Fm7 1x111x) are not
+   * offered for 7 and m7: they sit on the same base fret as the full barre
+   * with a lower top fret, so they would be the first card for F, F#, G and
+   * G#, and no open-string form exists to lead those chords instead. */
   { quality: 'm7', rootString: 0, frets: [0, 2, 0, 0, 0, 0], fingers: [1, 3, 1, 1, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Em7 shape' },
-  { quality: 'm7', rootString: 0, frets: [0, -1, 0, 0, 0, -1], fingers: [1, 0, 3, 3, 3, 0], barre: { fret: 0, from: 2, to: 4 }, name: 'E-string root (jazz)' },
   { quality: 'm7', rootString: 1, frets: [-1, 0, 2, 0, 1, 0], fingers: [0, 1, 3, 1, 2, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Am7 shape' },
   { quality: 'm7', rootString: 1, frets: [-1, 0, 2, 0, 1, -1], fingers: [0, 1, 3, 1, 2, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'A-string root (jazz)' },
   { quality: 'm7', rootString: 2, frets: [-1, -1, 0, 2, 1, 1], fingers: [0, 0, 1, 3, 2, 2], barre: { fret: 1, from: 4, to: 5 }, name: 'Dm7 shape' },
   /* -------------------------------------------------------------- sus2 */
-  /* The full Esus2 barre needs a four-fret stretch over an index barre, so
-   * the easier shapes are listed first (chordVoicings keeps this order). */
+  /* The full Esus2 barre needs a four-fret stretch over an index barre. On a
+   * tie (same base fret and top fret) the three-string form is listed first;
+   * everything else is ordered by position at runtime. The Fsus2 shape is
+   * the open xx3011 moved up (F#sus2 xx4122, G#sus2 xx6344). */
   { quality: 'sus2', rootString: 1, frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 1, 3, 4, 1, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Asus2 shape' },
   { quality: 'sus2', rootString: 0, frets: [0, 2, 4, -1, -1, -1], fingers: [1, 2, 4, 0, 0, 0], name: 'E-string root (three strings)' },
   { quality: 'sus2', rootString: 2, frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 1, 2, 3, 1], barre: { fret: 0, from: 2, to: 5 }, name: 'Dsus2 shape' },
+  { quality: 'sus2', rootString: 2, frets: [-1, -1, 3, 0, 1, 1], fingers: [0, 0, 4, 1, 2, 3], name: 'Fsus2 shape' },
   { quality: 'sus2', rootString: 0, frets: [0, 2, 4, 4, 0, 0], fingers: [1, 2, 3, 4, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Esus2 shape' },
   /* -------------------------------------------------------------- sus4 */
   { quality: 'sus4', rootString: 0, frets: [0, 2, 2, 2, 0, 0], fingers: [1, 2, 3, 4, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Esus4 shape' },
@@ -383,46 +428,75 @@ export const MOVABLE_SHAPES = [
   { quality: 'dim', rootString: 2, frets: [-1, -1, 0, 1, 3, 1], fingers: [0, 0, 1, 2, 4, 3], name: 'D-string root' },
   /* -------------------------------------------------------------- dim7 */
   { quality: 'dim7', rootString: 0, frets: [0, 1, 2, 0, 2, 0], fingers: [1, 2, 3, 1, 4, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'E-string root' },
+  /* The usual A-string dim7 (Bdim7 x2313x, Cdim7 x3424x): the G string is one
+   * fret below the root. The E-string jazz form (F#dim7 2x121x) mutes the A
+   * string and would be the first card for F#, G and G#, so it is left out. */
+  { quality: 'dim7', rootString: 1, frets: [-1, 1, 2, 0, 2, -1], fingers: [0, 2, 3, 1, 4, 0], name: 'A-string root' },
   { quality: 'dim7', rootString: 2, frets: [-1, -1, 0, 1, 0, 1], fingers: [0, 0, 1, 3, 2, 4], name: 'D-string root' },
-  /* The usual A-string dim7 (x2313x) puts the G string BELOW the root fret and
-   * cannot be encoded; every encodable A-string form either needs five
-   * fingers or mutes the G string. Kept as a last resort. */
-  { quality: 'dim7', rootString: 1, frets: [-1, 0, 1, -1, 1, 2], fingers: [0, 1, 2, 0, 3, 4], name: 'A-string root (G muted)' },
   /* -------------------------------------------------------------- m7b5 */
   { quality: 'm7b5', rootString: 0, frets: [0, 1, 0, 0, -1, -1], fingers: [1, 2, 1, 1, 0, 0], barre: { fret: 0, from: 0, to: 3 }, name: 'E-string root' },
   { quality: 'm7b5', rootString: 0, frets: [0, 1, 0, 0, 3, -1], fingers: [1, 2, 1, 1, 4, 0], barre: { fret: 0, from: 0, to: 3 }, name: 'E-string root (five strings)' },
   { quality: 'm7b5', rootString: 1, frets: [-1, 0, 1, 0, 1, -1], fingers: [0, 1, 3, 2, 4, 0], name: 'A-string root' },
   { quality: 'm7b5', rootString: 2, frets: [-1, -1, 0, 1, 1, 1], fingers: [0, 0, 1, 3, 3, 3], barre: { fret: 1, from: 3, to: 5 }, name: 'D-string root' },
   /* -------------------------------------------------------------- aug */
+  /* Faug shape = xx3221, Gaug shape = 32100x closed (G#aug 43211x), Caug
+   * shape = x3211x, Daug shape = xx0332 closed (D#aug xx1443). The Faug shape
+   * and the E-string jazz grip (1x322x) always share base and top fret, so
+   * the fully strummable Faug shape is listed first. */
+  { quality: 'aug', rootString: 2, frets: [-1, -1, 2, 1, 1, 0], fingers: [0, 0, 4, 2, 3, 1], name: 'Faug shape' },
   { quality: 'aug', rootString: 0, frets: [0, -1, 2, 1, 1, -1], fingers: [1, 0, 4, 2, 3, 0], name: 'E-string root' },
   { quality: 'aug', rootString: 0, frets: [0, 3, 2, 1, -1, -1], fingers: [1, 4, 3, 2, 0, 0], name: 'E-string root (low)' },
+  { quality: 'aug', rootString: 0, frets: [3, 2, 1, 0, 0, -1], fingers: [4, 3, 2, 1, 1, 0], barre: { fret: 0, from: 3, to: 4 }, name: 'Gaug shape' },
+  { quality: 'aug', rootString: 1, frets: [-1, 2, 1, 0, 0, -1], fingers: [0, 3, 2, 1, 1, 0], barre: { fret: 0, from: 3, to: 4 }, name: 'Caug shape' },
   { quality: 'aug', rootString: 1, frets: [-1, 0, 3, 2, 2, -1], fingers: [0, 1, 4, 2, 3, 0], name: 'A-string root' },
+  { quality: 'aug', rootString: 2, frets: [-1, -1, 0, 3, 3, 2], fingers: [0, 0, 1, 3, 4, 2], name: 'Daug shape' },
   /* -------------------------------------------------------------- 6th */
+  /* F6 shape = xx3231. It always shares base and top fret with the E-string
+   * jazz grip (1x323x), so the fully strummable F6 shape is listed first;
+   * likewise the A6 shape before the grip with the D string muted. */
+  { quality: '6', rootString: 2, frets: [-1, -1, 2, 1, 2, 0], fingers: [0, 0, 3, 2, 4, 1], name: 'F6 shape' },
   { quality: '6', rootString: 0, frets: [0, -1, 2, 1, 2, -1], fingers: [1, 0, 3, 2, 4, 0], name: 'E-string root' },
   { quality: '6', rootString: 1, frets: [-1, 0, 2, 2, 2, 2], fingers: [0, 1, 3, 3, 3, 3], barre: { fret: 2, from: 2, to: 5 }, name: 'A6 shape' },
   { quality: '6', rootString: 1, frets: [-1, 0, -1, 2, 2, 2], fingers: [0, 1, 0, 2, 3, 4], name: 'A-string root (D muted)' },
   { quality: '6', rootString: 2, frets: [-1, -1, 0, 2, 0, 2], fingers: [0, 0, 1, 2, 1, 3], barre: { fret: 0, from: 2, to: 4 }, name: 'D6 shape' },
   /* -------------------------------------------------------------- m6 */
+  /* Each barre form is listed before the jazz grip that shares its frets. */
   { quality: 'm6', rootString: 0, frets: [0, 2, 2, 0, 2, 0], fingers: [1, 2, 3, 1, 4, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Em6 shape' },
   { quality: 'm6', rootString: 0, frets: [0, -1, 2, 0, 2, -1], fingers: [1, 0, 3, 2, 4, 0], name: 'E-string root (jazz)' },
   { quality: 'm6', rootString: 1, frets: [-1, 0, 2, 2, 1, 2], fingers: [0, 1, 3, 3, 2, 4], barre: { fret: 2, from: 2, to: 3 }, name: 'Am6 shape' },
   { quality: 'm6', rootString: 1, frets: [-1, 0, -1, 2, 1, 2], fingers: [0, 1, 0, 3, 2, 4], name: 'A-string root (jazz)' },
   { quality: 'm6', rootString: 2, frets: [-1, -1, 0, 2, 0, 1], fingers: [0, 0, 1, 3, 1, 2], barre: { fret: 0, from: 2, to: 4 }, name: 'Dm6 shape' },
   /* -------------------------------------------------------------- add9 */
+  /* Cadd9 shape = the open x3203x closed (C#add9 x4314x, Dadd9 x5425x). */
   { quality: 'add9', rootString: 0, frets: [0, 2, 2, 1, 0, 2], fingers: [1, 3, 3, 2, 1, 4], barre: [{ fret: 0, from: 0, to: 5 }, { fret: 2, from: 1, to: 2 }], name: 'Eadd9 shape' },
+  { quality: 'add9', rootString: 1, frets: [-1, 3, 2, 0, 3, -1], fingers: [0, 3, 2, 1, 4, 0], name: 'Cadd9 shape' },
   { quality: 'add9', rootString: 1, frets: [-1, 0, 2, 4, 2, -1], fingers: [0, 1, 2, 4, 3, 0], name: 'A-string root' },
   { quality: 'add9', rootString: 1, frets: [-1, 0, 2, 4, 2, 0], fingers: [0, 1, 2, 4, 3, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'A-string root (five strings)' },
   /* -------------------------------------------------------------- 9th */
-  /* The open A9 (x02423) only works because the open A frees the index to
+  /* The chord-book 9th has its 3rd one fret BELOW the root:
+   *   A-string root: C9 x32333 (B9 x21222, D9 x54555), or x3233x without the 5th;
+   *   E-string root: G9 32323x (root, 3rd, b7, 9th, 5th; index barres A to G).
+   * The open A9 (x02423) only works because the open A frees the index to
    * barre the D and B strings; moved up the neck that barre would fall to the
    * middle finger, so the five-string A9 form is not offered as a shape. */
   { quality: '9', rootString: 0, frets: [0, 2, 0, 1, 0, 2], fingers: [1, 3, 1, 2, 1, 4], barre: { fret: 0, from: 0, to: 5 }, name: 'E9 shape' },
-  { quality: '9', rootString: 1, frets: [-1, 0, -1, 4, 2, 3], fingers: [0, 1, 0, 4, 2, 3], name: 'A-string root (D muted)' },
+  { quality: '9', rootString: 0, frets: [1, 0, 1, 0, 1, -1], fingers: [2, 1, 3, 1, 4, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'E-string root (five strings)' },
+  { quality: '9', rootString: 1, frets: [-1, 1, 0, 1, 1, 1], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 1, from: 3, to: 5 }, name: 'A-string root' },
+  { quality: '9', rootString: 1, frets: [-1, 1, 0, 1, 1, -1], fingers: [0, 2, 1, 3, 3, 0], barre: { fret: 1, from: 3, to: 4 }, name: 'A-string root (four strings)' },
   /* -------------------------------------------------------------- maj9 */
-  { quality: 'maj9', rootString: 0, frets: [0, -1, 1, 1, 0, 2], fingers: [1, 0, 3, 3, 2, 4], barre: { fret: 1, from: 2, to: 3 }, name: 'E-string root' },
-  { quality: 'maj9', rootString: 0, frets: [0, 2, 1, 1, 0, 2], fingers: [1, 3, 2, 2, 1, 4], barre: [{ fret: 0, from: 0, to: 5 }, { fret: 1, from: 2, to: 3 }], name: 'Emaj9 shape' },
-  { quality: 'maj9', rootString: 1, frets: [-1, 0, -1, 4, 2, 4], fingers: [0, 1, 0, 3, 2, 4], name: 'A-string root (D muted)' },
+  /* A-string root: Cmaj9 x3243x, or x32433 with the 5th on top. E-string
+   * root: Gmaj9 32423x (five strings) and the jazz grip 3x4435 with the A
+   * string muted, which never leads: F and A have open forms, F#, G and G#
+   * get the five-string shape first. */
+  { quality: 'maj9', rootString: 0, frets: [1, 0, 2, 0, 1, -1], fingers: [2, 1, 4, 1, 3, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'E-string root (five strings)' },
+  { quality: 'maj9', rootString: 0, frets: [0, -1, 1, 1, 0, 2], fingers: [1, 0, 3, 3, 2, 4], barre: { fret: 1, from: 2, to: 3 }, name: 'E-string root (A muted)' },
+  { quality: 'maj9', rootString: 1, frets: [-1, 1, 0, 2, 1, -1], fingers: [0, 2, 1, 4, 3, 0], name: 'A-string root' },
+  { quality: 'maj9', rootString: 1, frets: [-1, 1, 0, 2, 1, 1], fingers: [0, 2, 1, 4, 3, 3], barre: { fret: 1, from: 4, to: 5 }, name: 'A-string root (five strings)' },
   /* -------------------------------------------------------------- m9 */
+  /* A-string root: Cm9 x31333 (or x3133x). E-string root: the Em9 barre
+   * (Fm9 131113) and the four-string 6465xx (A#m9: root, b3, b7, 9th). */
   { quality: 'm9', rootString: 0, frets: [0, 2, 0, 0, 0, 2], fingers: [1, 3, 1, 1, 1, 4], barre: { fret: 0, from: 0, to: 5 }, name: 'Em9 shape' },
-  { quality: 'm9', rootString: 1, frets: [-1, 0, -1, 4, 1, 3], fingers: [0, 1, 0, 4, 2, 3], name: 'A-string root (D muted)' },
+  { quality: 'm9', rootString: 0, frets: [2, 0, 2, 1, -1, -1], fingers: [3, 1, 4, 2, 0, 0], name: 'E-string root (four strings)' },
+  { quality: 'm9', rootString: 1, frets: [-1, 2, 0, 2, 2, 2], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 2, from: 3, to: 5 }, name: 'A-string root' },
+  { quality: 'm9', rootString: 1, frets: [-1, 2, 0, 2, 2, -1], fingers: [0, 2, 1, 3, 3, 0], barre: { fret: 2, from: 3, to: 4 }, name: 'A-string root (four strings)' },
 ];
