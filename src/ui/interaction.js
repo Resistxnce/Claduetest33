@@ -54,6 +54,7 @@ export class Player {
       keyUp: (e) => this.onKeyUp(e),
     };
     state.addEventListener('tuning', () => this.refreshAllPitches());
+    state.addEventListener('option', (e) => { if (e.detail.key === 'dragAcross' && e.detail.value !== 'bend') this.releaseBends(); });
     state.addEventListener('capo', () => this.refreshAllPitches(0.02));
     state.addEventListener('chord', () => this.refreshAllPitches(0.02));
     engine.addEventListener('ready', () => this.refreshAllPitches(0, true));
@@ -293,7 +294,7 @@ export class Player {
       // Slide along the string
       this.applyPitch(string, { glide: ringing ? 0.045 : 0 });
       if (ringing) {
-        this.engine.slideNoise(string, clamp(0.015 + speed * 0.01, 0.01, 0.05));
+        this.engine.slideNoise(string, clamp(0.015 + speed * 0.01, 0.01, 0.04));
         this.noteChanged(string, this.state.noteOn(string));
       }
     }
@@ -365,7 +366,11 @@ export class Player {
     const ring = this.state.ringing[string];
     if (!this.state.options.releaseMutes && ringing && ring && ring.fret === before) {
       // The note this finger was holding rings out at its own pitch; the engine
-      // keeps that pitch until the next pluck sets a new one.
+      // keeps that pitch until the next pluck sets a new one. As far as the state is
+      // concerned the string is back at its resting note, so a later chord, capo or
+      // tuning event that leaves this string alone must not touch (and mute) it.
+      const rest = this.state.noteOn(string);
+      this.sentMidi[string] = rest ? rest.midi : -1;
       return;
     }
     if (this.state.options.releaseMutes && ringing) {
@@ -572,6 +577,16 @@ export class Player {
   onKeyUp(e) {
     if (e.code === 'KeyM') this.endMomentaryMute();
     if (e.key === 'Enter' && this.state.fingers.has(KEYBOARD_FINGER)) this.liftFinger(KEYBOARD_FINGER);
+  }
+
+  /** Let every bent string spring back (bend mode was switched off while a finger held a bend). */
+  releaseBends() {
+    for (const [id, finger] of this.state.fingers) {
+      if (!(finger.bend > 0) && !finger.offset) continue;
+      this.state.setFingerBend(id, 0, 0);
+      this.applyPitch(finger.string, { glide: 0.02 });
+      if (this.isRinging(finger.string)) this.state.setRinging(finger.string, this.state.noteOn(finger.string));
+    }
   }
 
   /* ---------------- keyboard cursor ---------------- */

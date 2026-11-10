@@ -127,13 +127,14 @@ export class AppState extends EventTarget {
   /** The fret that determines the sounding pitch: -1 = muted, 0 = open, n = fret. */
   soundingFret(string) {
     const finger = this.fingerFret(string);
-    if (finger !== null) return Math.max(finger, this.capo);
     const voicing = this.holdChord ? this.chordVoicing : null;
-    if (voicing) {
-      const f = voicing.frets[string];
-      if (f < 0) return -1;
-      return this.capo + f; // chord shapes are fingered relative to the capo
-    }
+    // Chord shapes are fingered relative to the capo; -1 = the chord mutes this string.
+    const held = voicing ? this.chordFret(voicing.frets[string]) : null;
+    // The highest fretted position on a string sets its pitch: an own finger behind a held chord's
+    // finger changes nothing; an own finger on a string the chord mutes plays that string.
+    // (A finger at or behind the capo presses a part of the string that does not sound.)
+    if (finger !== null && finger > this.capo) return Math.max(finger, held === null ? 0 : held);
+    if (held !== null) return held;
     return this.capo;
   }
 

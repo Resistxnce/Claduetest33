@@ -148,3 +148,27 @@ test('every chord quality gets at least one voicing in every tuning for the natu
   }
   assert.equal(missing, 0);
 });
+
+test('with a chord held, the highest fretted position on a string still wins', () => {
+  const st = new AppState();
+  st.setChord(5, 'maj', 0); // F major
+  const barre = st.chord.voicings.findIndex((v) => v.frets.join() === '1,3,3,2,1,1');
+  assert.ok(barre >= 0, 'F major has the E-shape barre at fret 1');
+  st.setChordVoicing(barre);
+  st.setHoldChord(true);
+  assert.deepEqual(names(st), ['F2', 'C3', 'F3', 'A3', 'C4', 'F4']);
+  // an own finger behind the chord's finger changes nothing (the chord's finger is nearer the bridge)
+  st.pressFinger(1, 1, 2); // A string, fret 2, behind the chord's fret 3
+  assert.equal(st.noteOn(1).name, 'C3');
+  // an own finger in front of it takes over
+  st.pressFinger(2, 1, 5);
+  assert.equal(st.noteOn(1).name, 'D3');
+  st.liftAll();
+  // behind the capo too
+  st.setCapo(3);
+  st.setChord(0, 'maj', 0);
+  st.setHoldChord(true);
+  const before = names(st);
+  for (let s = 0; s < 6; s++) st.pressFinger(10 + s, s, 1);
+  assert.deepEqual(names(st), before, 'fingers behind the capo do not change a held chord');
+});

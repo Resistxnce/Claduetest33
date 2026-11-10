@@ -179,3 +179,42 @@ test('a cancelling mute drops plucks that are still scheduled', () => {
   bank.process(after, 0.5);
   assert.ok(rms(after, 0, 0.1, bank.fs) > 1e-3);
 });
+
+test('slide noise stays well under the picked note on the plain strings and never leaves the loop offset', () => {
+  const open = [82.41, 110, 146.83, 196, 246.94, 329.63];
+  for (const string of [4, 5]) {
+    const slide = (level) => {
+      const bank = makeBank();
+      const f = (fret) => open[string] * Math.pow(2, fret / 12);
+      bank.enqueue({ type: 'pluck', string, velocity: 0.8, pickPosition: 0.14, damping: 0, frequency: f(12), lengthFraction: 0.5 }, 0);
+      for (let k = 1; k <= 12; k++) {
+        const time = 0.4 + k * 0.03;
+        bank.enqueue({ type: 'pitch', string, frequency: f(12 + k), glide: 0.045, lengthFraction: Math.pow(2, -(12 + k) / 12), time }, 0);
+        if (level) bank.enqueue({ type: 'noise', string, level, duration: 0.035, time }, 0);
+      }
+      return render(bank, 1.0);
+    };
+    const peakOf = (a, from, to) => { let p = 0; for (let i = Math.floor(from * 48000); i < Math.floor(to * 48000); i++) p = Math.max(p, Math.abs(a[i])); return p; };
+    const plain = slide(0);
+    const noisy = slide(0.04);
+    const pluckPeak = peakOf(noisy, 0, 0.1);
+    const slidePeak = peakOf(noisy, 0.4, 0.85);
+    assert.ok(slidePeak < pluckPeak * 0.8, `string ${string}: slide peak ${slidePeak.toFixed(3)} must stay under the pluck peak ${pluckPeak.toFixed(3)}`);
+    const gain = 20 * Math.log10(rms(noisy, 0.4, 0.85, 48000) / rms(plain, 0.4, 0.85, 48000));
+    assert.ok(gain < 4, `string ${string}: slide noise adds ${gain.toFixed(1)} dB (should be a texture, not a re-attack)`);
+    assert.ok(gain > -1, 'the scrape is still there');
+  }
+});
+
+test('garbage damp and absurd config values are ignored or clamped', () => {
+  const bank = makeBank();
+  bank.enqueue({ type: 'pluck', string: 1, velocity: 0.8, pickPosition: 0.14, damping: 0, frequency: 110, lengthFraction: 1 }, 0);
+  bank.enqueue({ type: 'damp', string: 1, amount: NaN }, 0);
+  bank.enqueue({ type: 'damp', string: 1 }, 0);
+  bank.enqueue({ type: 'config', string: 1, dispersion: 5, outGain: 1e6, brightness: -3 }, 0);
+  const out = render(bank, 1.0);
+  assert.ok(rms(out, 0.5, 1.0, bank.fs) > 1e-3, 'the string still rings after NaN damping');
+  let peak = 0;
+  for (const v of out) { assert.ok(Number.isFinite(v)); peak = Math.max(peak, Math.abs(v)); }
+  assert.ok(peak < 8, `clamped config keeps the output bounded (${peak})`);
+});

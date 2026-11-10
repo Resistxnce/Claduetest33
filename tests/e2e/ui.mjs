@@ -410,6 +410,35 @@ try {
   console.log('requestAnimationFrame calls per second when idle:', idleFrames);
   assert(idleFrames <= 2, `the page should be idle when nothing sounds, got ${idleFrames} animation frames per second`);
 
+  // A fretted note left to ring out survives events that do not concern its string:
+  // looking at a chord diagram, choosing another voicing, retuning another string.
+  await page.evaluate(() => { const g = window.__guitar; g.player.releaseEverything(); g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.state.setTuning('standard'); window.scrollTo(0, 0); });
+  canvasBox = await page.locator('#guitar').boundingBox();
+  p = await screenPos(3, 5); // G string, 5th fret = C4
+  await page.mouse.click(p.x, p.y);
+  await page.waitForTimeout(80);
+  const ringsC4 = () => page.evaluate(() => { const g = window.__guitar; const r = g.state.ringing[3]; return { name: r && r.name, engine: g.engine.stringState[3].ringing, hz: g.engine.stringState[3].frequency }; });
+  let c4 = await ringsC4();
+  assert(c4.name === 'C4' && c4.engine, `C4 rings after the tap: ${JSON.stringify(c4)}`);
+  await page.evaluate(() => window.__guitar.state.setChord(0, 'maj', 0));          // only looking at a chord diagram
+  await page.evaluate(() => window.__guitar.state.setChordVoicing(1));
+  await page.evaluate(() => window.__guitar.state.setTuning('drop-d'));           // retunes the low E only
+  await page.waitForTimeout(60);
+  c4 = await ringsC4();
+  console.log('Ring-out note after chord/voicing/tuning events:', JSON.stringify(c4));
+  assert(c4.name === 'C4' && c4.engine && Math.abs(c4.hz - 261.63) < 0.01, `a ringing fretted note must survive unrelated chord and tuning events: ${JSON.stringify(c4)}`);
+  await page.evaluate(() => { const g = window.__guitar; g.state.setChord(null); g.state.setTuning('standard'); g.player.releaseEverything(); });
+
+  // After the help is closed with the pointer, Space strums (focus does not stay on the help button)
+  await page.click('#help-btn');
+  await page.click('#help button[value="close"]');
+  await clearRecent();
+  await page.waitForFunction(() => document.activeElement === document.body); // the dialog's close event arrives with the next frame
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(150);
+  const afterHelp = await page.evaluate(() => ({ open: document.getElementById('help').open, played: window.__guitar.state.recent.length }));
+  assert(!afterHelp.open && afterHelp.played === 6, `Space strums after closing the help: ${JSON.stringify(afterHelp)}`);
+
   // A mute sent right after a strum silences it (the strum's later strings must not sound afterwards)
   await page.evaluate(() => { const g = window.__guitar; g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.player.releaseEverything(); });
   await page.waitForFunction(() => window.__guitar.engine.getLevel() < 0.0005, null, { timeout: 8000 }); // let earlier notes' reverb die away

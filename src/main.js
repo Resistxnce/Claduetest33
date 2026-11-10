@@ -165,11 +165,18 @@ function boot() {
   // Help dialog
   const help = document.getElementById('help');
   // Open at the top (the dialog would otherwise scroll to its focused "Got it" button), or at a given section.
-  const openHelp = (section) => {
+  let helpOpenedByPointer = false;
+  const openHelp = (section, e) => {
+    helpOpenedByPointer = !!e && e.detail > 0;
     if (!help.open) help.showModal();
     if (section) section.scrollIntoView({ block: 'center' }); else help.scrollTop = 0;
   };
-  document.getElementById('help-btn').addEventListener('click', () => openHelp());
+  document.getElementById('help-btn').addEventListener('click', (e) => openHelp(null, e));
+  // Closing a dialog hands focus back to the button that opened it. After a click or tap that would
+  // make Space re-open the help instead of strumming (keyboard users keep the usual focus return).
+  help.addEventListener('close', () => {
+    if (helpOpenedByPointer && document.activeElement && document.activeElement.closest('.topbar')) document.activeElement.blur();
+  });
   help.addEventListener('click', (e) => { if (e.target === help) help.close(); });
 
   // When served by tools/serve.mjs on a computer: show the address (and a QR code) to open on a phone or tablet.
@@ -191,7 +198,7 @@ function boot() {
     box.hidden = false;
     const deviceBtn = document.getElementById('device-btn');
     deviceBtn.hidden = false;
-    deviceBtn.addEventListener('click', () => openHelp(box));
+    deviceBtn.addEventListener('click', (e) => openHelp(box, e));
   }).catch(() => {});
 
   // Offline support / installability (only possible on https or localhost).

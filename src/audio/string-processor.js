@@ -138,10 +138,10 @@ class StringVoice {
 
   configure(c) {
     if (Number.isFinite(c.t60) && c.t60 > 0) this.t60Ring = c.t60;
-    if (Number.isFinite(c.brightness)) this.baseLpA = c.brightness;
+    if (Number.isFinite(c.brightness)) this.baseLpA = Math.min(0.98, Math.max(0, c.brightness));
     if (Number.isFinite(c.brightnessScale)) this.brightnessScale = c.brightnessScale;
-    if (Number.isFinite(c.dispersion)) this.baseApC = c.dispersion;
-    if (Number.isFinite(c.outGain)) this.outGain = c.outGain;
+    if (Number.isFinite(c.dispersion)) this.baseApC = Math.min(0.95, Math.max(-0.95, c.dispersion)); // all-pass pole inside the unit circle
+    if (Number.isFinite(c.outGain)) this.outGain = Math.min(4, Math.max(0, c.outGain));
     if (Number.isFinite(c.clickLevel)) this.clickLevel = c.clickLevel;
     if (Number.isFinite(c.idleDamping)) this.idleDamping = c.idleDamping;
     if (Array.isArray(c.pickupDistances) && c.pickupDistances.length && c.pickupDistances.every(Number.isFinite)) {
@@ -340,19 +340,31 @@ class StringVoice {
   noiseBurst(level, duration) {
     level = Math.min(0.2, Math.max(0, finite(level, 0.03)));
     const len = Math.min(this.exc.length, Math.max(8, Math.round(finite(duration, 0.03) * this.fs)));
+    // The loop resonates: a burst that lasts many periods (a short, high note) would pump in far
+    // more energy than a pluck, so its level follows the loop length. Finger squeak is also a
+    // wound-string sound; the plain strings only whisper.
+    const loopScale = Math.min(1, Math.sqrt(this.period / (this.fs / 110)));
+    const gain = level * 6 * loopScale * (this.index <= 2 ? 1 : 0.4);
+    // An excitation still being fed in (an earlier burst, the tail of a pluck) is kept, not cut off:
+    // truncating a zero-mean burst would leave a DC offset circulating in the loop.
+    const pending = Math.max(0, this.excLen - this.excPos);
+    if (pending > 0) this.exc.copyWithin(0, this.excPos, this.excLen);
+    const total = Math.max(len, pending);
+    for (let i = pending; i < total; i++) this.exc[i] = 0;
     const a = Math.exp(-TWO_PI * 2500 / this.fs);
+    const burst = this.scratch.length >= len ? this.scratch : new Float32Array(len);
     let lp = 0;
     let sum = 0, envSum = 0;
     for (let i = 0; i < len; i++) {
       lp = a * lp + (1 - a) * this.rng.next();
       const env = Math.sin(Math.PI * i / len);
-      this.exc[i] = lp * env * level * 6;
-      sum += this.exc[i]; envSum += env;
+      burst[i] = lp * env * gain;
+      sum += burst[i]; envSum += env;
     }
-    // Keep the burst zero-mean so it cannot leave a DC offset circulating in the loop.
+    // Zero-mean, so the burst itself cannot leave a DC offset either.
     const mean = envSum > 0 ? sum / envSum : 0;
-    for (let i = 0; i < len; i++) this.exc[i] -= mean * Math.sin(Math.PI * i / len);
-    this.excLen = len; this.excPos = 0;
+    for (let i = 0; i < len; i++) this.exc[i] += burst[i] - mean * Math.sin(Math.PI * i / len);
+    this.excLen = total; this.excPos = 0;
     this.active = true;
     this.quiet = 0;
   }
@@ -513,6 +525,7 @@ export class StringBank {
           voice.pluck(msg.velocity, msg.pickPosition, msg.damping);
           break;
         case 'damp':
+          if (!Number.isFinite(msg.amount)) break; // garbage must not mute a ringing string
           voice.setDamping(msg.amount);
           // A muting hand also stops strings that were only ringing in sympathy.
           if (voice.damping >= 0.9) for (const other of this.voices) other.choke();
