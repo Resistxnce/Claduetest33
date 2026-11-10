@@ -123,6 +123,37 @@ try {
   names = await recentNames();
   console.log('Swept fret 5:', names.join(' '));
   assert(names.join(' ') === 'A2 D3 G3 C4 E4 A4', `fret-5 sweep should be A2 D3 G3 C4 E4 A4, got ${names.join(' ')}`);
+  // A fast sweep (pointer events skip strings) still plays every string once, in order
+  await clearRecent();
+  const s7a = await screenPos(5, 7);
+  const s7b = await screenPos(0, 7);
+  await page.mouse.move(s7a.x, s7a.y);
+  await page.mouse.down();
+  await page.mouse.move(s7b.x, s7b.y, { steps: 2 });
+  await page.mouse.up();
+  await page.waitForTimeout(120);
+  names = await recentNames();
+  console.log('Fast sweep at fret 7 (high to low):', names.join(' '));
+  assert(names.join(' ') === 'B4 F#4 D4 A3 E3 B2', `fast fret-7 sweep should be B4 F#4 D4 A3 E3 B2, got ${names.join(' ')}`);
+  // A finger wobbling near the boundary between two strings does not retrigger
+  await clearRecent();
+  const hold = await screenPos(2, 9);
+  const spacingPx = await page.evaluate(() => window.__guitar.canvas.layout.spacing);
+  await page.mouse.move(hold.x, hold.y);
+  await page.mouse.down();
+  for (let i = 0; i < 6; i++) await page.mouse.move(hold.x, hold.y + (i % 2 ? -1 : 1) * spacingPx * 0.56, { steps: 2 });
+  await page.mouse.up();
+  await page.waitForTimeout(60);
+  names = await recentNames();
+  console.log('Wobble on D string fret 9:', names.join(' '));
+  assert(names.join(' ') === 'B3', `wobbling near a string boundary must not retrigger, got ${names.join(' ')}`);
+  // Sweep the open strings again so all six ring for the next check
+  await clearRecent();
+  await page.mouse.move(s5a.x, s5a.y);
+  await page.mouse.down();
+  await page.mouse.move(s5b.x, s5b.y, { steps: 14 });
+  await page.mouse.up();
+  await page.waitForTimeout(100);
   // With "lifting mutes" off, the swept notes keep ringing in the engine
   const ringing = await page.evaluate(() => window.__guitar.engine.stringState.filter((s) => s.ringing).length);
   assert(ringing === 6, `all six strings should still ring after the sweep, got ${ringing}`);

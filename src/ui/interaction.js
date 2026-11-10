@@ -180,24 +180,34 @@ export class Player {
   moveFinger(pointerId, string, fret, speed) {
     const finger = this.state.fingers.get(pointerId);
     if (!finger) return;
-    const prevString = finger.string;
-    const prevBefore = this.state.soundingFret(prevString);
-    const ringingPrev = this.isRinging(prevString);
-    const changedString = prevString !== string;
-    this.state.moveFinger(pointerId, string, fret);
-    if (changedString) {
-      // The finger swept onto another string: the old one is left behind and
-      // the new one is picked (a sweep across all six strings is a strum).
-      this.afterFingerLeft(prevString, prevBefore, ringingPrev);
-      this.applyPitch(string, { glide: 0 });
-      if (this.state.options.tapToPlay) this.pluck(string, { velocity: clamp(0.45 + speed * 0.2, 0.45, 1), pickPosition: 0.15 });
+    if (finger.string !== string) {
+      // The finger swept onto another string. Pointer events can skip strings on
+      // a fast sweep, so walk through every string in between: each one is left
+      // behind in turn and the next one is picked (six in a row is a strum).
+      const dir = string > finger.string ? 1 : -1;
+      const velocity = clamp(0.45 + speed * 0.2, 0.45, 1);
+      const base = this.engine.now;
+      let i = 0;
+      for (let s = finger.string + dir; dir > 0 ? s <= string : s >= string; s += dir) {
+        const prev = this.state.fingers.get(pointerId);
+        const prevBefore = this.state.soundingFret(prev.string);
+        const ringingPrev = this.isRinging(prev.string);
+        this.state.moveFinger(pointerId, s, fret);
+        this.afterFingerLeft(prev.string, prevBefore, ringingPrev);
+        this.applyPitch(s, { glide: 0 });
+        if (this.state.options.tapToPlay) this.pluck(s, { velocity, pickPosition: 0.15, when: base + i * 0.004 });
+        i++;
+      }
       return;
     }
+    const before = this.state.soundingFret(string);
+    const ringing = this.isRinging(string);
+    this.state.moveFinger(pointerId, string, fret);
     const after = this.state.soundingFret(string);
-    if (after !== prevBefore) {
+    if (after !== before) {
       // Slide along the string
-      this.applyPitch(string, { glide: ringingPrev ? 0.045 : 0 });
-      if (ringingPrev) {
+      this.applyPitch(string, { glide: ringing ? 0.045 : 0 });
+      if (ringing) {
         this.engine.slideNoise(string, clamp(0.015 + speed * 0.01, 0.01, 0.05));
         const note = this.state.noteOn(string);
         if (note) {
@@ -292,7 +302,7 @@ export class Player {
     const dt = Math.max(1, now - rec.t);
     const dist = Math.hypot(g.x - rec.x, g.y - rec.y);
     const speed = dist / dt; // px per ms
-    const hit = this.canvas.hitTest(g.x, g.y);
+    const hit = this.stickyHit(e.pointerId, rec, g);
     if (rec.zone === 'none' && hit.zone !== 'none') {
       // A drag that started off the strings and reaches them starts playing.
       rec.zone = hit.zone;
@@ -318,6 +328,22 @@ export class Player {
     }
     rec.x = g.x; rec.y = g.y; rec.t = now; rec.speed = speed;
     if (e.pointerType === 'mouse') this.canvas.setHover(this.canvas.hitTest(g.x, g.y));
+  }
+
+  /**
+   * Hit test with hysteresis: a pointer already on a string must move clearly
+   * past the midpoint to the neighbouring string before it switches, so a
+   * finger resting near a boundary does not flip back and forth.
+   */
+  stickyHit(pointerId, rec, g) {
+    const hit = this.canvas.hitTest(g.x, g.y);
+    if (hit.zone === 'none') return hit;
+    const finger = this.state.fingers.get(pointerId);
+    const current = finger ? finger.string : (rec.zone === 'open' ? rec.string : undefined);
+    if (current === undefined || hit.string === current) return hit;
+    const L = this.canvas.layout;
+    if (Math.abs(g.y - L.stringY(current)) < L.spacing * 0.64) return { ...hit, string: current };
+    return hit;
   }
 
   /** In the open zone: play every string between the last string and the new one (sweep/strum). */
