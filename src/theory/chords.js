@@ -300,15 +300,16 @@ export function assignFingers(frets) {
       remaining = fretted.filter((x) => !(x.f === minF && x.s >= from && x.s <= to));
     }
   }
-  // Remaining notes: assign fingers in order of fret, then string (low to high).
+  // Remaining notes: one finger per fret above the lowest fret (index on the
+  // lowest fret, pinky at most three frets above it), in order of fret then string.
   remaining.sort((a, b) => a.f - b.f || a.s - b.s);
   let next = barre ? 2 : 1;
-  const byFret = new Map();
   for (const x of remaining) {
-    // Two strings at the same fret with no barre: separate fingers.
-    if (next > 4) return null;
-    fingers[x.s] = next++;
-    byFret.set(x.f, (byFret.get(x.f) || 0) + 1);
+    const natural = Math.min(4, x.f - minF + 1);
+    const finger = Math.max(next, natural);
+    if (finger > 4) return null;
+    fingers[x.s] = finger;
+    next = finger + 1;
   }
   const count = (barre ? 1 : 0) + remaining.length;
   if (count > 4) return null;
@@ -343,7 +344,9 @@ export function chordVoicings(rootPc, qualityId, openMidi, { maxResults = 4 } = 
     return true;
   });
   const valid = unique.filter((v) => validateVoicing(v, rootPc, qualityId, openMidi).length === 0);
-  if (valid.length < maxResults) {
+  // Hand-checked shapes are never padded with generated ones; the generator
+  // (whose fingerings are heuristic) only fills in where the library is thin.
+  if (valid.length < Math.min(2, maxResults)) {
     for (const v of generateVoicings(rootPc, qualityId, openMidi, { maxResults: maxResults * 2 })) {
       const key = v.frets.join(',');
       if (seen.has(key)) continue;
