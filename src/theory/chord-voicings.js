@@ -89,11 +89,11 @@ export const OPEN_VOICINGS = {
    * 3x0033 mutes the A string between sounding strings and would be the
    * first G5 card, so G5 is left to the 355xxx shape. */
   '4:5': [ // E5
-    { frets: [0, 2, 2, -1, -1, -1], fingers: [0, 1, 3, 0, 0, 0], name: 'E5' },
+    { frets: [0, 2, 2, -1, -1, -1], fingers: [0, 1, 1, 0, 0, 0], barre: { fret: 2, from: 1, to: 2 }, name: 'E5' },
     { frets: [0, 2, -1, -1, -1, -1], fingers: [0, 1, 0, 0, 0, 0], name: 'E5 (two strings)' },
   ],
   '9:5': [ // A5
-    { frets: [-1, 0, 2, 2, -1, -1], fingers: [0, 0, 1, 3, 0, 0], name: 'A5' },
+    { frets: [-1, 0, 2, 2, -1, -1], fingers: [0, 0, 1, 1, 0, 0], barre: { fret: 2, from: 2, to: 3 }, name: 'A5' },
   ],
   '2:5': [ // D5
     { frets: [-1, -1, 0, 2, 3, -1], fingers: [0, 0, 0, 1, 3, 0], name: 'D5' },
@@ -180,12 +180,15 @@ export const OPEN_VOICINGS = {
     { frets: [3, 0, 0, 0, 3, 3], fingers: [2, 0, 0, 0, 3, 4], name: 'Open Gsus2' },
   ],
   '0:sus2': [ // Csus2
-    { frets: [-1, 3, 0, 0, 1, 3], fingers: [0, 2, 0, 0, 1, 3], name: 'Open Csus2' },
+    { frets: [-1, 3, 0, 0, 1, 3], fingers: [0, 3, 0, 0, 1, 4], name: 'Open Csus2' },
   ],
   '5:sus2': [ // Fsus2
     { frets: [-1, -1, 3, 0, 1, 1], fingers: [0, 0, 3, 0, 1, 1], barre: { fret: 1, from: 4, to: 5 }, name: 'Open Fsus2' },
   ],
   /* -------------------------------------------------------------- sus4 */
+  '11:sus4': [ // Bsus4
+    { frets: [-1, 2, 4, 4, 0, 0], fingers: [0, 1, 3, 4, 0, 0], name: 'Open Bsus4' },
+  ],
   '9:sus4': [ // Asus4
     { frets: [-1, 0, 2, 2, 3, 0], fingers: [0, 0, 1, 2, 4, 0], name: 'Open Asus4' },
   ],
@@ -273,7 +276,7 @@ export const OPEN_VOICINGS = {
     { frets: [0, 1, 2, 0, -1, -1], fingers: [0, 1, 2, 0, 0, 0], name: 'Open Edim' },
   ],
   '2:dim': [ // Ddim
-    { frets: [-1, -1, 0, 1, 3, 1], fingers: [0, 0, 0, 1, 3, 2], name: 'Open Ddim' },
+    { frets: [-1, -1, 0, 1, 3, 1], fingers: [0, 0, 0, 1, 3, 1], barre: { fret: 1, from: 3, to: 5 }, name: 'Open Ddim' },
   ],
   /* -------------------------------------------------------------- dim7 */
   '2:dim7': [ // Ddim7
@@ -289,15 +292,18 @@ export const OPEN_VOICINGS = {
     { frets: [-1, 1, 2, 0, 2, 0], fingers: [0, 1, 2, 0, 3, 0], name: 'Open A#dim7' },
   ],
   /* -------------------------------------------------------------- m7b5 */
+  '9:m7b5': [ // Am7b5
+    { frets: [-1, 0, 1, 0, 1, 3], fingers: [0, 0, 1, 0, 2, 4], name: 'Open Am7b5' },
+  ],
   '2:m7b5': [ // Dm7b5
     { frets: [-1, -1, 0, 1, 1, 1], fingers: [0, 0, 0, 1, 1, 1], barre: { fret: 1, from: 3, to: 5 }, name: 'Open Dm7♭5' },
   ],
   /* -------------------------------------------------------------- aug */
   '0:aug': [ // Caug
-    { frets: [-1, 3, 2, 1, 1, 0], fingers: [0, 3, 2, 1, 1, 0], barre: { fret: 1, from: 3, to: 4 }, name: 'Open Caug' },
+    { frets: [-1, 3, 2, 1, 1, 0], fingers: [0, 4, 3, 1, 2, 0], name: 'Open Caug' },
   ],
   '4:aug': [ // Eaug
-    { frets: [0, 3, 2, 1, 1, 0], fingers: [0, 3, 2, 1, 1, 0], barre: { fret: 1, from: 3, to: 4 }, name: 'Open Eaug' },
+    { frets: [0, 3, 2, 1, 1, 0], fingers: [0, 4, 3, 1, 2, 0], name: 'Open Eaug' },
   ],
   '9:aug': [ // Aaug
     { frets: [-1, 0, 3, 2, 2, 1], fingers: [0, 0, 4, 3, 2, 1], name: 'Open Aaug' },
@@ -318,7 +324,8 @@ export const OPEN_VOICINGS = {
     { frets: [0, 2, 0, 1, 0, 2], fingers: [0, 2, 0, 1, 0, 3], name: 'Open E9' },
   ],
   '7:9': [ // G9
-    { frets: [3, 2, 0, 2, 0, 1], fingers: [4, 2, 0, 3, 0, 1], name: 'Open G9' },
+    { frets: [3, 0, 0, 2, 0, 1], fingers: [3, 0, 0, 2, 0, 1], name: 'Open G9' },
+    { frets: [3, 2, 0, 2, 0, 1], fingers: [4, 2, 0, 3, 0, 1], name: 'Open G9 (B on the A string)' },
   ],
   /* -------------------------------------------------------------- maj9 */
   '0:maj9': [ // Cmaj9
@@ -332,7 +339,7 @@ export const OPEN_VOICINGS = {
     { frets: [-1, 0, 2, 4, 2, 4], fingers: [0, 0, 1, 3, 2, 4], name: 'Open Amaj9' },
   ],
   '5:maj9': [ // Fmaj9  (Am7 x02010 over an F bass)
-    { frets: [1, 0, 2, 0, 1, 0], fingers: [1, 0, 3, 0, 2, 0], name: 'Open Fmaj9' },
+    { frets: [1, 0, 2, 0, 1, 0], fingers: ['T', 0, 2, 0, 1, 0], name: 'Open Fmaj9' },
   ],
   /* -------------------------------------------------------------- m9 */
   '4:m9': [ // Em9
@@ -341,7 +348,7 @@ export const OPEN_VOICINGS = {
   ],
   '9:m9': [ // Am9
     { frets: [-1, 0, 2, 4, 1, 3], fingers: [0, 0, 2, 4, 1, 3], name: 'Open Am9' },
-    { frets: [-1, 0, 5, 5, 0, 0], fingers: [0, 0, 1, 1, 0, 0], barre: { fret: 5, from: 2, to: 3 }, name: 'Am9 (open B and E)' },
+    { frets: [-1, 0, 5, 5, 0, 0], fingers: [0, 0, 1, 2, 0, 0], name: 'Am9 (open B and E)' },
   ],
   /* Cm9 x31333, Dm9 x53555 ... are the 'A-string root' shape; for B its D
    * string is open, which a closed shape cannot be. For A# both shapes land
@@ -424,7 +431,7 @@ export const MOVABLE_SHAPES = [
    * the open xx3011 moved up (F#sus2 xx4122, G#sus2 xx6344). */
   { quality: 'sus2', rootString: 1, frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 1, 3, 4, 1, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Asus2 shape' },
   { quality: 'sus2', rootString: 0, frets: [0, 2, 4, -1, -1, -1], fingers: [1, 2, 4, 0, 0, 0], name: 'E-string root (three strings)' },
-  { quality: 'sus2', rootString: 2, frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 1, 2, 3, 1], barre: { fret: 0, from: 2, to: 5 }, name: 'Dsus2 shape' },
+  { quality: 'sus2', rootString: 2, frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 1, 3, 4, 1], barre: { fret: 0, from: 2, to: 5 }, name: 'Dsus2 shape' },
   { quality: 'sus2', rootString: 2, frets: [-1, -1, 3, 0, 1, 1], fingers: [0, 0, 4, 1, 2, 3], name: 'Fsus2 shape' },
   { quality: 'sus2', rootString: 0, frets: [0, 2, 4, 4, 0, 0], fingers: [1, 2, 3, 4, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Esus2 shape' },
   /* -------------------------------------------------------------- sus4 */
@@ -471,7 +478,7 @@ export const MOVABLE_SHAPES = [
   { quality: '6', rootString: 0, frets: [0, -1, 2, 1, 2, -1], fingers: [1, 0, 3, 2, 4, 0], name: 'E-string root' },
   { quality: '6', rootString: 1, frets: [-1, 0, 2, 2, 2, 2], fingers: [0, 1, 3, 3, 3, 3], barre: { fret: 2, from: 2, to: 5 }, name: 'A6 shape' },
   { quality: '6', rootString: 1, frets: [-1, 0, -1, 2, 2, 2], fingers: [0, 1, 0, 2, 3, 4], name: 'A-string root (D muted)' },
-  { quality: '6', rootString: 2, frets: [-1, -1, 0, 2, 0, 2], fingers: [0, 0, 1, 2, 1, 3], barre: { fret: 0, from: 2, to: 4 }, name: 'D6 shape' },
+  { quality: '6', rootString: 2, frets: [-1, -1, 0, 2, 0, 2], fingers: [0, 0, 1, 3, 1, 4], barre: { fret: 0, from: 2, to: 4 }, name: 'D6 shape' },
   /* -------------------------------------------------------------- m6 */
   /* Each barre form is listed before the jazz grip that shares its frets. */
   { quality: 'm6', rootString: 0, frets: [0, 2, 2, 0, 2, 0], fingers: [1, 2, 3, 1, 4, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Em6 shape' },
@@ -481,6 +488,7 @@ export const MOVABLE_SHAPES = [
   { quality: 'm6', rootString: 2, frets: [-1, -1, 0, 2, 0, 1], fingers: [0, 0, 1, 3, 1, 2], barre: { fret: 0, from: 2, to: 4 }, name: 'Dm6 shape' },
   /* -------------------------------------------------------------- add9 */
   /* Cadd9 shape = the open x3203x closed (C#add9 x4314x, Dadd9 x5425x). */
+  { quality: 'add9', rootString: 2, frets: [-1, -1, 2, 1, 0, 2], fingers: [0, 0, 3, 2, 1, 4], name: 'Fadd9 shape' },
   { quality: 'add9', rootString: 0, frets: [0, 2, 2, 1, 0, 2], fingers: [1, 3, 3, 2, 1, 4], barre: [{ fret: 0, from: 0, to: 5 }, { fret: 2, from: 1, to: 2 }], name: 'Eadd9 shape' },
   { quality: 'add9', rootString: 1, frets: [-1, 3, 2, 0, 3, -1], fingers: [0, 3, 2, 1, 4, 0], name: 'Cadd9 shape' },
   { quality: 'add9', rootString: 1, frets: [-1, 0, 2, 4, 2, -1], fingers: [0, 1, 2, 4, 3, 0], name: 'A-string root' },

@@ -309,7 +309,7 @@ test('the curated library covers the standard chords with their conventional fin
   expect('9:sus2', [-1, 0, 2, 2, 0, 0]);
   expect('2:sus2', [-1, -1, 0, 2, 3, 0]);
   expect('7:sus2', [3, 0, 0, 0, 3, 3], [2, 0, 0, 0, 3, 4]);         // Gsus2
-  expect('0:sus2', [-1, 3, 0, 0, 1, 3], [0, 2, 0, 0, 1, 3]);        // Csus2
+  expect('0:sus2', [-1, 3, 0, 0, 1, 3], [0, 3, 0, 0, 1, 4]);        // Csus2
   const fsus2 = expect('5:sus2', [-1, -1, 3, 0, 1, 1], [0, 0, 3, 0, 1, 1]); // Fsus2
   assert.deepEqual(voicingBarres(fsus2), [{ fret: 1, from: 4, to: 5 }]);
   expectCurated(6, 'sus2', [-1, -1, 4, 1, 2, 2]);                    // F#sus2 (Fsus2 shape)
@@ -336,7 +336,7 @@ test('the curated library covers the standard chords with their conventional fin
   expect('4:6', [0, 2, 2, 1, 2, 0]);                                 // E6
   expect('7:6', [3, 2, 0, 0, 0, 0]);                                 // G6
   // Diminished / half-diminished / augmented
-  expect('2:dim', [-1, -1, 0, 1, 3, 1], [0, 0, 0, 1, 3, 2]);        // Ddim
+  expect('2:dim', [-1, -1, 0, 1, 3, 1], [0, 0, 0, 1, 3, 1]);        // Ddim
   expect('2:dim7', [-1, -1, 0, 1, 0, 1]);                            // Ddim7
   expect('10:dim7', [-1, 1, 2, 0, 2, 0], [0, 1, 2, 0, 3, 0]);       // A#dim7
   expectCurated(11, 'dim7', [-1, 2, 3, 1, 3, -1], [0, 2, 3, 1, 4, 0]); // Bdim7 (A-string root)
@@ -346,8 +346,8 @@ test('the curated library covers the standard chords with their conventional fin
   expectCurated(3, 'dim7', [-1, -1, 1, 2, 1, 2]);                    // D#dim7 (D-string root)
   const dm7b5 = expect('2:m7b5', [-1, -1, 0, 1, 1, 1], [0, 0, 0, 1, 1, 1]); // Dm7b5
   assert.deepEqual(voicingBarres(dm7b5), [{ fret: 1, from: 3, to: 5 }]);
-  expect('0:aug', [-1, 3, 2, 1, 1, 0], [0, 3, 2, 1, 1, 0]);         // Caug
-  expect('4:aug', [0, 3, 2, 1, 1, 0]);                               // Eaug
+  expect('0:aug', [-1, 3, 2, 1, 1, 0], [0, 4, 3, 1, 2, 0]);         // Caug
+  expect('4:aug', [0, 3, 2, 1, 1, 0], [0, 4, 3, 1, 2, 0]);                               // Eaug
   expect('9:aug', [-1, 0, 3, 2, 2, 1], [0, 0, 4, 3, 2, 1]);         // Aaug
   expect('2:aug', [-1, -1, 0, 3, 3, 2]);                             // Daug
   expectCurated(5, 'aug', [-1, -1, 3, 2, 2, 1], [0, 0, 4, 2, 3, 1]); // Faug (xx3221)
@@ -357,8 +357,8 @@ test('the curated library covers the standard chords with their conventional fin
   expectCurated(8, 'aug', [4, 3, 2, 1, 1, -1], [4, 3, 2, 1, 1, 0]); // G#aug (Gaug shape)
   expectCurated(5, '6', [-1, -1, 3, 2, 3, 1], [0, 0, 3, 2, 4, 1]);  // F6 (xx3231)
   // Power chords: open forms in the library, fretted forms from the shapes.
-  expect('4:5', [0, 2, 2, -1, -1, -1]);                              // E5
-  expect('9:5', [-1, 0, 2, 2, -1, -1]);                              // A5
+  expect('4:5', [0, 2, 2, -1, -1, -1], [0, 1, 1, 0, 0, 0]);                              // E5
+  expect('9:5', [-1, 0, 2, 2, -1, -1], [0, 0, 1, 1, 0, 0]);                              // A5
   expect('2:5', [-1, -1, 0, 2, 3, -1]);                              // D5
   expectCurated(7, '5', [3, 5, 5, -1, -1, -1], [1, 3, 4, 0, 0, 0]);  // G5
   expectCurated(0, '5', [-1, 3, 5, 5, -1, -1], [0, 1, 3, 4, 0, 0]);  // C5
@@ -377,11 +377,11 @@ test('the curated library covers the standard chords with their conventional fin
   expectCurated(5, '9', [1, 3, 1, 2, 1, 3], [1, 3, 1, 2, 1, 4]);    // F9 (E9 shape)
   const bb9 = expectCurated(10, '9', [6, 5, 6, 5, 6, -1], [2, 1, 3, 1, 4, 0]); // A#9 (E-string root)
   assert.deepEqual(voicingBarres(bb9), [{ fret: 5, from: 1, to: 3 }]);
-  expect('7:9', [3, 2, 0, 2, 0, 1]);                                 // G9
+  expect('7:9', [3, 0, 0, 2, 0, 1], [3, 0, 0, 2, 0, 1]);                                 // G9
   expect('0:maj9', [-1, 3, 2, 4, 3, 0]);                             // Cmaj9
   expect('4:maj9', [0, 2, 1, 1, 0, 2], [0, 3, 1, 2, 0, 4]);         // Emaj9
   expect('9:maj9', [-1, 0, 2, 4, 2, 4]);                             // Amaj9
-  expect('5:maj9', [1, 0, 2, 0, 1, 0]);                              // Fmaj9
+  expect('5:maj9', [1, 0, 2, 0, 1, 0], ['T', 0, 2, 0, 1, 0]);                              // Fmaj9
   expectCurated(0, 'maj9', [-1, 3, 2, 4, 3, -1], [0, 2, 1, 4, 3, 0]); // Cmaj9 (A-string root)
   expectCurated(11, 'maj9', [-1, 2, 1, 3, 2, -1]);                   // Bmaj9
   expectCurated(11, 'maj9', [-1, 2, 1, 3, 2, 2], [0, 2, 1, 4, 3, 3]); // Bmaj9 (five strings)
