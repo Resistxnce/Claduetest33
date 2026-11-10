@@ -398,8 +398,8 @@ export class GuitarCanvas {
       ctx.drawImage(this.staticLayer, this.scroll * ss, 0, this.viewLen * ss, L.H * ss, 0, 0, this.canvas.width, this.canvas.height);
     }
     this.applyTransform(ctx, this.dpr, this.scroll);
-    this.drawOverlays(ctx);
     this.drawStrings(ctx, now);
+    this.drawOverlays(ctx);   // labels and markers sit on top of the strings so they stay readable
     this.drawOpenLabels(ctx);
     this.drawChordDots(ctx);
     this.drawRinging(ctx, now);
@@ -623,6 +623,22 @@ export class GuitarCanvas {
     const flats = st.options.flats;
     const drawn = new Set();
     const key = (s, f) => s * 100 + f;
+    // Capo
+    if (st.capo > 0 && st.capo <= L.N) {
+      const x = L.fretX(st.capo) - L.cellWidth(st.capo) * 0.3;
+      const w = Math.max(8, Math.min(L.cellWidth(st.capo) * 0.34, 18));
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6;
+      const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+      g.addColorStop(0, '#1f2328'); g.addColorStop(0.5, '#4b5159'); g.addColorStop(1, '#1f2328');
+      ctx.fillStyle = g;
+      roundRect(ctx, x - w / 2, L.fbTop - 3, w, L.fbH + 6, 4);
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = '#d14b3a';
+      roundRect(ctx, x - w / 2 + 1.5, L.fbTop + 2, w - 3, L.fbH - 4, 3);
+      ctx.fill();
+    }
     // Scale positions
     if (st.scale) {
       for (const p of scalePositions(st.fretboard, st.scale.scale, st.scale.rootPc)) {
@@ -663,22 +679,6 @@ export class GuitarCanvas {
           this.text(ctx, c.x, c.y, name, { font: `700 ${size}px system-ui, sans-serif`, color: 'rgba(245,240,228,0.95)' });
         }
       }
-    }
-    // Capo
-    if (st.capo > 0 && st.capo <= L.N) {
-      const x = L.fretX(st.capo) - L.cellWidth(st.capo) * 0.3;
-      const w = Math.max(8, Math.min(L.cellWidth(st.capo) * 0.34, 18));
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6;
-      const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
-      g.addColorStop(0, '#1f2328'); g.addColorStop(0.5, '#4b5159'); g.addColorStop(1, '#1f2328');
-      ctx.fillStyle = g;
-      roundRect(ctx, x - w / 2, L.fbTop - 3, w, L.fbH + 6, 4);
-      ctx.fill();
-      ctx.restore();
-      ctx.fillStyle = '#d14b3a';
-      roundRect(ctx, x - w / 2 + 1.5, L.fbTop + 2, w - 3, L.fbH - 4, 3);
-      ctx.fill();
     }
   }
 

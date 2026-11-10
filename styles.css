@@ -162,7 +162,7 @@ main { display: flex; flex-direction: column; gap: 16px; padding: 16px 22px 40px
 .knob svg { display: block; }
 .knob-track { fill: none; stroke: #2a2f3a; stroke-width: 5; stroke-linecap: round; }
 .knob-fill { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; }
-.knob-cap { fill: url(#knobGradient); fill: #2b2f38; stroke: #434a58; stroke-width: 1.5; }
+.knob-cap { fill: #2b2f38; stroke: #434a58; stroke-width: 1.5; }
 .knob-pointer { stroke: #f3f4f6; stroke-width: 3; stroke-linecap: round; }
 .knob-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
 .knob-value { font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
