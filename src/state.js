@@ -16,6 +16,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   tapToPlay: true,     // pressing a fret also picks the string
   releaseMutes: false, // lifting the last finger mutes the string (off: tapped notes ring out)
   palmMute: false,
+  dragAcross: 'strum',  // dragging a held finger across the strings: 'strum' them or 'bend' the string
   pickPosition: 0.14,  // where the pick hits: fraction of the scale length from the bridge (0.05 bright … 0.30 warm)
   pickStrength: 0.8,   // base picking intensity for taps (0.2 soft … 1 hard)
   view: 'auto',        // 'auto' | 'fit' | 'zoom' — how the 24-fret neck fills the screen
@@ -132,12 +133,27 @@ export class AppState extends EventTarget {
     return this.capo;
   }
 
-  /** Describe the note currently selected on a string (null when muted). */
+  /** Bend (in semitones) applied by the finger that sets the string's pitch; 0 when not bent. */
+  bendOn(string) {
+    const fret = this.fingerFret(string);
+    if (fret === null) return 0;
+    let bend = 0;
+    for (const f of this.fingers.values()) if (f.string === string && f.fret === fret && f.bend > bend) bend = f.bend;
+    return bend;
+  }
+
+  /**
+   * Describe the note currently selected on a string (null when muted).
+   * `frequency` is the equal-tempered pitch of the fretted note; `playFrequency`
+   * additionally includes any string bend.
+   */
   noteOn(string) {
     const fret = this.soundingFret(string);
     if (fret < 0) return null;
     const midi = this.fretboard.midiAt(string, fret);
-    return { string, fret, lengthFraction: vibratingLengthFraction(fret), ...describeNote(midi, { flats: this.options.flats }) };
+    const note = describeNote(midi, { flats: this.options.flats });
+    const bend = this.bendOn(string);
+    return { string, fret, lengthFraction: vibratingLengthFraction(fret), ...note, bend, playFrequency: note.frequency * Math.pow(2, bend / 12) };
   }
 
   pressFinger(pointerId, string, fret) {
@@ -150,9 +166,18 @@ export class AppState extends EventTarget {
     const previous = this.fingers.get(pointerId);
     if (!previous) return this.pressFinger(pointerId, string, fret);
     if (previous.string === string && previous.fret === fret) return undefined;
-    this.fingers.set(pointerId, { string, fret });
+    this.fingers.set(pointerId, previous.string === string ? { ...previous, fret } : { string, fret });
     this.emit('finger', { pointerId, string, fret, previous, action: 'move' });
     return undefined;
+  }
+
+  /** Bend the string under a finger: `semitones` of pitch, `offset` px of sideways displacement (for drawing). */
+  setFingerBend(pointerId, semitones, offset) {
+    const finger = this.fingers.get(pointerId);
+    if (!finger) return;
+    finger.bend = Math.max(0, semitones);
+    finger.offset = offset;
+    this.emit('finger', { pointerId, string: finger.string, fret: finger.fret, previous: finger, action: 'bend' });
   }
 
   liftFinger(pointerId) {

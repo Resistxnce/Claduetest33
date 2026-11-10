@@ -139,6 +139,7 @@ export class ControlPanel {
         opt('tapToPlay', 'Tapping a string plays it'),
         opt('releaseMutes', 'Lifting a finger mutes the string'),
         opt('palmMute', 'Palm mute'),
+        opt('dragAcross', 'Dragging across strings', { type: 'select', values: [['strum', 'Strums them'], ['bend', 'Bends the string (vibrato)']] }),
       ]),
       el('div', { class: 'options column' }, [
         opt('pickStrength', 'Pick strength', { type: 'range', values: [0.2, 1, 0.01, 'soft', 'hard'] }),

@@ -12,6 +12,8 @@
  *  - Lifting a finger lets the note ring out (default) or mutes it when
  *    "Lifting a finger mutes" is on; lifting onto a lower finger is a pull-off.
  *  - Pressing a higher fret while the string rings is a hammer-on.
+ *  - With "dragging across strings: bends", a held finger stays on its string
+ *    and sideways movement bends the pitch (wiggle for vibrato).
  */
 import { STRING_COUNT } from '../theory/fretboard.js';
 
@@ -97,7 +99,7 @@ export class Player {
       this.canvas.stopVisual(string);
       return;
     }
-    this.engine.setStringPitch(string, note.frequency, { glide, lengthFraction: note.lengthFraction });
+    this.engine.setStringPitch(string, note.playFrequency, { glide, lengthFraction: note.lengthFraction });
   }
 
   isRinging(string) {
@@ -124,7 +126,7 @@ export class Player {
       this.engine.pluck(string, { velocity: velocity * 0.55, damping: 0.96, pickPosition, when });
       this.state.setRinging(string, null);
     } else {
-      this.engine.pluck(string, { velocity, pickPosition, frequency: note.frequency, lengthFraction: note.lengthFraction, when });
+      this.engine.pluck(string, { velocity, pickPosition, frequency: note.playFrequency, lengthFraction: note.lengthFraction, when });
       this.state.notePlayed(note, velocity);
     }
     if (visualDelayMs > 0) setTimeout(showVisual, visualDelayMs); else showVisual();
@@ -182,7 +184,7 @@ export class Player {
       if (ringing && after > before && !this.state.options.tapToPlay) {
         const note = this.state.noteOn(string);
         if (note) {
-          this.engine.pluck(string, { velocity: 0.3, pickPosition: 0.2, frequency: note.frequency, lengthFraction: note.lengthFraction });
+          this.engine.pluck(string, { velocity: 0.3, pickPosition: 0.2, frequency: note.playFrequency, lengthFraction: note.lengthFraction });
           this.state.setRinging(string, note);
           this.canvas.setRingPosition(string, note.fret, note.name);
         }
@@ -234,14 +236,40 @@ export class Player {
     }
   }
 
+  /**
+   * Bend mode: the finger stays on its string. Movement along the string still
+   * slides; movement across it bends the pitch up — two semitones per string
+   * spacing, after a small dead zone so ordinary taps stay in tune.
+   */
+  bendFinger(pointerId, rec, g, speed) {
+    const finger = this.state.fingers.get(pointerId);
+    const L = this.canvas.layout;
+    const along = this.canvas.hitTest(g.x, L.stringY(finger.string));
+    if (along.zone === 'fretboard' && along.fret !== finger.fret) this.moveFinger(pointerId, finger.string, along.fret, speed);
+    const dy = g.y - rec.downY;
+    const dead = L.spacing * 0.15;
+    const semitones = clamp(((Math.abs(dy) - dead) / L.spacing) * 2, 0, 3);
+    const offset = clamp(dy, -L.spacing * 1.65, L.spacing * 1.65);
+    const current = this.state.fingers.get(pointerId);
+    if (Math.abs((current.bend || 0) - semitones) < 0.004 && current.offset === offset) return;
+    this.state.setFingerBend(pointerId, semitones, Math.abs(dy) > dead ? offset : 0);
+    this.applyPitch(finger.string, { glide: 0.012 });
+  }
+
   liftFinger(pointerId) {
     const finger = this.state.fingers.get(pointerId);
     if (!finger) return;
     const string = finger.string;
     const before = this.state.soundingFret(string);
     const ringing = this.isRinging(string);
+    const wasBent = (finger.bend || 0) > 0;
     this.state.liftFinger(pointerId);
     this.afterFingerLeft(string, before, ringing);
+    // A bent string that keeps ringing springs back to the fretted pitch.
+    const ring = this.state.ringing[string];
+    if (wasBent && ring && this.isRinging(string) && this.state.fingerFret(string) === null) {
+      this.engine.setStringPitch(string, ring.frequency, { glide: 0.05, lengthFraction: ring.lengthFraction });
+    }
   }
 
   /** Decide what the string does once a finger has left it. */
@@ -261,7 +289,7 @@ export class Player {
       if (ringing) {
         const note = this.state.noteOn(string);
         if (note) {
-          this.engine.pluck(string, { velocity: 0.22, pickPosition: 0.25, frequency: note.frequency, lengthFraction: note.lengthFraction });
+          this.engine.pluck(string, { velocity: 0.22, pickPosition: 0.25, frequency: note.playFrequency, lengthFraction: note.lengthFraction });
           this.state.setRinging(string, note);
           this.canvas.setRingPosition(string, note.fret, note.name);
         }
@@ -290,7 +318,7 @@ export class Player {
     const g = this.canvas.toGuitar(e.clientX, e.clientY);
     const hit = this.canvas.hitTest(g.x, g.y);
     const now = performance.now();
-    const rec = { zone: hit.zone, x: g.x, y: g.y, t: now, startY: g.y, hit, speed: 0 };
+    const rec = { zone: hit.zone, x: g.x, y: g.y, t: now, downY: g.y, hit, speed: 0 };
     this.pointers.set(e.pointerId, rec);
     try { this.canvas.canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     switch (hit.zone) {
@@ -324,6 +352,8 @@ export class Player {
       rec.zone = hit.zone;
       if (hit.zone === 'fretboard') this.pressFinger(e.pointerId, hit.string, hit.fret);
       else { rec.string = hit.string; this.pluck(hit.string, { velocity: this.sweepVelocity(speed) }); }
+    } else if (rec.zone === 'fretboard' && this.state.options.dragAcross === 'bend' && this.state.fingers.has(e.pointerId)) {
+      this.bendFinger(e.pointerId, rec, g, speed);
     } else if (rec.zone === 'fretboard') {
       if (hit.zone === 'fretboard') this.moveFinger(e.pointerId, hit.string, hit.fret, speed);
       else if (hit.zone === 'open') {

@@ -39,6 +39,9 @@ Open `index.html` through any static server (modules need http://, not file://).
 - Tap a string to play it, drag along a string to slide, add or lift fingers
   for hammer-ons and pull-offs. Notes ring out when you lift (or mute, if you
   switch on fret-hand muting).
+- Optional bend mode: pull a held note sideways to bend its pitch (two
+  semitones per string spacing) and wiggle for vibrato; the string is drawn
+  pulled along with your finger.
 - Sweep across the strings to strum — on the fretboard or over the open
   strings. Sweep speed sets the picking intensity; "Pick strength" and
   "Pick position" (bridge = bright, neck = warm) shape every pluck, and touch

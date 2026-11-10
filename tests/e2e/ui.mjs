@@ -147,6 +147,26 @@ try {
   names = await recentNames();
   console.log('Wobble on D string fret 9:', names.join(' '));
   assert(names.join(' ') === 'B3', `wobbling near a string boundary must not retrigger, got ${names.join(' ')}`);
+  // Bend mode: dragging sideways bends the held string instead of strumming
+  await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'bend'));
+  await clearRecent();
+  const bendPos = await screenPos(2, 7); // D string, 7th fret = A3 (220 Hz)
+  await page.mouse.move(bendPos.x, bendPos.y);
+  await page.mouse.down();
+  await page.waitForTimeout(40);
+  await page.mouse.move(bendPos.x, bendPos.y - spacingPx * 1.15, { steps: 8 });
+  await page.waitForTimeout(40);
+  const bent = await page.evaluate(() => ({ fingers: [...window.__guitar.state.fingers.values()].map((f) => ({ string: f.string, fret: f.fret, bend: f.bend })), freq: window.__guitar.engine.stringState[2].frequency, played: window.__guitar.state.recent.map((n) => n.name) }));
+  console.log('Bend:', JSON.stringify(bent));
+  assert(bent.fingers.length === 1 && bent.fingers[0].string === 2 && bent.fingers[0].fret === 7, 'bending keeps the finger on its string and fret');
+  assert(Math.abs(bent.fingers[0].bend - 2) < 0.05, `1.15 spacings of pull should bend two semitones, got ${bent.fingers[0].bend}`);
+  assert(Math.abs(bent.freq - 220 * Math.pow(2, 2 / 12)) < 0.8, `bent pitch should be B3 (246.94 Hz), got ${bent.freq}`);
+  assert(bent.played.join(' ') === 'A3', `a bend must not retrigger or pick other strings, got ${bent.played.join(' ')}`);
+  await page.mouse.up();
+  await page.waitForTimeout(40);
+  const unbent = await page.evaluate(() => window.__guitar.engine.stringState[2].frequency);
+  assert(Math.abs(unbent - 220) < 0.01, `released bend should return to A3 (220 Hz), got ${unbent}`);
+  await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'strum'));
   // Sweep the open strings again so all six ring for the next check
   await clearRecent();
   await page.mouse.move(s5a.x, s5a.y);

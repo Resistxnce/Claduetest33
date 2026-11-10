@@ -696,12 +696,18 @@ export class GuitarCanvas {
       const v = this.vib[i];
       const y = L.stringY(i);
       const xVib0 = sounding > 0 ? L.fretX(Math.min(sounding, L.N)) + 1 : L.nutX;
+      // A bent string is pulled sideways at the fret: straight from the nut to the
+      // bend point, then straight on to the bridge.
+      const bendOff = sounding > 0 ? this.bendOffset(i) : 0;
+      const lineY = (x) => (bendOff ? y + bendOff * (x <= xVib0 ? (x - L.nutX) / Math.max(1, xVib0 - L.nutX) : (L.bridgeX - x) / (L.bridgeX - xVib0)) : y);
       // Shadow on the wood
       ctx.strokeStyle = 'rgba(0,0,0,0.5)';
       ctx.lineWidth = width + 0.6;
       ctx.lineCap = 'butt';
+      ctx.lineJoin = 'round';
       ctx.setLineDash([]);
-      ctx.beginPath(); ctx.moveTo(-6, y + width * 0.7 + 1.5); ctx.lineTo(xEnd, y + width * 0.7 + 1.5); ctx.stroke();
+      const sh = width * 0.7 + 1.5;
+      ctx.beginPath(); ctx.moveTo(-6, y + sh); ctx.lineTo(L.nutX, y + sh); ctx.lineTo(xVib0, lineY(xVib0) + sh); ctx.lineTo(xEnd, lineY(xEnd) + sh); ctx.stroke();
       // Pale brass string with a highlight, like the reference fretboard
       const grad = ctx.createLinearGradient(0, y - width / 2, 0, y + width / 2);
       grad.addColorStop(0, '#d9d38f');
@@ -710,8 +716,8 @@ export class GuitarCanvas {
       grad.addColorStop(1, '#a39a52');
       ctx.strokeStyle = muted ? 'rgba(150,150,140,0.55)' : grad;
       ctx.lineWidth = width;
-      // Static part: open zone → fretted point
-      ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(xVib0, y); ctx.stroke();
+      // Static part: open zone → nut → fretted point
+      ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(L.nutX, y); ctx.lineTo(xVib0, lineY(xVib0)); ctx.stroke();
       // Vibrating part: fretted point → bridge (the bridge lies beyond the visible neck)
       const span = L.bridgeX - xVib0;
       const drawVib = (phaseOffset, alpha) => {
@@ -729,7 +735,7 @@ export class GuitarCanvas {
             d = amp * Math.sin(Math.PI * u) * Math.sin(2 * Math.PI * v.freq * tt + v.phase + phaseOffset)
               + amp * 0.25 * Math.sin(2 * Math.PI * u) * Math.sin(2 * Math.PI * v.freq * 2.1 * tt + v.phase * 1.7);
           }
-          if (k === 0) ctx.moveTo(x, y + d); else ctx.lineTo(x, y + d);
+          if (k === 0) ctx.moveTo(x, lineY(x) + d); else ctx.lineTo(x, lineY(x) + d);
         }
         ctx.stroke();
         ctx.restore();
@@ -743,7 +749,9 @@ export class GuitarCanvas {
         ctx.strokeStyle = '#6f6730';
         ctx.lineWidth = width * 0.7;
         ctx.setLineDash([1, 1.6]);
-        ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(amp > 0.2 ? xVib0 : xEnd, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(L.nutX, y); ctx.lineTo(xVib0, lineY(xVib0));
+        if (amp <= 0.2) ctx.lineTo(xEnd, lineY(xEnd));
+        ctx.stroke();
         ctx.restore();
       }
       // Pluck flash
@@ -755,10 +763,19 @@ export class GuitarCanvas {
         ctx.strokeStyle = '#fff7c2';
         ctx.lineWidth = width + 2.5;
         ctx.shadowColor = '#ffe680'; ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.moveTo(xVib0, y); ctx.lineTo(xEnd, y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xVib0, lineY(xVib0)); ctx.lineTo(xEnd, lineY(xEnd)); ctx.stroke();
         ctx.restore();
       }
     }
+  }
+
+  /** Sideways displacement (px) of a string at its fretted point when a finger bends it. */
+  bendOffset(string) {
+    const fret = this.state.fingerFret(string);
+    if (fret === null) return 0;
+    let off = 0;
+    for (const f of this.state.fingers.values()) if (f.string === string && f.fret === fret && Math.abs(f.offset || 0) > Math.abs(off)) off = f.offset;
+    return off;
   }
 
   /** Open-string note letters at the outer edge of the open zone. */
@@ -852,11 +869,12 @@ export class GuitarCanvas {
     for (const [, f] of st.fingers) {
       if (f.fret > L.N) continue;
       const c = L.positionCenter(f.string, f.fret);
+      const y = c.y + (f.offset || 0); // a bending finger drags its dot (and the string) sideways
       const r = this.dotRadius(f.fret, 0.44);
-      glossyDot(ctx, c.x, c.y, r, DOT_BLUE);
+      glossyDot(ctx, c.x, y, r, DOT_BLUE);
       if (showName) {
         const note = st.fretboard.noteAt(f.string, Math.max(f.fret, st.capo), { flats: st.options.flats });
-        this.text(ctx, c.x, c.y, note.name, { font: `800 ${Math.max(8, r * 0.72)}px system-ui, sans-serif`, color: '#ffffff' });
+        this.text(ctx, c.x, y, note.name, { font: `800 ${Math.max(8, r * 0.72)}px system-ui, sans-serif`, color: '#ffffff' });
       }
     }
   }
