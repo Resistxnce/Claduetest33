@@ -59,6 +59,12 @@ try {
   assert(at(released, 1.05) < at(ring, 1.05) * 0.1, `released note should be muted: ${at(released, 1.05)} vs ${at(ring, 1.05)}`);
   assert(released.rmsLate < ring.rmsLate * 0.1, 'released note should stay quiet');
   // Velocity dynamics
+  // The overdrive preset is touch sensitive: a soft pick is clearly quieter than a hard one
+  const odSoft = await page.evaluate((o) => window.renderNote(o), { preset: 'overdrive', frequency: 220, string: 2, velocity: 0.3, duration: 1.0 });
+  const odHard = await page.evaluate((o) => window.renderNote(o), { preset: 'overdrive', frequency: 220, string: 2, velocity: 0.8, duration: 1.0 });
+  const odDynamics = 20 * Math.log10(odHard.rmsEarly / odSoft.rmsEarly);
+  console.log(`Overdrive dynamics: ${odDynamics.toFixed(1)} dB between soft and hard picking`);
+  assert(odDynamics > 2.3, `overdrive should respond to picking strength, got ${odDynamics.toFixed(1)} dB`);
   const soft = await page.evaluate((o) => window.renderNote(o), { frequency: 196, string: 3, velocity: 0.2, duration: 1.0 });
   const hard = await page.evaluate((o) => window.renderNote(o), { frequency: 196, string: 3, velocity: 1.0, duration: 1.0 });
   console.log(`velocity: soft peak ${soft.peak.toFixed(3)} hard peak ${hard.peak.toFixed(3)}`);

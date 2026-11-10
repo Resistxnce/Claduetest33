@@ -65,6 +65,9 @@ export const DELAY_TIMES = Object.freeze([
   { id: 'slap', name: 'Slapback (110 ms)', seconds: 0.11 },
 ]);
 
+/** A string moving less than this (peak of its wave at the bridge; a firm pluck is about 0.35) is no longer heard. */
+const AUDIBLE_LEVEL = 0.0025;
+
 /** Block size of the ScriptProcessor fallback (frames). */
 const SCRIPT_BUFFER_SIZE = 512;
 
@@ -157,6 +160,10 @@ export class GuitarAudioEngine extends EventTarget {
     this.stringState = Array.from({ length: STRING_COUNT }, (_, i) => ({ frequency: defaults[i], lengthFraction: 1, ringing: false, lastPluck: 0 }));
     this.moduleUrl = new URL('./string-processor.js', import.meta.url);
     this.pending = new Map();
+    /** Latest per-string levels reported by the worklet (the fallback backend reads its bank directly). */
+    this.stringLevels = new Float32Array(STRING_COUNT);
+    this.levelsSeen = false;
+    this.oversampleTimer = 0;
     this.pingId = 0;
   }
 
@@ -289,6 +296,8 @@ export class GuitarAudioEngine extends EventTarget {
     this.shaper.oversample = 'none'; // switched to 4x only when the amp is driven hard (see applyDrive)
     this.shaper.curve = makeDistortionCurve(0);
     this.postGain = ctx.createGain();
+    // Closed for a few milliseconds while the shaper's oversampling is switched (see applyDrive).
+    this.driveGate = ctx.createGain();
     // Asymmetric clipping leaves a DC component behind; remove it.
     this.postHighpass = ctx.createBiquadFilter();
     this.postHighpass.type = 'highpass';
@@ -333,6 +342,7 @@ export class GuitarAudioEngine extends EventTarget {
     for (const f of this.bodyFilters) node = node.connect(f);
     node = node.connect(this.preGain);
     node = node.connect(this.shaper);
+    node = node.connect(this.driveGate);
     node = node.connect(this.postGain);
     node = node.connect(this.postHighpass);
     node = node.connect(this.toneFilter);
@@ -471,9 +481,28 @@ export class GuitarAudioEngine extends EventTarget {
    * for clean high notes.
    */
   applyDrive() {
-    const heavy = this.params.distortion > 0.25 || this.params.gain > 0.4;
+    const heavy = this.params.distortion > 0.12 || this.params.gain > 0.18;
     const mode = heavy ? '4x' : 'none';
-    if (this.shaper.oversample !== mode) this.shaper.oversample = mode;
+    this.oversampleWanted = mode;
+    if (this.shaper.oversample === mode || this.oversampleTimer) return;
+    const ctx = this.ctx;
+    // Switching the oversampling of a node that is passing audio drops about 4 ms of signal: a
+    // tick on a ringing note. Offline renders and a silent amp switch at once; otherwise the
+    // stage dips smoothly for a few milliseconds around the switch.
+    if (typeof ctx.startRendering === 'function' || ctx.state !== 'running' || this.getLevel() < 1e-4) { this.shaper.oversample = mode; return; }
+    const gate = this.driveGate.gain;
+    const t = ctx.currentTime;
+    gate.cancelScheduledValues(t);
+    gate.setValueAtTime(gate.value, t);
+    gate.linearRampToValueAtTime(0, t + 0.006);
+    this.oversampleTimer = setTimeout(() => {
+      this.oversampleTimer = 0;
+      this.shaper.oversample = this.oversampleWanted;
+      const t2 = ctx.currentTime;
+      gate.cancelScheduledValues(t2);
+      gate.setValueAtTime(0, t2 + 0.008);
+      gate.linearRampToValueAtTime(1, t2 + 0.022);
+    }, 14);
   }
 
   setDelayTime(id) {
@@ -610,7 +639,15 @@ export class GuitarAudioEngine extends EventTarget {
    */
   isAudible(stringIdx) {
     const st = this.stringState[stringIdx];
-    return st.ringing && this.now - st.lastPluck < STRING_T60[stringIdx] * 0.85;
+    if (!st.ringing) return false;
+    const since = this.now - st.lastPluck;
+    if (since > STRING_T60[stringIdx] * 0.85) return false;
+    // The string model reports how strongly each string is still moving, so a palm-muted
+    // or very high note stops counting as soon as it has really died away. The report lags
+    // the pluck a little, and is not available at all until the model has spoken once.
+    if (since < 0.3) return true;
+    const levels = this.backend === 'script' && this.bank ? this.bank.levels : (this.levelsSeen ? this.stringLevels : null);
+    return levels ? levels[stringIdx] > AUDIBLE_LEVEL : true;
   }
 
   /**
@@ -631,6 +668,11 @@ export class GuitarAudioEngine extends EventTarget {
   }
 
   onStringMessage(msg) {
+    if (msg && msg.type === 'levels' && msg.levels) {
+      for (let i = 0; i < STRING_COUNT; i++) this.stringLevels[i] = Number(msg.levels[i]) || 0;
+      this.levelsSeen = true;
+      return;
+    }
     if (msg && msg.type === 'pong') {
       const resolve = this.pending.get(msg.id);
       if (resolve) { this.pending.delete(msg.id); resolve(); }

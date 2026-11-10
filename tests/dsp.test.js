@@ -218,3 +218,20 @@ test('garbage damp and absurd config values are ignored or clamped', () => {
   for (const v of out) { assert.ok(Number.isFinite(v)); peak = Math.max(peak, Math.abs(v)); }
   assert.ok(peak < 8, `clamped config keeps the output bounded (${peak})`);
 });
+
+test('per-string level follows the sound: up with a pluck, gone after a palm mute or a mute', () => {
+  const bank = makeBank();
+  bank.enqueue({ type: 'pluck', string: 5, velocity: 0.8, pickPosition: 0.14, damping: 0, frequency: 329.63, lengthFraction: 1 }, 0);
+  bank.enqueue({ type: 'pluck', string: 0, velocity: 0.8, pickPosition: 0.14, damping: 0.62, frequency: 82.41, lengthFraction: 1 }, 0); // palm-muted
+  render(bank, 0.05);
+  assert.ok(bank.levels[5] > 0.2 && bank.levels[0] > 0.1, `both strings move right after the pluck (${bank.levels[5]}, ${bank.levels[0]})`);
+  assert.ok(bank.levels[2] < 0.01, 'an unplayed string barely moves');
+  // (the meter works per audio block, so advance in real block sizes)
+  const advance = (seconds, from) => { const block = new Float32Array(128); for (let t = 0; t < seconds; t += 128 / bank.fs) bank.process(block, from + t); };
+  advance(1.0, 0.05);
+  assert.ok(bank.levels[5] > 0.01, `the open high E still rings after a second (${bank.levels[5]})`);
+  assert.ok(bank.levels[0] < 0.0025, `the palm-muted note has died away (${bank.levels[0]})`);
+  bank.enqueue({ type: 'damp', string: 5, amount: 1 }, 1.05);
+  advance(0.5, 1.05);
+  assert.ok(bank.levels[5] < 0.0025, `a muted string stops counting as sounding (${bank.levels[5]})`);
+});

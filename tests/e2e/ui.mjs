@@ -410,6 +410,19 @@ try {
   console.log('requestAnimationFrame calls per second when idle:', idleFrames);
   assert(idleFrames <= 2, `the page should be idle when nothing sounds, got ${idleFrames} animation frames per second`);
 
+  // The read-out follows the real sound: a palm-muted note is gone from "now playing" within a second
+  await page.evaluate(() => { const g = window.__guitar; g.player.releaseEverything(); g.state.setOption('palmMute', true); });
+  await page.keyboard.press('Digit6');
+  await page.waitForTimeout(150);
+  const muteNow = await page.evaluate(() => ({ idle: document.querySelector('#learning .now-playing').classList.contains('idle'), audible: window.__guitar.engine.isAudible(0) }));
+  await page.waitForFunction(() => document.querySelector('#learning .now-playing').classList.contains('idle') && !window.__guitar.engine.isAudible(0), null, { timeout: 1500 });
+  assert(!muteNow.idle && muteNow.audible, 'the palm-muted note is shown while it sounds');
+  await page.evaluate(() => window.__guitar.state.setOption('palmMute', false));
+  await page.keyboard.press('Digit6');
+  await page.waitForTimeout(1200);
+  assert(await page.evaluate(() => window.__guitar.engine.isAudible(0) && !document.querySelector('#learning .now-playing').classList.contains('idle')), 'an open low E is still shown after a second');
+  await page.evaluate(() => window.__guitar.player.releaseEverything());
+
   // ---- Barre chords ----
   // Dragging a pressed finger across the strings inside one fret lays it down as a barre:
   // the strings stay fretted while it is down, and the barre moves as one.

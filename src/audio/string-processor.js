@@ -473,6 +473,9 @@ export class StringBank {
     this.bridgeLp = 0;
     this.bridgeA = Math.exp(-TWO_PI * 1500 / fs);
     this.y = new Float64Array(STRING_COUNT);
+    /** How strongly each string is moving right now (peak of its wave at the bridge, smoothed downward). */
+    this.levels = new Float32Array(STRING_COUNT);
+    this.blockPeaks = new Float32Array(STRING_COUNT);
     this.events = [];
   }
 
@@ -557,6 +560,8 @@ export class StringBank {
     const ba = this.bridgeA;
     let bridge = this.bridgeLp;
     let nextEvent = this.events.length ? this.events[0] : null;
+    const peaks = this.blockPeaks;
+    peaks.fill(0);
 
     for (let i = 0; i < frames; i++) {
       // Fire scheduled events that fall on this sample.
@@ -570,7 +575,11 @@ export class StringBank {
       }
       // Waves arriving at the bridge from every string
       let sum = 0;
-      for (let s = 0; s < STRING_COUNT; s++) { const v = voices[s].read(); y[s] = v; sum += v; }
+      for (let s = 0; s < STRING_COUNT; s++) {
+        const v = voices[s].read(); y[s] = v; sum += v;
+        const a = v < 0 ? -v : v;
+        if (a > peaks[s]) peaks[s] = a;
+      }
       // The bridge moves a little with the summed string motion (low-passed) …
       bridge = ba * bridge + (1 - ba) * sum;
       if (!(bridge > -12 && bridge < 12)) bridge = 0;
@@ -581,7 +590,13 @@ export class StringBank {
       out[i] = o;
     }
     this.bridgeLp = bridge;
-    for (let s = 0; s < STRING_COUNT; s++) voices[s].endBlock();
+    // Level meter per string: jumps up with the signal, falls 60 dB in a quarter of a second.
+    const fall = Math.pow(10, (-3 * frames) / (this.fs * 0.25));
+    for (let s = 0; s < STRING_COUNT; s++) {
+      voices[s].endBlock();
+      const held = this.levels[s] * fall;
+      this.levels[s] = peaks[s] > held ? peaks[s] : held;
+    }
   }
 }
 
@@ -606,6 +621,15 @@ if (typeof AudioWorkletProcessor !== 'undefined' && typeof registerProcessor ===
       const out = outputs[0][0];
       this.bank.process(out, currentTime);
       for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(out);
+      // Tell the page how loud each string still is, about 15 times a second while anything moves
+      // (and once more when everything has stopped).
+      this.blocks = (this.blocks || 0) + 1;
+      if (this.blocks % 24 === 0) {
+        let moving = false;
+        for (let s = 0; s < STRING_COUNT; s++) if (this.bank.levels[s] > 1e-5) moving = true;
+        if (moving || this.wasMoving) this.port.postMessage({ type: 'levels', levels: Array.from(this.bank.levels) });
+        this.wasMoving = moving;
+      }
       return true;
     }
   }

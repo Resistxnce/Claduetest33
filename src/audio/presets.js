@@ -15,7 +15,8 @@ export const PRESETS = Object.freeze([
     id: 'overdrive',
     name: 'Overdrive',
     description: 'Warm, touch-sensitive tube break-up.',
-    params: { volume: 0.78, tone: 0.62, gain: 0.5, distortion: 0.42, reverb: 0.18, delay: 0.0, chorus: 0.0 },
+    // Driven just into break-up: a soft pick stays cleaner and quieter than a hard one.
+    params: { volume: 0.78, tone: 0.62, gain: 0.2, distortion: 0.16, reverb: 0.18, delay: 0.0, chorus: 0.0 },
     pickup: 2,
     body: 'electric',
   },
