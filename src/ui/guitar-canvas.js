@@ -48,13 +48,14 @@ const MAX_NECK_CROSS = 470;
  * @param {number} o.length    full neck length in guitar space (CSS px)
  * @param {number} o.cross     size across the strings (CSS px)
  * @param {number} [o.fretCount=24]
+ * @param {number} [o.tail=0]   room past the last fret (where the strum strip sits when the neck ends there)
  */
-export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
+export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT, tail = 0 }) {
   const N = fretCount;
   const openW = clamp(W * 0.06, 60, 84);          // tappable open-string zone
   const nutW = clamp(W * 0.016, 10, 26);            // a wide marble nut, as on the reference fretboard
   const nutX = openW + nutW;                       // fret 0 (bridge-side edge of the nut)
-  const rightPad = Math.max(10, W * 0.012);        // a little wood past the last fret
+  const rightPad = Math.max(10, W * 0.012) + tail; // a little wood past the last fret, then the strum strip
   const L = (W - rightPad - nutX) / fretDistanceFraction(N); // scale length in px
   const fretX = (n) => nutX + L * fretDistanceFraction(n);
   // On tall screens the neck is a centred band rather than a stretched fretboard.
@@ -162,6 +163,7 @@ export class GuitarCanvas {
     this.dirty = true;
     this.hover = null;
     this.cur = { scale: 1, scroll: 0 }; // transform of the context being drawn into
+    this.pickW = 60; // width of the strum strip (set by resize)
     this.vib = Array.from({ length: STRING_COUNT }, () => ({ amp: 0, t0: 0, tau: 1, phase: 0, freq: 6 }));
     /** time + fret of the last pluck per string (for ring indicators) */
     this.lastPluck = Array.from({ length: STRING_COUNT }, () => ({ t: 0, fret: 0, name: '' }));
@@ -243,7 +245,11 @@ export class GuitarCanvas {
     this.canvas.height = Math.round(h * this.dpr);
     this.viewLen = vertical ? h : w;
     const cross = vertical ? w : h;
-    this.layout = computeLayout({ length: Math.max(neck, this.viewLen), cross });
+    // The strum strip is pinned to the bridge-side end of the view; the neck gets that much
+    // extra length so the last frets are never stuck underneath it.
+    this.pickW = clamp(this.viewLen * 0.09, 54, 86);
+    const zoomed = neck > this.viewLen + 0.5;
+    this.layout = computeLayout({ length: zoomed ? neck + this.pickW : this.viewLen, cross, tail: this.pickW });
     this.scroll = clamp(this.scroll, 0, this.maxScroll);
     // Static layer covers the whole neck; cap its pixel count on very large/zoomed necks.
     const L = this.layout;
@@ -278,9 +284,10 @@ export class GuitarCanvas {
     const pad = L.spacing * 0.8;
     const x0 = (minFret <= 0 ? 0 : L.fretX(minFret - 1)) - pad;
     const x1 = L.fretX(Math.min(L.N, Math.max(1, maxFret))) + pad;
-    if (x0 >= this.scroll && x1 <= this.scroll + this.viewLen) return;
+    const clear = this.viewLen - this.pickW; // the strum strip covers the end of the view
+    if (x0 >= this.scroll && x1 <= this.scroll + clear) return;
     const centre = (x0 + x1) / 2;
-    this.setScroll(x1 - x0 >= this.viewLen ? x0 : centre - this.viewLen / 2);
+    this.setScroll(x1 - x0 >= clear ? x0 : centre - clear / 2);
   }
 
   revealChord() {
@@ -320,6 +327,11 @@ export class GuitarCanvas {
     else ctx.setTransform(k, 0, 0, k, -scroll * k, 0);
   }
 
+  /** Guitar-space x where the strum strip begins (it is pinned to the bridge-side end of the view). */
+  get pickX() {
+    return this.scroll + this.viewLen - this.pickW;
+  }
+
   /** Guitar-space point for a client (viewport) coordinate. */
   toGuitar(clientX, clientY) {
     const rect = this.canvas.getBoundingClientRect();
@@ -346,12 +358,14 @@ export class GuitarCanvas {
    * Classify a guitar-space point.
    * @returns {{zone:'open'|'fretboard'|'none', string?:number, fret?:number}}
    */
-  hitTest(gx, gy) {
+  hitTest(gx, gy, { pick = true } = {}) {
     const L = this.layout;
     if (gy < L.fbTop - L.spacing * 0.3 || gy > L.fbBottom + L.spacing * 0.3) return { zone: 'none' };
     // Nearest string (index 0 = low E at the bottom).
     const fromTop = clamp(Math.round((gy - L.stringY(STRING_COUNT - 1)) / L.spacing), 0, STRING_COUNT - 1);
     const string = STRING_COUNT - 1 - fromTop;
+    // The strum strip: the last stretch of the *view* (it does not scroll with the neck).
+    if (pick && gx >= this.pickX && gx <= this.scroll + this.viewLen + 4) return { zone: 'pick', string, fret: 0 };
     if (gx < L.nutX - L.nutW * 0.5) {
       if (gx < -4) return { zone: 'none' };
       return { zone: 'open', string, fret: 0 };
@@ -439,6 +453,7 @@ export class GuitarCanvas {
       ctx.drawImage(this.staticLayer, this.scroll * ss, 0, this.viewLen * ss, L.H * ss, 0, 0, this.canvas.width, this.canvas.height);
     }
     this.applyTransform(ctx, this.dpr, this.scroll);
+    this.drawPickStrip(ctx);  // under the strings, so they stay visible to aim at
     this.drawStrings(ctx, now);
     this.drawOverlays(ctx);   // labels and markers sit on top of the strings so they stay readable
     this.drawOpenLabels(ctx);
@@ -1019,19 +1034,88 @@ export class GuitarCanvas {
   drawFingers(ctx) {
     const st = this.state;
     const L = this.layout;
+    const vertical = this.orientation === 'vertical';
     const showName = st.options.noteNames !== 'off';
     for (const [, f] of st.fingers) {
       if (f.fret > L.N) continue;
+      const strings = st.fingerStrings(f);
+      const r = this.dotRadius(f.fret, 0.44);
+      const x = L.positionCenter(f.string, f.fret).x;
+      if (strings.length > 1) {
+        // A finger lying across the strings: one bar, like the barre in a chord diagram.
+        const yA = L.stringY(strings[strings.length - 1]), yB = L.stringY(strings[0]);
+        const w = r * 1.5;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = r * 0.6; ctx.shadowOffsetY = r * 0.18;
+        const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+        g.addColorStop(0, DOT_BLUE[2]); g.addColorStop(0.45, DOT_BLUE[1]); g.addColorStop(0.7, '#6fb4ff'); g.addColorStop(1, DOT_BLUE[2]);
+        ctx.fillStyle = g;
+        roundRect(ctx, x - w / 2, yA - r, w, yB - yA + r * 2, w / 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle = f.held ? '#fbbf24' : 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = f.held ? 2 : 1;
+        roundRect(ctx, x - w / 2, yA - r, w, yB - yA + r * 2, w / 2);
+        ctx.stroke();
+        if (showName) {
+          for (const s of strings) {
+            // Only where this finger is the one that sets the pitch (another finger may be in front of it).
+            if (st.soundingFret(s) !== Math.max(f.fret, st.capo)) continue;
+            const note = st.fretboard.noteAt(s, Math.max(f.fret, st.capo), { flats: st.options.flats });
+            const { label, font } = this.dotLabel(note.name, Math.min(r, L.spacing * 0.4));
+            this.text(ctx, x, L.stringY(s), label, { font, color: '#ffffff' });
+          }
+        }
+        continue;
+      }
       const c = L.positionCenter(f.string, f.fret);
       const y = c.y + (f.offset || 0); // a bending finger drags its dot (and the string) sideways
-      const r = this.dotRadius(f.fret, 0.44);
-      glossyDot(ctx, c.x, y, r, DOT_BLUE, this.orientation === 'vertical');
+      glossyDot(ctx, c.x, y, r, DOT_BLUE, vertical);
+      if (f.held) {
+        // A held finger: an amber ring, so it is clear it stays without a touch (tap it to let go).
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(c.x, y, r + 1.5, 0, Math.PI * 2); ctx.stroke();
+      }
       if (showName) {
         const note = st.fretboard.noteAt(f.string, Math.max(f.fret, st.capo), { flats: st.options.flats });
         const { label, font } = this.dotLabel(note.name, r);
         this.text(ctx, c.x, y, label, { font, color: '#ffffff' });
       }
     }
+  }
+
+  /** The strum strip: tap or sweep it to pick the strings, whatever the other hand is fretting. */
+  drawPickStrip(ctx) {
+    const L = this.layout;
+    const x = this.pickX, w = this.pickW;
+    const top = L.fbTop - 2, h = L.fbH + 4;
+    ctx.save();
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, 'rgba(16,18,24,0.9)');
+    g.addColorStop(1, 'rgba(24,27,35,0.96)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, top, w + 8, h);
+    ctx.fillStyle = 'rgba(245,158,11,0.75)';
+    ctx.fillRect(x, top, 2, h);
+    ctx.restore();
+    // A pick, and the word, between the strings (upright in both layouts).
+    const midY = (L.stringY(2) + L.stringY(3)) / 2;
+    const p = this.toScreen(x + w / 2, midY, this.cur.scroll);
+    const k = this.cur.scale;
+    ctx.save();
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#f59e0b';
+    const s = Math.min(w, L.spacing) * 0.36;
+    ctx.beginPath();
+    ctx.moveTo(p.x - s, p.y - s * 0.8);
+    ctx.quadraticCurveTo(p.x, p.y - s * 1.25, p.x + s, p.y - s * 0.8);
+    ctx.quadraticCurveTo(p.x + s * 0.55, p.y + s * 0.6, p.x, p.y + s * 1.2);
+    ctx.quadraticCurveTo(p.x - s * 0.55, p.y + s * 0.6, p.x - s, p.y - s * 0.8);
+    ctx.fill();
+    ctx.restore();
+    // The word sits inside the strip (the margin beside it carries fret numbers).
+    this.text(ctx, x + w / 2, (L.stringY(3) + L.stringY(4)) / 2, 'STRUM', { font: '700 9px system-ui, sans-serif', color: 'rgba(245,158,11,0.9)' });
   }
 
   /** Show (or hide, with null) the keyboard cursor: the position the Enter key plays. */
@@ -1064,10 +1148,16 @@ export class GuitarCanvas {
     const h = this.hover;
     if (!h || h.zone === 'none') { this.canvas.style.cursor = 'default'; return; }
     this.canvas.style.cursor = 'pointer';
-    if (this.state.fingers.size > 0) return;
+    for (const f of this.state.fingers.values()) if (!f.held) return; // a finger of one's own is down
     const L = this.layout;
-    const c = L.positionCenter(h.string, h.fret);
     const sp = L.spacing;
+    if (h.zone === 'pick') {
+      ctx.fillStyle = 'rgba(245,158,11,0.16)';
+      roundRect(ctx, this.pickX + 4, L.stringY(h.string) - sp * 0.42, this.pickW - 8, sp * 0.84, 5);
+      ctx.fill();
+      return;
+    }
+    const c = L.positionCenter(h.string, h.fret);
     const x0 = h.fret === 0 ? L.openW * 0.4 : L.fretX(h.fret - 1) + L.cellWidth(h.fret) * 0.08;
     const w = h.fret === 0 ? L.openW * 0.56 : L.cellWidth(h.fret) * 0.84;
     ctx.fillStyle = 'rgba(255,255,255,0.09)';

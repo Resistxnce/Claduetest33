@@ -172,3 +172,49 @@ test('with a chord held, the highest fretted position on a string still wins', (
   for (let s = 0; s < 6; s++) st.pressFinger(10 + s, s, 1);
   assert.deepEqual(names(st), before, 'fingers behind the capo do not change a held chord');
 });
+
+test('a finger dragged across strings in one fret is a barre; held fingers stay until released', () => {
+  const st = new AppState();
+  st.pressFinger(1, 0, 1);                       // low E, fret 1
+  for (let s = 1; s <= 5; s++) st.moveFinger(1, s, 1, { barre: true });
+  const finger = st.fingers.get(1);
+  assert.deepEqual([finger.string, finger.fret, finger.from], [5, 1, 0]);
+  assert.deepEqual(st.fingerStrings(finger), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(names(st), ['F2', 'A#2', 'D#3', 'G#3', 'C4', 'F4'], 'every string is fretted at 1');
+  // other fingers in front of the barre: F major, E shape
+  st.pressFinger(2, 3, 2); st.pressFinger(3, 1, 3); st.pressFinger(4, 2, 3);
+  assert.deepEqual(names(st), ['F2', 'C3', 'F3', 'A3', 'C4', 'F4']);
+  // the barre slides as one
+  st.moveFinger(1, 5, 3);
+  assert.equal(st.fingers.get(1).from, 0, 'sliding keeps the span');
+  assert.deepEqual(names(st), ['G2', 'C3', 'F3', 'A#3', 'D4', 'G4']);
+  // dragging back toward where it began uncovers strings; back at the start it is one fingertip again
+  st.moveFinger(1, 2, 3, { barre: true });
+  assert.deepEqual(st.fingerStrings(st.fingers.get(1)), [0, 1, 2]);
+  assert.equal(st.noteOn(5).name, 'E4');
+  st.moveFinger(1, 0, 3, { barre: true });
+  assert.equal(st.fingers.get(1).from, undefined);
+  // a step to another string without barre leaves the old strings
+  st.moveFinger(1, 1, 4);
+  assert.deepEqual(st.fingerStrings(st.fingers.get(1)), [1]);
+  // partial barre from the A string (A shape), then hold it
+  st.liftAll();
+  st.pressFinger(7, 1, 2);
+  st.moveFinger(7, 5, 2, { barre: true });
+  const id = st.holdFinger(7);
+  assert.ok(!st.fingers.has(7) && st.fingers.get(id).held, 'the touch is gone, the finger stays');
+  assert.deepEqual(names(st), ['E2', 'B2', 'E3', 'A3', 'C#4', 'F#4']);
+  assert.equal(st.heldFingerAt(3, 2).id, id, 'found under any string it covers');
+  assert.equal(st.heldFingerAt(0, 2), null);
+  assert.equal(st.heldFingerAt(3, 3), null);
+  st.pressFinger(8, 4, 3);
+  st.liftAll();
+  assert.equal(st.fingers.size, 1, 'liftAll lifts touches, not held fingers');
+  st.liftAll({ held: true });
+  assert.equal(st.fingers.size, 0);
+  // bends belong to single fingertips only
+  st.pressFinger(9, 2, 7); st.setFingerBend(9, 1, 10);
+  assert.equal(st.bendOn(2), 1);
+  st.moveFinger(9, 3, 7, { barre: true });
+  assert.equal(st.bendOn(2), 0); assert.equal(st.bendOn(3), 0);
+});

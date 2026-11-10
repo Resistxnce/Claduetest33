@@ -103,6 +103,16 @@ function boot() {
   document.getElementById('tool-strum-down').addEventListener('click', () => player.strum('down'));
   document.getElementById('tool-strum-up').addEventListener('click', () => player.strum('up'));
   document.getElementById('tool-mute').addEventListener('click', () => player.releaseEverything());
+  // Hold: fingers stay down after the touch lifts (chord shapes, barre chords on a phone).
+  const holdBtn = document.getElementById('tool-hold');
+  const syncHold = () => {
+    const on = !!state.options.holdFingers;
+    holdBtn.setAttribute('aria-pressed', String(on));
+    holdBtn.classList.toggle('active', on);
+  };
+  holdBtn.addEventListener('click', () => state.setOption('holdFingers', !state.options.holdFingers));
+  state.addEventListener('option', (e) => { if (e.detail.key === 'holdFingers') syncHold(); });
+  syncHold();
   const stagePreset = document.getElementById('stage-preset');
   for (const p of PRESETS) stagePreset.append(new Option(p.name, p.id));
   stagePreset.value = engine.presetId;

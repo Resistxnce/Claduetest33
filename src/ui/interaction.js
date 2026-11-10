@@ -54,7 +54,10 @@ export class Player {
       keyUp: (e) => this.onKeyUp(e),
     };
     state.addEventListener('tuning', () => this.refreshAllPitches());
-    state.addEventListener('option', (e) => { if (e.detail.key === 'dragAcross' && e.detail.value !== 'bend') this.releaseBends(); });
+    state.addEventListener('option', (e) => {
+      if (e.detail.key === 'dragAcross' && e.detail.value !== 'bend') this.releaseBends();
+      if (e.detail.key === 'holdFingers' && !e.detail.value) this.releaseHeld();
+    });
     state.addEventListener('capo', () => this.refreshAllPitches(0.02));
     state.addEventListener('chord', () => this.refreshAllPitches(0.02));
     engine.addEventListener('ready', () => this.refreshAllPitches(0, true));
@@ -265,39 +268,54 @@ export class Player {
   moveFinger(pointerId, string, fret, speed) {
     const finger = this.state.fingers.get(pointerId);
     if (!finger) return;
-    if (finger.string !== string) {
-      // The finger swept onto another string. Pointer events can skip strings on
-      // a fast sweep, so walk through every string in between: each one is left
-      // behind in turn and the next one is picked (six in a row is a strum).
-      const dir = string > finger.string ? 1 : -1;
-      const velocity = this.sweepVelocity(speed);
-      const base = this.engine.now;
-      let i = 0;
-      for (let s = finger.string + dir; dir > 0 ? s <= string : s >= string; s += dir) {
-        const prev = this.state.fingers.get(pointerId);
-        const prevBefore = this.state.soundingFret(prev.string);
-        const prevRinging = this.isRinging(prev.string);
-        const before = this.state.soundingFret(s);
-        const ringing = this.isRinging(s);
-        this.state.moveFinger(pointerId, s, fret);
-        this.afterFingerLeft(prev.string, prevBefore, prevRinging);
-        this.landOn(s, before, ringing, velocity, base + i * 0.004);
-        i++;
+    if (finger.string === string) {
+      if (finger.fret === fret) return;
+      // Slide along the neck: every string under the finger (one string, or a whole barre) follows.
+      const under = this.snapshot(this.state.fingerStrings(finger));
+      this.state.moveFinger(pointerId, string, fret);
+      for (const { s, before, ringing } of under) {
+        if (this.state.soundingFret(s) === before) continue;
+        this.applyPitch(s, { glide: ringing ? 0.045 : 0 });
+        if (ringing) {
+          this.engine.slideNoise(s, clamp(0.015 + speed * 0.01, 0.01, 0.04));
+          this.noteChanged(s, this.state.noteOn(s));
+        }
       }
       return;
     }
-    const before = this.state.soundingFret(string);
-    const ringing = this.isRinging(string);
-    this.state.moveFinger(pointerId, string, fret);
-    const after = this.state.soundingFret(string);
-    if (after !== before) {
-      // Slide along the string
-      this.applyPitch(string, { glide: ringing ? 0.045 : 0 });
-      if (ringing) {
-        this.engine.slideNoise(string, clamp(0.015 + speed * 0.01, 0.01, 0.04));
-        this.noteChanged(string, this.state.noteOn(string));
-      }
+    // The finger reached another string. Staying in its fret it lies down across the strings it
+    // crosses — a barre: they stay fretted while the finger is down. Moving diagonally it is a
+    // fingertip stepping from string to string and leaves the earlier strings behind.
+    const barre = fret === finger.fret;
+    if (!barre && finger.from !== undefined) {
+      const others = this.snapshot(this.state.fingerStrings(finger).filter((s) => s !== finger.string));
+      this.state.collapseFinger(pointerId);
+      for (const { s, before, ringing } of others) this.afterFingerLeft(s, before, ringing);
     }
+    // Pointer events can skip strings on a fast sweep, so walk through every string in
+    // between: each one is picked as it is reached (six in a row is a strum).
+    const dir = string > finger.string ? 1 : -1;
+    const velocity = this.sweepVelocity(speed);
+    const base = this.engine.now;
+    let i = 0;
+    for (let s = finger.string + dir; dir > 0 ? s <= string : s >= string; s += dir) {
+      const prev = this.state.fingers.get(pointerId);
+      const from = prev.from === undefined ? prev.string : prev.from;
+      // Dragging back toward where the barre began uncovers the string just left.
+      const leaves = !barre || Math.abs(s - from) < Math.abs(prev.string - from);
+      const [left] = this.snapshot([prev.string]);
+      const before = this.state.soundingFret(s);
+      const ringing = this.isRinging(s);
+      this.state.moveFinger(pointerId, s, fret, { barre });
+      if (leaves) this.afterFingerLeft(left.s, left.before, left.ringing);
+      this.landOn(s, before, ringing, velocity, base + i * 0.004);
+      i++;
+    }
+  }
+
+  /** What each of these strings sounds, and whether it rings, before a finger changes. */
+  snapshot(strings) {
+    return strings.map((s) => ({ s, before: this.state.soundingFret(s), ringing: this.isRinging(s) }));
   }
 
   /**
@@ -332,11 +350,10 @@ export class Player {
     const finger = this.state.fingers.get(pointerId);
     if (!finger) return;
     const string = finger.string;
-    const before = this.state.soundingFret(string);
-    const ringing = this.isRinging(string);
+    const under = this.snapshot(this.state.fingerStrings(finger)); // a barre leaves several strings at once
     const wasBent = (finger.bend || 0) > 0;
     this.state.liftFinger(pointerId);
-    this.afterFingerLeft(string, before, ringing);
+    for (const { s, before, ringing } of under) this.afterFingerLeft(s, before, ringing);
     // A bent string that keeps ringing springs back to the fretted pitch.
     const ring = this.state.ringing[string];
     if (wasBent && ring && this.isRinging(string) && this.state.fingerFret(string) === null) {
@@ -346,6 +363,24 @@ export class Player {
   }
 
   /** Decide what the string does once a finger has left it. */
+  /** The touch (or key) is gone: lift the finger, or in Hold mode leave it pressed. */
+  endTouch(pointerId) {
+    const finger = this.state.fingers.get(pointerId);
+    if (!finger) return;
+    if (!this.state.options.holdFingers) { this.liftFinger(pointerId); return; }
+    if ((finger.bend || 0) > 0 || finger.offset) {
+      this.state.setFingerBend(pointerId, 0, 0);
+      this.applyPitch(finger.string, { glide: 0.02 });
+      if (this.isRinging(finger.string)) this.state.setRinging(finger.string, this.state.noteOn(finger.string));
+    }
+    this.state.holdFinger(pointerId);
+  }
+
+  /** Let go of every held finger (Hold was switched off). */
+  releaseHeld() {
+    for (const [id, finger] of [...this.state.fingers]) if (finger.held) this.liftFinger(id);
+  }
+
   afterFingerLeft(string, before, ringing) {
     const after = this.state.soundingFret(string);
     const stillFretted = this.state.fingerFret(string) !== null;
@@ -401,8 +436,14 @@ export class Player {
     this.pointers.set(e.pointerId, rec);
     try { this.canvas.canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     if (hit.zone === 'fretboard') {
-      this.pressFinger(e.pointerId, hit.string, hit.fret, this.tapVelocity(e));
-    } else if (hit.zone === 'open') {
+      const held = this.state.heldFingerAt(hit.string, hit.fret);
+      if (held) {
+        // Tapping a held finger lets it go.
+        rec.zone = 'dead';
+        this.liftFinger(held.id);
+      } else this.pressFinger(e.pointerId, hit.string, hit.fret, this.tapVelocity(e));
+    } else if (hit.zone === 'open' || hit.zone === 'pick') {
+      // Before the nut, or on the strum strip: the picking hand. The string sounds whatever is fretted.
       rec.string = hit.string;
       this.pluck(hit.string, { velocity: this.tapVelocity(e) });
     }
@@ -427,6 +468,9 @@ export class Player {
       rec.downY = g.y;
       if (hit.zone === 'fretboard') this.pressFinger(e.pointerId, hit.string, hit.fret, this.sweepVelocity(speed));
       else { rec.string = hit.string; this.pluck(hit.string, { velocity: this.sweepVelocity(speed) }); }
+    } else if (rec.zone === 'pick') {
+      // A sweep that began on the strum strip stays a strum wherever the finger drifts.
+      if (hit.zone !== 'none') this.sweepOpen(rec, hit.string, speed);
     } else if (rec.zone === 'fretboard' && this.state.options.dragAcross === 'bend' && this.state.fingers.has(e.pointerId)) {
       this.bendFinger(e.pointerId, rec, g, speed);
     } else if (rec.zone === 'fretboard') {
@@ -459,8 +503,15 @@ export class Player {
    * open-string strumming and fretting.
    */
   stickyHit(pointerId, rec, g) {
-    let hit = this.canvas.hitTest(g.x, g.y);
+    // A finger already on the fretboard or in the open zone slides on underneath the strum strip.
+    let hit = this.canvas.hitTest(g.x, g.y, { pick: rec.zone === 'none' || rec.zone === 'pick' });
     if (hit.zone === 'none') return hit;
+    if (rec.zone === 'pick') {
+      // String hysteresis only: the strip has no frets.
+      const L = this.canvas.layout;
+      if (hit.string !== rec.string && Math.abs(g.y - L.stringY(rec.string)) < L.spacing * 0.64) hit = { ...hit, string: rec.string };
+      return hit;
+    }
     const L = this.canvas.layout;
     const finger = this.state.fingers.get(pointerId);
     // Nut: stay in the current zone until the pointer is clearly on the other side.
@@ -507,7 +558,7 @@ export class Player {
     const rec = this.pointers.get(e.pointerId);
     if (!rec) return;
     this.pointers.delete(e.pointerId);
-    if (rec.zone === 'fretboard') this.liftFinger(e.pointerId);
+    if (rec.zone === 'fretboard') this.endTouch(e.pointerId);
     try { this.canvas.canvas.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
     this.canvas.requestRender();
   }
@@ -576,7 +627,7 @@ export class Player {
 
   onKeyUp(e) {
     if (e.code === 'KeyM') this.endMomentaryMute();
-    if (e.key === 'Enter' && this.state.fingers.has(KEYBOARD_FINGER)) this.liftFinger(KEYBOARD_FINGER);
+    if (e.key === 'Enter' && this.state.fingers.has(KEYBOARD_FINGER)) this.endTouch(KEYBOARD_FINGER);
   }
 
   /** Let every bent string spring back (bend mode was switched off while a finger held a bend). */
@@ -625,7 +676,9 @@ export class Player {
       e.preventDefault();
       if (e.repeat) return true;
       this.ensureAudio();
-      if (c.fret === 0) this.pluck(c.string);
+      const held = c.fret > 0 ? this.state.heldFingerAt(c.string, c.fret) : null;
+      if (held) this.liftFinger(held.id); // Enter on a held finger lets it go
+      else if (c.fret === 0) this.pluck(c.string);
       else this.pressFinger(KEYBOARD_FINGER, c.string, c.fret);
       return true;
     } else return false;

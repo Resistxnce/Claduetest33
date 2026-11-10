@@ -39,6 +39,7 @@
         <span class="stage-bar-spacer"></span>
         <button class="tool-btn" id="tool-strum-down" type="button" aria-label="Strum down" title="Strum down (Space)">⬇<span> Strum</span></button>
         <button class="tool-btn" id="tool-strum-up" type="button" aria-label="Strum up" title="Strum up (Shift+Space)">⬆</button>
+        <button class="tool-btn" id="tool-hold" type="button" aria-pressed="false" aria-label="Hold fingers down" title="Hold: fingers stay down after you lift, so you can build a chord one touch at a time. Tap a held finger to let it go.">Hold</button>
         <button class="tool-btn" id="tool-mute" type="button" aria-label="Mute all strings" title="Mute all (Esc)">Mute</button>
         <button class="tool-btn accent" id="play-mode-btn" type="button" aria-pressed="false" title="Fill the screen with the fretboard">⤢<span> Full screen</span></button>
       </div>
@@ -50,7 +51,7 @@
         <canvas id="neck-nav" class="neck-nav" aria-label="Neck position: drag to move along the fretboard" hidden></canvas>
       </div>
     </section>
-    <p class="stage-caption">Tap a string at any fret to play it · tap left of the nut for open strings · drag along a string to slide · sweep across the strings to strum · <kbd>Space</kbd> strums</p>
+    <p class="stage-caption">Tap a string at any fret to play it · drag along a string to slide · drag across the strings in one fret to lay a barre · sweep the <b>strum</b> strip to strum what you are holding · <b>Hold</b> keeps fingers down</p>
 
     <section class="dock">
       <div class="panel" id="controls" aria-label="Amp and guitar controls"></div>
@@ -76,7 +77,8 @@
       <h2 tabindex="-1" autofocus>How to play</h2>
       <ul>
         <li><b>Play a note:</b> tap a string between two frets — it sounds that note (the thick low E is the bottom string, as in tablature; on an upright phone neck it is on the left). Tap a string before the nut for the open string. Several fingers can play several strings at once (multi-touch).</li>
-        <li><b>Strum:</b> sweep your finger across the strings (before the nut for open strings or a held chord). Faster = louder.</li>
+        <li><b>Strum:</b> sweep the amber <i>strum</i> strip at the bridge end of the neck (or the zone before the nut): it picks the strings without fretting them, so it plays whatever your other fingers hold. Faster = louder. Tap one string there to pick it.</li>
+        <li><b>Barre chords:</b> press a string and drag across the others <i>in the same fret</i> — the finger lies down across them like a real barre (a blue bar) and stays while you hold it; add the other fingers in front of it and strum the strip. Slide the bar along the neck to move the whole chord. On a phone turn on <i>Hold</i> in the toolbar: every finger stays down after you lift (amber ring), so you can build the shape one touch at a time; tap a held finger to let it go.</li>
         <li><b>All 24 frets:</b> on phones, tablets and small windows the neck is zoomed so every fret is big enough to hit — drag the minimap (or press <kbd>←</kbd>/<kbd>→</kbd>) to move along it. <i>Neck view</i> in the panel switches between the whole neck and the zoomed one.</li>
         <li><b>Slide:</b> drag a pressed finger along the string. <b>Hammer-on / pull-off:</b> add or lift a finger while the note rings.</li>
         <li><b>Bend / vibrato:</b> set "Dragging across strings" to <i>Bends the string</i> in <i>Playing</i>, then pull a held note sideways.</li>

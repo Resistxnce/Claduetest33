@@ -72,6 +72,19 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
   slides, hammer-ons, pull-offs, bends, retunes); the read-out and the ring
   markers are driven from it, and `engine.isAudible(string)` bounds how long a
   note counts as ringing by that string's decay time.
+* A finger is one entry in `state.fingers` (`{string, fret}`), keyed by pointer
+  id. Dragged across the strings inside one fret it gains `from` and presses
+  every string between `from` and `string` — a barre (`state.covers`,
+  `state.fingerStrings`); the pitch rule stays "highest fretted position on a
+  string wins". Along the neck the whole span slides; a diagonal move stands
+  the finger up again and it leaves the earlier strings. In Hold mode a lifted
+  touch re-keys its finger as `held-N` (`held: true`): it stays until tapped,
+  or until Hold is switched off. "Mute" lifts touches but not held fingers.
+* The strum strip (`zone: 'pick'`) is pinned to the bridge-side end of the
+  view (`canvas.pickX`, `pickW`); the layout reserves a tail past the 24th
+  fret so the last frets are never underneath it. Like the open zone it picks
+  strings at their sounding fret without fretting them. A pointer that began
+  on the fretboard passes underneath it.
 * Pointer hit-testing has hysteresis on all three boundaries (string to string,
   fret to fret, open zone to fretboard) so a resting finger never flickers.
 * Sweeping a pointer across strings plucks each string it reaches (a strum);

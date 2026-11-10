@@ -15,6 +15,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   flats: false,
   tapToPlay: true,     // pressing a fret also picks the string
   releaseMutes: false, // lifting the last finger mutes the string (off: tapped notes ring out)
+  holdFingers: false,  // fingers stay down after the touch lifts, to build chord shapes one touch at a time
   palmMute: false,
   dragAcross: 'strum',  // dragging a held finger across the strings: 'strum' them or 'bend' the string
   pickPosition: 0.14,  // where the pick hits: fraction of the scale length from the bridge (0.05 bright … 0.30 warm)
@@ -30,8 +31,14 @@ export class AppState extends EventTarget {
     this.tuning = getTuning(DEFAULT_TUNING_ID);
     this.fretboard = new Fretboard({ tuning: this.tuning, fretCount: 24 });
     this.capo = 0;
-    /** @type {Map<number, {string:number, fret:number}>} pointerId -> finger */
+    /**
+     * Fingers on the fretboard, by pointer id. A finger presses `string` at `fret`; one that was
+     * dragged across the strings within a fret lies flat over every string between `from` (where
+     * it started) and `string` — a barre. `held` fingers stay down without a touch (Hold mode).
+     * @type {Map<number|string, {string:number, fret:number, from?:number, held?:boolean, bend?:number, offset?:number}>}
+     */
     this.fingers = new Map();
+    this.heldCount = 0;
     this.chord = null;      // { rootPc, quality, voicings, index }
     this.holdChord = false; // virtual fingers hold the selected chord
     this.scale = null;      // { rootPc, scaleId }
@@ -117,11 +124,31 @@ export class AppState extends EventTarget {
 
   /* ---------------- fingers ---------------- */
 
+  /** Does this finger press the string? (A barre presses every string it lies across.) */
+  covers(finger, string) {
+    const from = finger.from === undefined ? finger.string : finger.from;
+    return string >= Math.min(from, finger.string) && string <= Math.max(from, finger.string);
+  }
+
+  /** The strings a finger presses, low to high. */
+  fingerStrings(finger) {
+    const from = finger.from === undefined ? finger.string : finger.from;
+    const out = [];
+    for (let s = Math.min(from, finger.string); s <= Math.max(from, finger.string); s++) out.push(s);
+    return out;
+  }
+
   /** Highest fret held by a user finger on the string, or null. */
   fingerFret(string) {
     let best = null;
-    for (const f of this.fingers.values()) if (f.string === string && (best === null || f.fret > best)) best = f.fret;
+    for (const f of this.fingers.values()) if (this.covers(f, string) && (best === null || f.fret > best)) best = f.fret;
     return best;
+  }
+
+  /** A held (latched) finger pressing this string at this fret: `{ id, finger }` or null. */
+  heldFingerAt(string, fret) {
+    for (const [id, f] of this.fingers) if (f.held && f.fret === fret && this.covers(f, string)) return { id, finger: f };
+    return null;
   }
 
   /** The fret that determines the sounding pitch: -1 = muted, 0 = open, n = fret. */
@@ -148,7 +175,7 @@ export class AppState extends EventTarget {
     const fret = this.fingerFret(string);
     if (fret === null) return 0;
     let bend = 0;
-    for (const f of this.fingers.values()) if (f.string === string && f.fret === fret && f.bend > bend) bend = f.bend;
+    for (const f of this.fingers.values()) if (f.string === string && f.from === undefined && f.fret === fret && f.bend > bend) bend = f.bend;
     return bend;
   }
 
@@ -172,13 +199,49 @@ export class AppState extends EventTarget {
     this.emit('finger', { pointerId, string, fret, previous, action: previous ? 'move' : 'press' });
   }
 
-  moveFinger(pointerId, string, fret) {
+  /**
+   * Move a finger. Along its string it slides (a barre keeps its span). To another string it
+   * either steps over (`barre` false: it leaves the strings it was on) or lies down across the
+   * strings in between (`barre` true), back to a single string when it returns to where it began.
+   */
+  moveFinger(pointerId, string, fret, { barre = false } = {}) {
     const previous = this.fingers.get(pointerId);
     if (!previous) return this.pressFinger(pointerId, string, fret);
     if (previous.string === string && previous.fret === fret) return undefined;
-    this.fingers.set(pointerId, previous.string === string ? { ...previous, fret } : { string, fret });
+    let next;
+    if (previous.string === string) next = { ...previous, fret };
+    else {
+      next = { string, fret };
+      const from = previous.from === undefined ? previous.string : previous.from;
+      if (barre && from !== string) next.from = from;
+      if (previous.held) next.held = true;
+    }
+    this.fingers.set(pointerId, next);
     this.emit('finger', { pointerId, string, fret, previous, action: 'move' });
     return undefined;
+  }
+
+  /** A barre stands up again: the finger keeps only the string it is on. */
+  collapseFinger(pointerId) {
+    const previous = this.fingers.get(pointerId);
+    if (!previous || previous.from === undefined) return;
+    const next = { ...previous };
+    delete next.from;
+    this.fingers.set(pointerId, next);
+    this.emit('finger', { pointerId, string: next.string, fret: next.fret, previous, action: 'move' });
+  }
+
+  /** The touch lifts but the finger stays down (Hold mode). Returns the held finger's id. */
+  holdFinger(pointerId) {
+    const previous = this.fingers.get(pointerId);
+    if (!previous) return null;
+    this.fingers.delete(pointerId);
+    const id = `held-${++this.heldCount}`;
+    const finger = { string: previous.string, fret: previous.fret, held: true };
+    if (previous.from !== undefined) finger.from = previous.from;
+    this.fingers.set(id, finger);
+    this.emit('finger', { pointerId: id, string: finger.string, fret: finger.fret, previous, action: 'hold' });
+    return id;
   }
 
   /** Bend the string under a finger: `semitones` of pitch, `offset` px of sideways displacement (for drawing). */
@@ -197,9 +260,10 @@ export class AppState extends EventTarget {
     this.emit('finger', { pointerId, string: previous.string, fret: previous.fret, previous, action: 'lift' });
   }
 
-  liftAll() {
-    const all = [...this.fingers.entries()];
-    this.fingers.clear();
+  /** Lift every finger that belongs to a touch; held fingers stay unless `held` is true. */
+  liftAll({ held = false } = {}) {
+    const all = [...this.fingers.entries()].filter(([, f]) => held || !f.held);
+    for (const [pointerId] of all) this.fingers.delete(pointerId);
     for (const [pointerId, previous] of all) this.emit('finger', { pointerId, string: previous.string, fret: previous.fret, previous, action: 'lift' });
   }
 

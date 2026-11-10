@@ -139,8 +139,9 @@ export class ControlPanel {
       el('div', { class: 'options' }, [
         opt('tapToPlay', 'Tapping a string plays it'),
         opt('releaseMutes', 'Lifting a finger mutes the string'),
+        opt('holdFingers', 'Hold: fingers stay down after lifting (tap one to let go)'),
         opt('palmMute', 'Palm mute'),
-        opt('dragAcross', 'Dragging across strings', { type: 'select', values: [['strum', 'Strums them'], ['bend', 'Bends the string (vibrato)']] }),
+        opt('dragAcross', 'Dragging across strings', { type: 'select', values: [['strum', 'Strums them / lays a barre'], ['bend', 'Bends the string (vibrato)']] }),
       ]),
       el('div', { class: 'options column' }, [
         opt('pickStrength', 'Pick strength', { type: 'range', values: [0.2, 1, 0.01, 'soft', 'hard'] }),

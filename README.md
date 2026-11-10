@@ -66,6 +66,17 @@ Good to know:
   thick low E at the bottom (tablature orientation).
 - Every string is tappable at every fret; the zone before the nut plays the
   open strings. Played notes show as glossy dots with their note name.
+- **Barre chords.** Press a string and drag across the others inside the same
+  fret: the finger lies down across them like a real barre (a blue bar) and
+  stays while you hold it. Add the other fingers in front of it, strum, and
+  slide the bar along the neck to move the whole chord.
+- **Strum strip.** The amber strip at the bridge end of the neck is always on
+  screen: tap a string there to pick it, sweep it to strum. It never frets
+  anything, so it plays whatever the other hand is holding.
+- **Hold.** With *Hold* on (toolbar), every finger stays down after you lift
+  it (amber ring), so a chord shape — barre included — can be built one touch
+  at a time on a phone; tap a held finger to let it go, *Mute* silences the
+  strings without losing the shape.
 - With a mouse all 24 frets fit the screen. On touch screens (phones and
   tablets) the neck is zoomed so that even the 24th fret is a finger-sized
   target, with a minimap to move along it; on a portrait phone it rotates to

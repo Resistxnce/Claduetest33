@@ -410,6 +410,84 @@ try {
   console.log('requestAnimationFrame calls per second when idle:', idleFrames);
   assert(idleFrames <= 2, `the page should be idle when nothing sounds, got ${idleFrames} animation frames per second`);
 
+  // ---- Barre chords ----
+  // Dragging a pressed finger across the strings inside one fret lays it down as a barre:
+  // the strings stay fretted while it is down, and the barre moves as one.
+  await page.evaluate(() => { const g = window.__guitar; g.player.releaseEverything(); g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.state.setTuning('standard'); window.scrollTo(0, 0); });
+  canvasBox = await page.locator('#guitar').boundingBox();
+  const notesNow = () => page.evaluate(() => [0, 1, 2, 3, 4, 5].map((i) => { const n = window.__guitar.state.noteOn(i); return n ? n.name : 'x'; }).join(' '));
+  const stripPos = async (string) => {
+    const q = await page.evaluate((i) => { const c = window.__guitar.canvas; return c.toScreen(c.pickX + c.pickW / 2, c.layout.stringY(i)); }, string);
+    return { x: canvasBox.x + q.x, y: canvasBox.y + q.y };
+  };
+  const b0 = await screenPos(0, 1), b5 = await screenPos(5, 1);
+  await clearRecent();
+  await page.mouse.move(b0.x, b0.y);
+  await page.mouse.down();
+  await page.mouse.move(b5.x, b5.y, { steps: 12 });
+  await page.waitForTimeout(60);
+  let barre = await page.evaluate(() => [...window.__guitar.state.fingers.values()].map((f) => [f.string, f.fret, f.from]));
+  names = await recentNames();
+  console.log('Barre at fret 1:', JSON.stringify(barre), '|', await notesNow());
+  assert(barre.length === 1 && barre[0].join() === '5,1,0', `one finger lying across all six strings: ${JSON.stringify(barre)}`);
+  assert((await notesNow()) === 'F2 A#2 D#3 G#3 C4 F4', 'every string is fretted at the barre');
+  assert(names.join(' ') === 'F2 A#2 D#3 G#3 C4 F4', `laying the barre rakes each string once: ${names.join(' ')}`);
+  await clearRecent();
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(200);
+  names = await recentNames();
+  assert(names.join(' ') === 'F2 A#2 D#3 G#3 C4 F4', `a strum plays the barre, not open strings: ${names.join(' ')}`);
+  const b5at3 = await screenPos(5, 3);
+  await page.mouse.move(b5at3.x, b5at3.y, { steps: 8 });
+  await page.waitForTimeout(60);
+  const slidBarre = await page.evaluate(() => ({ hz: window.__guitar.engine.stringState.map((x) => +x.frequency.toFixed(1)), ringing: window.__guitar.state.ringing.map((r) => r && r.name).join(' ') }));
+  assert((await notesNow()) === 'G2 C3 F3 A#3 D4 G4' && slidBarre.ringing === 'G2 C3 F3 A#3 D4 G4', `the whole barre slides to fret 3: ${JSON.stringify(slidBarre)}`);
+  assert(Math.abs(slidBarre.hz[0] - 98.0) < 0.1 && Math.abs(slidBarre.hz[5] - 392.0) < 0.1, 'the engine follows every string of the sliding barre');
+  await page.screenshot({ path: `${outDir}/05b-barre.png` });
+  await page.mouse.up();
+  await page.waitForTimeout(40);
+  assert((await page.evaluate(() => window.__guitar.state.fingers.size)) === 0 && (await notesNow()) === 'E2 A2 D3 G3 B3 E4', 'lifting the barre frees every string');
+
+  // The strum strip picks strings without fretting them
+  await page.evaluate(() => window.__guitar.player.releaseEverything());
+  await clearRecent();
+  const sp5 = await stripPos(5), sp0 = await stripPos(0);
+  await page.mouse.click(sp5.x, sp5.y);
+  await page.waitForTimeout(60);
+  assert((await recentNames()).join(' ') === 'E4' && (await page.evaluate(() => window.__guitar.state.fingers.size)) === 0, 'a tap on the strum strip picks that string and frets nothing');
+
+  // Hold: fingers stay down after the pointer lifts, so a barre chord can be built one touch at a time
+  await page.click('#tool-hold');
+  await page.mouse.move(b0.x, b0.y);
+  await page.mouse.down();
+  await page.mouse.move(b5.x, b5.y, { steps: 12 });
+  await page.mouse.up();
+  for (const [string, fret] of [[3, 2], [1, 3], [2, 3]]) { const q = await screenPos(string, fret); await page.mouse.click(q.x, q.y); }
+  await page.waitForTimeout(60);
+  const heldShape = await page.evaluate(() => ({ held: [...window.__guitar.state.fingers.values()].filter((f) => f.held).length, pressed: document.getElementById('tool-hold').getAttribute('aria-pressed'), option: document.querySelector('#controls input[type="checkbox"]') !== null }));
+  assert(heldShape.held === 4 && heldShape.pressed === 'true' && (await notesNow()) === 'F2 C3 F3 A3 C4 F4', `F major (E shape) built with Hold: ${JSON.stringify(heldShape)} ${await notesNow()}`);
+  await clearRecent();
+  await page.mouse.move(sp0.x, sp0.y);
+  await page.mouse.down();
+  await page.mouse.move(sp5.x, sp5.y, { steps: 10 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  names = await recentNames();
+  const chordShown = (await page.textContent('#learning .np-chord')).trim();
+  console.log('Held F major strummed on the strip:', names.join(' '), '|', chordShown);
+  assert(names.join(' ') === 'F2 C3 F3 A3 C4 F4' && chordShown === 'Chord: F', `sweeping the strum strip plays the held barre chord: ${names.join(' ')} / ${chordShown}`);
+  await page.screenshot({ path: `${outDir}/05c-hold-barre-chord.png` });
+  await page.click('#tool-mute');
+  await page.waitForTimeout(60);
+  assert((await page.evaluate(() => [...window.__guitar.state.fingers.values()].filter((f) => f.held).length)) === 4 && (await page.evaluate(() => window.__guitar.state.ringing.filter(Boolean).length)) === 0, 'Mute silences the strings but keeps the held shape');
+  const heldG = await screenPos(3, 2);
+  await page.mouse.click(heldG.x, heldG.y);
+  await page.waitForTimeout(40);
+  assert((await notesNow()) === 'F2 C3 F3 G#3 C4 F4', `tapping a held finger lets it go: ${await notesNow()}`);
+  await page.click('#tool-hold');
+  await page.waitForTimeout(40);
+  assert((await page.evaluate(() => window.__guitar.state.fingers.size)) === 0 && (await notesNow()) === 'E2 A2 D3 G3 B3 E4', 'switching Hold off lifts every held finger');
+
   // A fretted note left to ring out survives events that do not concern its string:
   // looking at a chord diagram, choosing another voicing, retuning another string.
   await page.evaluate(() => { const g = window.__guitar; g.player.releaseEverything(); g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.state.setTuning('standard'); window.scrollTo(0, 0); });
@@ -523,6 +601,35 @@ try {
   await page.waitForTimeout(50);
   fingers = await page.evaluate(() => window.__guitar.state.fingers.size);
   assert(fingers === 0, 'all touches lifted');
+
+  // A real two-handed barre chord: one touch lies across fret 1, three more fingers shape F major,
+  // and a fifth touch strums on the strip (five touches is what an iPhone tracks).
+  await page.evaluate(() => { window.__guitar.player.releaseEverything(); window.__guitar.canvas.setScroll(0); });
+  const T = async (string, fret, id) => ({ ...(await screenPos(string, fret)), id });
+  const many = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((pt) => ({ x: pt.x, y: pt.y, id: pt.id })) });
+  const lay0 = await T(0, 1, 1), lay5 = await T(5, 1, 1);
+  await many('touchStart', [lay0]);
+  for (let k = 1; k <= 10; k++) await many('touchMove', [{ x: lay0.x + ((lay5.x - lay0.x) * k) / 10, y: lay0.y + ((lay5.y - lay0.y) * k) / 10, id: 1 }]);
+  const fG = await T(3, 2, 2), fA = await T(1, 3, 3), fD = await T(2, 3, 4);
+  await many('touchStart', [lay5, fG]);
+  await many('touchStart', [lay5, fG, fA]);
+  await many('touchStart', [lay5, fG, fA, fD]);
+  await page.waitForTimeout(60);
+  const shape = await page.evaluate(() => [0, 1, 2, 3, 4, 5].map((i) => window.__guitar.state.noteOn(i).name).join(' '));
+  assert(shape === 'F2 C3 F3 A3 C4 F4', `four touches hold F major as a barre chord: ${shape}`);
+  await clearRecent();
+  const strum0 = await page.evaluate(() => { const c = window.__guitar.canvas; const b = c.canvas.getBoundingClientRect(); const a = c.toScreen(c.pickX + c.pickW / 2, c.layout.stringY(0)); const z = c.toScreen(c.pickX + c.pickW / 2, c.layout.stringY(5)); return { ax: b.left + a.x, ay: b.top + a.y, zx: b.left + z.x, zy: b.top + z.y }; });
+  await many('touchStart', [lay5, fG, fA, fD, { x: strum0.ax, y: strum0.ay, id: 5 }]);
+  for (let k = 1; k <= 8; k++) await many('touchMove', [lay5, fG, fA, fD, { x: strum0.ax + ((strum0.zx - strum0.ax) * k) / 8, y: strum0.ay + ((strum0.zy - strum0.ay) * k) / 8, id: 5 }]);
+  await many('touchEnd', [lay5, fG, fA, fD]);
+  await page.waitForTimeout(200);
+  names = await recentNames();
+  console.log('Five-touch F major barre chord:', names.join(' '));
+  assert(names.join(' ') === 'F2 C3 F3 A3 C4 F4', `the fifth touch strums the barre chord on the strip: ${names.join(' ')}`);
+  await page.screenshot({ path: `${outDir}/04b-touch-barre-chord.png` });
+  await many('touchEnd', []);
+  await page.waitForTimeout(50);
+  assert((await page.evaluate(() => window.__guitar.state.fingers.size)) === 0, 'all five touches lifted');
 
   // Mobile portrait
   await page.setViewportSize({ width: 390, height: 844 });
