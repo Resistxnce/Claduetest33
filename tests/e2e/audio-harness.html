@@ -162,6 +162,31 @@ window.renderNote = async function renderNote(o) {
   };
 };
 
+/**
+ * Generic scripted render: `steps` is a list of [method, ...args] calls on the
+ * engine (e.g. ['pluck', 0, {frequency: 110, when: 0.05}]). Returns level
+ * statistics per window plus whether every sample is finite.
+ */
+window.renderScript = async function renderScript({ steps = [], preset, duration = 2, sampleRate = 48000, window: win = 0.1, presetBeforeInit = false } = {}) {
+  const ctx = new OfflineAudioContext(2, Math.floor(sampleRate * duration), sampleRate);
+  const engine = new GuitarAudioEngine();
+  if (preset && presetBeforeInit) engine.setPreset(preset);
+  await engine.init(ctx);
+  if (preset && !presetBeforeInit) engine.setPreset(preset);
+  for (const [method, ...args] of steps) engine[method](...args);
+  await engine.sync();
+  const buffer = await ctx.startRendering();
+  const data = buffer.getChannelData(0);
+  let finiteSamples = true;
+  for (let i = 0; i < data.length; i++) if (!Number.isFinite(data[i])) { finiteSamples = false; break; }
+  const windows = [];
+  for (let t = 0; t + win <= duration + 1e-9; t += win) windows.push(rms(data.subarray(Math.floor(t * sampleRate), Math.floor((t + win) * sampleRate))));
+  // A cheap fingerprint to compare two renders
+  let sum = 0;
+  for (let i = 0; i < data.length; i += 7) sum += data[i] * ((i % 13) - 6);
+  return { finite: finiteSamples, peak: peak(data), windows, fingerprint: sum };
+};
+
 document.getElementById('log').textContent += '\nready';
 window.__harnessReady = true;
 </script>

@@ -32,15 +32,16 @@ export function makeDistortionCurve(amount, samples = 4096) {
 
 /**
  * Transparent safety limiter curve. Fed through a 0.5 gain so the shaper's
- * [-1, 1] domain covers ±2: linear up to ±0.5, then a smooth tanh knee that
- * never exceeds ±1.
+ * [-1, 1] domain covers ±2: exactly linear up to ±0.8 (normal playing never
+ * touches it), then a smooth tanh knee that never exceeds ±1.
  */
-export function makeSoftLimiterCurve(samples = 4096) {
+export function makeSoftLimiterCurve(samples = 8192) {
   const curve = new Float32Array(samples);
+  const knee = 0.8;
   for (let i = 0; i < samples; i++) {
     const x = ((i / (samples - 1)) * 2 - 1) * 2; // -2 .. 2
     const ax = Math.abs(x);
-    const y = ax <= 0.5 ? ax : 0.5 + 0.5 * Math.tanh((ax - 0.5) / 0.5);
+    const y = ax <= knee ? ax : knee + (1 - knee) * Math.tanh((ax - knee) / (1 - knee));
     curve[i] = Math.sign(x) * y;
   }
   return curve;

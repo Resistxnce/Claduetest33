@@ -1,13 +1,13 @@
 /**
- * GuitarAudioEngine — owns the AudioContext, six string voices (AudioWorklet
- * nodes running the waveguide model in string-processor.js) and the amp /
- * effects chain.
+ * GuitarAudioEngine — owns the AudioContext, the six-string worklet (the
+ * waveguide model in string-processor.js, including the bridge coupling
+ * between strings) and the amp / effects chain.
  *
- *   strings[0..5] ─► stringMix ─► pickup EQ ─► body EQ ─► preGain ─► shaper ─► postGain
- *        ▲              │                                                  │
- *        └─ coupling ◄──┘ (sympathetic resonance, −45 dB, low-passed)      ▼
- *   tone LPF ─► cabinet ─► chorus ─► delay ─► reverb ─► master ─► limiter ─► analyser ─► out
+ *   strings (one AudioWorkletNode, mono) ─► pickup EQ ─► body EQ ─► preGain ─► shaper ─► postGain
+ *   ─► DC filter ─► tone LPF ─► cabinet ─► chorus ─► delay ─► reverb ─► master ─► soft limiter ─► analyser ─► out
  *
+ * The graph is a straight chain (no feedback cycles outside the delay effect's
+ * own DelayNode loop), so it renders identically in every browser.
  * All timing uses AudioContext time; `when` arguments default to "now".
  * The engine is theory-agnostic: callers pass frequencies and vibrating
  * length fractions (which the processor needs for pickup/pick positions).
@@ -22,9 +22,15 @@ const STRING_T60 = [8.0, 7.5, 7.0, 5.5, 5.0, 4.5];               // seconds to �
 const STRING_BRIGHTNESS = [0.50, 0.47, 0.44, 0.30, 0.26, 0.22];   // loop low-pass coefficient (higher = darker)
 const STRING_DISPERSION = [-0.12, -0.10, -0.08, -0.04, -0.03, -0.02]; // all-pass coefficient (stiffness)
 const STRING_OUT_GAIN = [0.62, 0.62, 0.64, 0.72, 0.78, 0.84];
+/** Fraction of the summed string motion absorbed by the shared bridge each sample (sympathetic resonance). */
+const BRIDGE_COUPLING = 0.0003;
 
-/** Pickup positions as a fraction of the scale length measured from the bridge (Stratocaster layout). */
-export const PICKUP_DISTANCES = Object.freeze({ bridge: 0.0627, middle: 0.153, neck: 0.247 });
+/**
+ * Pickup positions as a fraction of the scale length measured from the bridge.
+ * This is a 24-fret layout: the neck pickup sits a little closer to the bridge
+ * than on a 21/22-fret guitar because the fingerboard reaches further.
+ */
+export const PICKUP_DISTANCES = Object.freeze({ bridge: 0.06, middle: 0.135, neck: 0.21 });
 
 export const PICKUP_SELECTOR = Object.freeze([
   { position: 1, name: 'Bridge', short: 'B', pickups: ['bridge'], resonance: 4300, q: 2.4 },
@@ -74,7 +80,7 @@ export class GuitarAudioEngine extends EventTarget {
     this.pickupPosition = 4;
     this.delayTimeId = 'dotted';
     this.palmMute = false;
-    this.strings = [];
+    this.stringsNode = null;
     // Default open-string pitches (standard tuning); the UI overrides these from the active tuning.
     const defaults = [82.4069, 110, 146.8324, 195.9977, 246.9417, 329.6276];
     this.stringState = Array.from({ length: STRING_COUNT }, (_, i) => ({ frequency: defaults[i], lengthFraction: 1, ringing: false, lastPluck: 0 }));
@@ -101,13 +107,22 @@ export class GuitarAudioEngine extends EventTarget {
     if (this.initializing) return this.initializing;
     this.initializing = (async () => {
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
-      await this.ctx.audioWorklet.addModule(this.moduleUrl);
-      this.buildGraph();
-      this.applyAllParams();
-      this.setPickupSelector(this.pickupPosition, true);
-      this.applyBody(this.body);
+      const ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
+      try {
+        if (!ctx.audioWorklet) throw new Error('AudioWorklet is not available (needs a secure context and a modern browser)');
+        await ctx.audioWorklet.addModule(this.moduleUrl);
+        this.ctx = ctx;
+        this.buildGraph();
+      } catch (err) {
+        // Leave the engine in a state where the next user gesture can try again.
+        this.initializing = null;
+        this.ctx = null;
+        if (!existingContext && typeof ctx.close === 'function') ctx.close().catch(() => {});
+        throw err;
+      }
       this.ready = true;
+      this.applyAllParams();
+      this.applyBody(this.body); // also applies the pickup selector for the electric body
       this.dispatchEvent(new CustomEvent('ready'));
       return this;
     })();
@@ -123,41 +138,27 @@ export class GuitarAudioEngine extends EventTarget {
 
   buildGraph() {
     const ctx = this.ctx;
+    const selector = PICKUP_SELECTOR.find((p) => p.position === this.pickupPosition);
+    // All six strings and their bridge coupling live in one worklet.
+    this.stringsNode = new AudioWorkletNode(ctx, 'guitar-strings-processor', {
+      numberOfInputs: 0,
+      numberOfOutputs: 1,
+      outputChannelCount: [1],
+      processorOptions: {
+        strings: STRING_T60.map((t60, i) => ({ t60, brightness: STRING_BRIGHTNESS[i], dispersion: STRING_DISPERSION[i], outGain: STRING_OUT_GAIN[i] })),
+        pickupDistances: selector.pickups.map((p) => PICKUP_DISTANCES[p]),
+        pickupWeights: selector.pickups.map(() => (selector.pickups.length > 1 ? 0.72 : 1)),
+        coupling: BRIDGE_COUPLING,
+      },
+    });
+    this.stringsNode.onprocessorerror = (e) => console.error('String processor error', e);
+    this.stringsNode.port.onmessage = (e) => this.onStringMessage(e.data);
+    for (let i = 0; i < STRING_COUNT; i++) {
+      this.post(i, { type: 'pitch', frequency: this.stringState[i].frequency, glide: 0, lengthFraction: this.stringState[i].lengthFraction });
+    }
     this.stringMix = ctx.createGain();
     this.stringMix.gain.value = 1;
-
-    // Sympathetic coupling: a quiet, low-passed copy of all strings feeds every string.
-    this.couplingGain = ctx.createGain();
-    this.couplingGain.gain.value = 0.0005;
-    this.couplingFilter = ctx.createBiquadFilter();
-    this.couplingFilter.type = 'lowpass';
-    this.couplingFilter.frequency.value = 1500;
-    this.couplingFilter.Q.value = 0.5;
-    this.stringMix.connect(this.couplingGain).connect(this.couplingFilter);
-
-    this.strings = [];
-    for (let i = 0; i < STRING_COUNT; i++) {
-      const node = new AudioWorkletNode(ctx, 'guitar-string-processor', {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        outputChannelCount: [1],
-        processorOptions: {
-          stringIndex: i,
-          t60: STRING_T60[i],
-          brightness: STRING_BRIGHTNESS[i],
-          dispersion: STRING_DISPERSION[i],
-          outGain: STRING_OUT_GAIN[i],
-          pickupDistances: [PICKUP_DISTANCES.neck],
-          pickupWeights: [1],
-        },
-      });
-      node.onprocessorerror = (e) => console.error('String processor error', i, e);
-      node.port.onmessage = (e) => this.onStringMessage(i, e.data);
-      node.port.postMessage({ type: 'pitch', frequency: this.stringState[i].frequency, glide: 0, lengthFraction: this.stringState[i].lengthFraction });
-      node.connect(this.stringMix);
-      this.couplingFilter.connect(node);
-      this.strings.push(node);
-    }
+    this.stringsNode.connect(this.stringMix);
 
     // Pickup: resonant low-pass (magnetic pickup + cable) and rumble filter.
     this.pickupFilter = ctx.createBiquadFilter();
@@ -183,7 +184,7 @@ export class GuitarAudioEngine extends EventTarget {
     // Amp: pre-gain → wave shaper → post-gain
     this.preGain = ctx.createGain();
     this.shaper = ctx.createWaveShaper();
-    this.shaper.oversample = '4x';
+    this.shaper.oversample = 'none'; // switched to 4x only when the amp is driven hard (see applyDrive)
     this.shaper.curve = makeDistortionCurve(0);
     this.postGain = ctx.createGain();
     // Asymmetric clipping leaves a DC component behind; remove it.
@@ -211,19 +212,13 @@ export class GuitarAudioEngine extends EventTarget {
     this.delay = this.buildDelay();
     this.reverb = this.buildReverb();
 
-    // Master: volume → gentle glue compressor → soft safety limiter
+    // Master: volume → zero-latency soft safety limiter (linear in normal use)
     this.master = ctx.createGain();
-    this.limiter = ctx.createDynamicsCompressor();
-    this.limiter.threshold.value = -14;
-    this.limiter.knee.value = 18;
-    this.limiter.ratio.value = 3;
-    this.limiter.attack.value = 0.004;
-    this.limiter.release.value = 0.2;
     this.safetyIn = ctx.createGain();
     this.safetyIn.gain.value = 0.5;
     this.safety = ctx.createWaveShaper();
     this.safety.curve = makeSoftLimiterCurve();
-    this.safety.oversample = '2x';
+    this.safety.oversample = 'none';
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 1024;
     this.analyser.smoothingTimeConstant = 0.6;
@@ -245,7 +240,7 @@ export class GuitarAudioEngine extends EventTarget {
     this.chorus.output.connect(this.delay.input);
     this.delay.output.connect(this.reverb.input);
     this.reverb.output.connect(this.master);
-    this.master.connect(this.limiter).connect(this.safetyIn).connect(this.safety).connect(this.analyser).connect(ctx.destination);
+    this.master.connect(this.safetyIn).connect(this.safety).connect(this.analyser).connect(ctx.destination);
   }
 
   buildChorus() {
@@ -316,7 +311,9 @@ export class GuitarAudioEngine extends EventTarget {
 
   setParam(id, value) {
     if (!(id in this.params)) throw new Error(`Unknown parameter ${id}`);
-    this.params[id] = clamp(Number(value), 0, 1);
+    const v = Number(value);
+    if (!Number.isFinite(v)) return; // ignore garbage instead of poisoning the audio graph
+    this.params[id] = clamp(v, 0, 1);
     if (this.ready) this.applyParam(id);
     this.dispatchEvent(new CustomEvent('param', { detail: { id, value: this.params[id] } }));
   }
@@ -331,7 +328,8 @@ export class GuitarAudioEngine extends EventTarget {
     const v = this.params[id];
     switch (id) {
       case 'volume':
-        setParamSmooth(this.master.gain, Math.pow(v, 1.6) * 1.1, ctx);
+        // Leaves headroom so ordinary playing stays inside the limiter's linear range.
+        setParamSmooth(this.master.gain, Math.pow(v, 1.6) * 0.62, ctx);
         break;
       case 'tone':
         setParamSmooth(this.toneFilter.frequency, expMap(420, 12000, v), ctx, 0.03);
@@ -341,11 +339,13 @@ export class GuitarAudioEngine extends EventTarget {
         // (a saturated signal has a much higher RMS than a clean one).
         const drive = 1 + v * v * 60;
         setParamSmooth(this.preGain.gain, drive, ctx);
-        setParamSmooth(this.postGain.gain, Math.pow(drive, -0.28), ctx);
+        setParamSmooth(this.postGain.gain, Math.pow(drive, -0.2), ctx);
+        this.applyDrive();
         break;
       }
       case 'distortion':
         this.shaper.curve = makeDistortionCurve(v);
+        this.applyDrive();
         break;
       case 'reverb':
         setParamSmooth(this.reverb.wet.gain, v * 0.9, ctx, 0.05);
@@ -361,6 +361,17 @@ export class GuitarAudioEngine extends EventTarget {
       default:
         break;
     }
+  }
+
+  /**
+   * Oversample the amp stage only when it is driven hard enough to alias.
+   * Clean settings stay at zero added latency; overdriven ones trade ~4 ms
+   * for clean high notes.
+   */
+  applyDrive() {
+    const heavy = this.params.distortion > 0.25 || this.params.gain > 0.4;
+    const mode = heavy ? '4x' : 'none';
+    if (this.shaper.oversample !== mode) this.shaper.oversample = mode;
   }
 
   setDelayTime(id) {
@@ -384,7 +395,7 @@ export class GuitarAudioEngine extends EventTarget {
       const distances = sel.pickups.map((p) => PICKUP_DISTANCES[p]);
       const weights = distances.map(() => (distances.length > 1 ? 0.72 : 1));
       if (this.body === 'electric') {
-        for (const node of this.strings) node.port.postMessage({ type: 'config', pickupDistances: distances, pickupWeights: weights });
+        this.postAll({ type: 'config', pickupDistances: distances, pickupWeights: weights });
         setParamSmooth(this.pickupFilter.frequency, sel.resonance, this.ctx, 0.03);
         setParamSmooth(this.pickupFilter.Q, sel.q, this.ctx, 0.03);
       }
@@ -403,13 +414,11 @@ export class GuitarAudioEngine extends EventTarget {
       setParamSmooth(this.pickupFilter.frequency, 16000, ctx, 0.03);
       setParamSmooth(this.pickupFilter.Q, 0.5, ctx, 0.03);
       setParamSmooth(this.cabLow.frequency, 11000, ctx, 0.03);
-      for (const node of this.strings) {
-        node.port.postMessage({ type: 'config', pickupDistances: [0.21], pickupWeights: [1.15], brightnessScale: 0.72, clickLevel: 0.14 });
-      }
+      this.postAll({ type: 'config', pickupDistances: [0.19], pickupWeights: [1.15], brightnessScale: 0.72, clickLevel: 0.14 });
     } else {
       this.bodyFilters.forEach((f) => setParamSmooth(f.gain, 0, ctx, 0.05));
       setParamSmooth(this.cabLow.frequency, 6500, ctx, 0.03);
-      for (const node of this.strings) node.port.postMessage({ type: 'config', brightnessScale: 1, clickLevel: 0.08 });
+      this.postAll({ type: 'config', brightnessScale: 1, clickLevel: 0.08 });
       this.setPickupSelector(this.pickupPosition, true);
     }
     this.dispatchEvent(new CustomEvent('body', { detail: { body } }));
@@ -423,8 +432,7 @@ export class GuitarAudioEngine extends EventTarget {
     this.pickupPosition = preset.pickup;
     if (this.ready) {
       this.applyAllParams();
-      this.applyBody(preset.body);
-      this.setPickupSelector(preset.pickup, true);
+      this.applyBody(preset.body); // applies the pickup selector too
     }
     this.dispatchEvent(new CustomEvent('preset', { detail: { preset, params: this.getParams() } }));
   }
@@ -438,8 +446,12 @@ export class GuitarAudioEngine extends EventTarget {
   /* ------------------------------------------------------------------ */
 
   post(stringIdx, msg) {
-    const node = this.strings[stringIdx];
-    if (node) node.port.postMessage(msg);
+    if (this.stringsNode) this.stringsNode.port.postMessage({ ...msg, string: stringIdx });
+  }
+
+  /** Send a message addressed to every string (config / panic). */
+  postAll(msg) {
+    if (this.stringsNode) this.stringsNode.port.postMessage(msg);
   }
 
   /**
@@ -474,8 +486,8 @@ export class GuitarAudioEngine extends EventTarget {
     const damp = damping ?? (this.palmMute ? 0.62 : 0);
     this.post(stringIdx, {
       type: 'pluck',
-      velocity: clamp(velocity, 0.02, 1),
-      pickPosition: clamp(pickPosition, 0.03, 0.45),
+      velocity: clamp(Number.isFinite(velocity) ? velocity : 0.8, 0.02, 1),
+      pickPosition: clamp(Number.isFinite(pickPosition) ? pickPosition : 0.14, 0.03, 0.45),
       damping: damp,
       frequency: st.frequency,
       lengthFraction: st.lengthFraction,
@@ -504,7 +516,7 @@ export class GuitarAudioEngine extends EventTarget {
     this.post(stringIdx, { type: 'noise', level, duration: 0.035, time: when });
   }
 
-  onStringMessage(stringIdx, msg) {
+  onStringMessage(msg) {
     if (msg && msg.type === 'pong') {
       const resolve = this.pending.get(msg.id);
       if (resolve) { this.pending.delete(msg.id); resolve(); }
@@ -512,16 +524,16 @@ export class GuitarAudioEngine extends EventTarget {
   }
 
   /**
-   * Resolves once every string processor has received all messages posted so
+   * Resolves once the string processor has received every message posted so
    * far (useful before offline rendering, or to detect a dead worklet).
    */
   sync() {
     if (!this.ready) return Promise.resolve();
-    return Promise.all(this.strings.map((node) => new Promise((resolve) => {
+    return new Promise((resolve) => {
       const id = ++this.pingId;
       this.pending.set(id, resolve);
-      node.port.postMessage({ type: 'ping', id });
-    })));
+      this.stringsNode.port.postMessage({ type: 'ping', id });
+    });
   }
 
   /** Mute all strings immediately. */
@@ -530,7 +542,8 @@ export class GuitarAudioEngine extends EventTarget {
   }
 
   panic() {
-    for (let i = 0; i < STRING_COUNT; i++) this.post(i, { type: 'panic' });
+    this.postAll({ type: 'panic' });
+    for (const st of this.stringState) st.ringing = false;
   }
 
   /** Output level 0..1 (RMS) for meters. */

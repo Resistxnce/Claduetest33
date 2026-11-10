@@ -23,8 +23,8 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/theory/scales.js` | Scale formulas and fretboard positions |
 | `src/theory/chords.js` | Chord formulas, naming, detection, voicing validation + generator for any tuning, curated-library access |
 | `src/theory/chord-voicings.js` | Curated standard-tuning voicings: `OPEN_VOICINGS` (keyed `${rootPc}:${quality}`) and `MOVABLE_SHAPES` |
-| `src/audio/string-processor.js` | AudioWorklet: extended Karplus-Strong / waveguide string (one node per string) |
-| `src/audio/engine.js` | `GuitarAudioEngine`: context, six string nodes, sympathetic coupling, pickup EQ, amp (gain, distortion), tone, cabinet, chorus, delay, reverb, master, presets |
+| `src/audio/string-processor.js` | AudioWorklet: six extended Karplus-Strong / waveguide strings in one processor, coupled through a passive bridge |
+| `src/audio/engine.js` | `GuitarAudioEngine`: context, strings worklet, pickup EQ, amp (gain, distortion), tone, cabinet, chorus, delay, reverb, master, soft limiter, presets |
 | `src/audio/effects.js` | Distortion curves, reverb impulse generation, helpers |
 | `src/audio/presets.js` | Tone presets (clean, overdrive, distortion, acoustic) |
 | `src/state.js` | Observable app state (tuning, capo, fingers, chord/scale overlays, options) |
@@ -65,11 +65,16 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 ## Audio signal flow
 
 ```
-string[0..5] (AudioWorklet) ─┬─► stringMix ─► pickup EQ ─► preGain ─► waveshaper ─► postGain
-                             │                                                     │
-                             └◄── coupling (−40 dB sympathetic resonance) ◄────────┘ (from stringMix)
-   … ─► tone (low-pass) ─► cabinet/body EQ ─► chorus ─► delay ─► reverb ─► master ─► limiter ─► output
+strings (one AudioWorklet, six waveguide voices + passive bridge coupling) ─► pickup EQ ─► body EQ
+  ─► preGain ─► waveshaper (4× oversampled only when driven hard) ─► postGain ─► DC filter
+  ─► tone (low-pass) ─► cabinet ─► chorus ─► delay ─► reverb ─► master ─► soft limiter ─► output
 ```
+
+The graph is a straight chain: sympathetic resonance is computed inside the
+worklet (each sample the bridge takes a small, low-passed fraction of the summed
+string motion out of every string's reflection), so there is no feedback cycle
+in the node graph and the coupling can never add energy. The clean path adds no
+latency beyond the device's own; the limiter is linear below 0.8 of full scale.
 
 ## Testing
 

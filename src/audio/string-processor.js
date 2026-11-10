@@ -1,40 +1,50 @@
 /**
- * GuitarStringProcessor — an AudioWorkletProcessor modelling one guitar string.
+ * GuitarStringsProcessor — one AudioWorkletProcessor modelling all six strings.
  *
- * Physical model (extended Karplus-Strong / digital waveguide, after Jaffe & Smith):
+ * Per string (extended Karplus-Strong / digital waveguide, after Jaffe & Smith):
  *
  *   excitation ──►(+)──► delay line (fractional, cubic interpolation) ──► loop low-pass
  *                  ▲      (length = period − filter phase delay)              │
  *                  │                                                          ▼
- *                  └──────────── × loop gain ◄──── dispersion all-pass ◄──────┘
+ *                  └─(− bridge)─── × loop gain ◄──── dispersion all-pass ◄────┘
  *
  *   output = Σ pickups [ w(t − p·P/2) − w(t − (P − p·P/2)) ]   (pickup-position comb)
  *
  *  - Pitch: the loop length is set so that period = sampleRate / f0 *including*
  *    the phase delay of the loop filters at f0 (computed analytically), so the
- *    synthesized pitch matches equal temperament, not an approximation of it.
- *  - Pluck: a burst of low-passed noise shaped by a pick-position comb filter.
- *    Velocity controls level, brightness, pick-click level and a brief sharp
- *    pitch bend (tension modulation) that relaxes over ~50 ms.
- *  - Damping: loop gain derived from a target T60; "release" and "mute" simply
- *    shorten the T60 so the string rings down the way a muted string does.
- *  - Slides / hammer-ons: the loop length glides to the new value.
- *  - Sympathetic resonance: the node input (a quiet mix of the other strings)
- *    is injected into the loop.
+ *    synthesized pitch matches equal temperament at any sample rate.
+ *  - Pluck: a low-passed impulse (1/k velocity-wave spectrum) plus a little pick
+ *    noise, shaped by a pick-position comb. Velocity controls level, brightness,
+ *    pick-click level and a brief sharp pitch bend that relaxes over ~50 ms.
+ *  - Damping: loop gain derived from a target T60; "release" and "mute" shorten
+ *    the T60 so the string rings down the way a muted string does. Strings
+ *    nobody is playing rest at a light "idle" damping.
+ *  - Slides / hammer-ons / bends: the loop length and the pickup taps glide
+ *    together to the new values (no discontinuity in the read-out).
+ *  - Sympathetic resonance: the strings share a bridge. Each sample the bridge
+ *    takes a small fraction of the summed string motion and that same amount is
+ *    removed from every string's reflection (v = y − c·lowpass(Σy)). The
+ *    coupling is passive — it can only move or absorb energy, never create it —
+ *    so it is stable for any combination of notes, and it lives entirely inside
+ *    this processor (no feedback cycle in the audio graph).
  *
- * Messages (port.postMessage):
- *   { type:'config', ... }             per-string parameters (t60, brightness, dispersion, pickups…)
- *   { type:'pitch', frequency, glide, lengthFraction, time? }
- *   { type:'pluck', velocity, pickPosition, damping, frequency?, lengthFraction?, time? }
- *   { type:'damp', amount, time? }     0 = ring freely, 1 = full mute
- *   { type:'noise', level, duration, time? }  fret/slide noise burst
- *   { type:'panic' }                   clear everything
- *   { type:'ping', id }                echoed back as { type:'pong', id } once all earlier messages were received
+ * Messages (port.postMessage); `string` is the string index 0..5 (omit on
+ * 'config'/'panic' to address all strings):
+ *   { type:'config', string?, ... }            parameters (t60, brightness, pickups, coupling…)
+ *   { type:'pitch', string, frequency, glide, lengthFraction, time? }
+ *   { type:'pluck', string, velocity, pickPosition, damping, frequency?, lengthFraction?, time? }
+ *   { type:'damp', string, amount, time? }     0 = ring freely, 1 = full mute
+ *   { type:'noise', string, level, duration, time? }  fret/slide noise burst
+ *   { type:'panic' }                           clear everything
+ *   { type:'ping', id }                        echoed back as { type:'pong', id } once all earlier messages were received
  */
 
 const TWO_PI = Math.PI * 2;
 const BUFFER_SIZE = 8192; // samples; enough for ~5.8 Hz at 48 kHz
 const MASK = BUFFER_SIZE - 1;
+const STRING_COUNT = 6;
+const MAX_LOOP_GAIN = 0.99995;
+const finite = (v, fallback) => (Number.isFinite(v) ? v : fallback);
 
 class Xorshift {
   constructor(seed) { this.s = seed >>> 0 || 0x9e3779b9; }
@@ -50,23 +60,23 @@ class Xorshift {
 
 /** Phase delay (in samples) at angular frequency `omega` of the loop filters. */
 function loopFilterPhaseDelay(omega, lpA, apC) {
-  // one-pole low-pass  H1 = (1-a) / (1 - a e^{-jw})
+  // one-pole low-pass  H1 = (1-a) / (1 - a e^{-jw});  angle(H1) = -atan2(a sin w, 1 - a cos w)
   const cw = Math.cos(omega), sw = Math.sin(omega);
-  let re = 1 - lpA * cw, im = lpA * sw; // denominator of H1 (conjugate handled below)
-  // angle(H1) = -angle(1 - a e^{-jw}) = -atan2(a sin w, 1 - a cos w)
-  let phase = -Math.atan2(im, re);
+  let phase = -Math.atan2(lpA * sw, 1 - lpA * cw);
   // first-order all-pass  H2 = (c + e^{-jw}) / (1 + c e^{-jw})
-  const nRe = apC + cw, nIm = -sw;
-  const dRe = 1 + apC * cw, dIm = -apC * sw;
-  phase += Math.atan2(nIm, nRe) - Math.atan2(dIm, dRe);
+  phase += Math.atan2(-sw, apC + cw) - Math.atan2(-apC * sw, 1 + apC * cw);
   return -phase / omega;
 }
 
-class GuitarStringProcessor extends AudioWorkletProcessor {
-  constructor(options) {
-    super();
-    const o = (options && options.processorOptions) || {};
-    this.index = o.stringIndex ?? 0;
+/** Magnitude of the one-pole loop low-pass at angular frequency `omega`. */
+function lowpassMagnitude(omega, a) {
+  return (1 - a) / Math.sqrt(1 - 2 * a * Math.cos(omega) + a * a);
+}
+
+/** One string: delay loop, excitation, pickup taps. */
+class StringVoice {
+  constructor(index, o = {}) {
+    this.index = index;
     this.buf = new Float32Array(BUFFER_SIZE);
     this.write = 0;
 
@@ -77,129 +87,101 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
     this.lp = 0;
     this.apX = 0; this.apY = 0;
     this.loopGain = 0.99;
-    this.lpA = 0.4;      // loop low-pass coefficient (higher = darker / faster HF decay)
+    this.lpA = 0.4;      // loop low-pass coefficient at this sample rate
     this.apC = -0.05;    // dispersion all-pass coefficient (negative = stiff string)
     this.frequency = 110;
     this.lengthFraction = 1;
-    this.damping = 0;    // 0 = ringing, 1 = fully muted
+    this.period = sampleRate / 110;
 
-    // Per-string character
+    // Per-string character (brightness is specified for 48 kHz and converted)
     this.t60Ring = o.t60 ?? 5;
     this.t60Muted = 0.04;
     this.baseLpA = o.brightness ?? 0.4;
     this.baseApC = o.dispersion ?? -0.05;
     this.outGain = o.outGain ?? 0.5;
-    this.couplingGain = o.couplingGain ?? 1;
-    this.pickupDistances = o.pickupDistances ?? [0.063]; // fraction of scale length from the bridge
+    this.pickupDistances = o.pickupDistances ?? [0.06]; // fraction of scale length from the bridge
     this.pickupWeights = o.pickupWeights ?? [1];
     this.clickLevel = o.clickLevel ?? 0.08;
     this.brightnessScale = 1;
+    this.idleDamping = o.idleDamping ?? 0.5; // strings nobody is playing ring only briefly in sympathy
+    this.damping = this.idleDamping;         // 0 = ringing, 1 = fully muted
 
-    // Pickup taps (samples behind the write head)
+    // Pickup taps (samples behind the write head; fractional, glide with the pitch)
     this.tapA = [10]; this.tapB = [190];
+    this.tapATarget = [10]; this.tapBTarget = [190];
 
-    // Excitation / click / noise bursts
+    // Excitation / click bursts and scratch space (no allocation while playing)
     this.exc = new Float32Array(4096); this.excLen = 0; this.excPos = 0;
+    this.scratch = new Float32Array(4096);
     this.click = new Float32Array(512); this.clickLen = 0; this.clickPos = 0;
 
     // Output DC blocker
     this.dcX = 0; this.dcY = 0;
 
-    this.rng = new Xorshift(0x1234567 + this.index * 7919);
-    this.events = [];
+    this.rng = new Xorshift(0x1234567 + index * 7919);
     this.active = false;
-    this.quietBlocks = 0;
-
-    this.port.onmessage = (e) => this.enqueue(e.data);
+    this.sounding = false; // true while a played note is meant to ring (not muted / idle)
+    this.quiet = 0;
+    this.peak = 0;
     this.setPitch(this.frequency, 0, 1);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Messages                                                           */
-  /* ------------------------------------------------------------------ */
-
-  enqueue(msg) {
-    if (!msg) return;
-    if (msg.type === 'config') { this.configure(msg); return; }
-    if (msg.type === 'panic') { this.panic(); return; }
-    if (msg.type === 'ping') { this.port.postMessage({ type: 'pong', id: msg.id }); return; }
-    const time = typeof msg.time === 'number' ? msg.time : -1;
-    if (time <= currentTime) { this.handle(msg); return; }
-    // keep sorted by time
-    let i = this.events.length;
-    while (i > 0 && this.events[i - 1].time > time) i--;
-    this.events.splice(i, 0, { ...msg, time });
-  }
-
   configure(c) {
-    if (c.t60 !== undefined) this.t60Ring = c.t60;
-    if (c.brightness !== undefined) this.baseLpA = c.brightness;
-    if (c.brightnessScale !== undefined) this.brightnessScale = c.brightnessScale;
-    if (c.dispersion !== undefined) this.baseApC = c.dispersion;
-    if (c.outGain !== undefined) this.outGain = c.outGain;
-    if (c.couplingGain !== undefined) this.couplingGain = c.couplingGain;
-    if (c.clickLevel !== undefined) this.clickLevel = c.clickLevel;
-    if (c.pickupDistances) { this.pickupDistances = c.pickupDistances.slice(); this.pickupWeights = (c.pickupWeights || c.pickupDistances.map(() => 1)).slice(); }
-    this.setPitch(this.frequency, 0, this.lengthFraction, true);
-  }
-
-  handle(msg) {
-    switch (msg.type) {
-      case 'pitch':
-        this.setPitch(msg.frequency, msg.glide ?? 0, msg.lengthFraction ?? this.lengthFraction);
-        break;
-      case 'pluck':
-        if (msg.frequency) this.setPitch(msg.frequency, 0, msg.lengthFraction ?? this.lengthFraction);
-        this.pluck(msg.velocity ?? 0.8, msg.pickPosition ?? 0.13, msg.damping ?? 0);
-        break;
-      case 'damp':
-        this.setDamping(msg.amount ?? 1);
-        break;
-      case 'noise':
-        this.noiseBurst(msg.level ?? 0.03, msg.duration ?? 0.03);
-        break;
-      default:
-        break;
+    if (Number.isFinite(c.t60) && c.t60 > 0) this.t60Ring = c.t60;
+    if (Number.isFinite(c.brightness)) this.baseLpA = c.brightness;
+    if (Number.isFinite(c.brightnessScale)) this.brightnessScale = c.brightnessScale;
+    if (Number.isFinite(c.dispersion)) this.baseApC = c.dispersion;
+    if (Number.isFinite(c.outGain)) this.outGain = c.outGain;
+    if (Number.isFinite(c.clickLevel)) this.clickLevel = c.clickLevel;
+    if (Number.isFinite(c.idleDamping)) this.idleDamping = c.idleDamping;
+    if (Array.isArray(c.pickupDistances) && c.pickupDistances.length && c.pickupDistances.every(Number.isFinite)) {
+      this.pickupDistances = c.pickupDistances.slice();
+      const w = Array.isArray(c.pickupWeights) && c.pickupWeights.length === c.pickupDistances.length ? c.pickupWeights : c.pickupDistances.map(() => 1);
+      this.pickupWeights = w.map((x) => finite(x, 1));
     }
+    this.recomputeLoop();
+    // Pickup changes crossfade by gliding the taps for a few milliseconds.
+    this.updateTaps(this.active ? 0.006 : 0);
   }
 
   panic() {
     this.buf.fill(0);
     this.lp = 0; this.apX = 0; this.apY = 0;
+    this.dcX = 0; this.dcY = 0;
     this.excLen = this.excPos = 0;
     this.clickLen = this.clickPos = 0;
-    this.events.length = 0;
     this.active = false;
+    this.quiet = 0;
+    this.damping = this.idleDamping;
+    this.recomputeLoop();
+    this.curDelay = this.targetDelay;
+    this.glideCoef = 1;
+    this.updateTaps(0);
   }
-
-  /* ------------------------------------------------------------------ */
-  /* Model control                                                      */
-  /* ------------------------------------------------------------------ */
 
   /**
    * Set the loop so that it resonates at `frequency` Hz.
-   * `glide` (seconds) is the time constant of the pitch transition.
+   * `glide` (seconds) is the time the pitch transition takes.
    */
-  setPitch(frequency, glide, lengthFraction, keepCurrent = false) {
-    if (!(frequency > 10)) return;
+  setPitch(frequency, glide, lengthFraction) {
+    if (!(frequency > 10) || !Number.isFinite(frequency)) return;
+    frequency = Math.min(frequency, sampleRate / 8);
     this.frequency = frequency;
-    this.lengthFraction = Math.max(0.05, Math.min(1, lengthFraction || 1));
+    this.lengthFraction = Math.max(0.05, Math.min(1, finite(lengthFraction, this.lengthFraction) || 1));
     this.period = sampleRate / frequency;
-    const wasActive = this.active;
     const previousDelay = this.curDelay;
     this.recomputeLoop();
-    if (!keepCurrent) {
-      if (glide <= 0 || !wasActive) {
-        this.curDelay = this.targetDelay;
-        this.glideCoef = 1;
-      } else {
-        // Glide from where the string currently is towards the new length:
-        // exponential approach reaching ~98% of the change in `glide` seconds.
-        this.curDelay = previousDelay;
-        this.glideCoef = 1 - Math.exp(-4 / (glide * sampleRate));
-      }
+    const gliding = glide > 0 && this.active;
+    if (gliding) {
+      // Glide from where the string currently is towards the new length:
+      // exponential approach reaching ~98% of the change in `glide` seconds.
+      this.curDelay = previousDelay;
+      this.glideCoef = 1 - Math.exp(-4 / (glide * sampleRate));
+    } else {
+      this.curDelay = this.targetDelay;
+      this.glideCoef = 1;
     }
-    this.updateTaps(this.period);
+    this.updateTaps(gliding ? glide : 0);
   }
 
   /**
@@ -208,58 +190,83 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
    */
   recomputeLoop() {
     const frequency = this.frequency;
-    const period = this.period || (sampleRate / frequency);
+    const period = this.period;
     // Loop low-pass gets a touch brighter for higher notes so short strings keep sparkle.
     const brightnessComp = Math.min(1, Math.max(0.55, 1 - (frequency - 150) / 1800));
-    const ringLpA = this.baseLpA * this.brightnessScale * brightnessComp;
-    // Muting also darkens the string (flesh damps high partials first).
-    this.lpA = Math.min(0.95, Math.max(0.02, ringLpA + this.damping * 0.35));
+    // Brightness values are designed at 48 kHz; keep the same analogue corner at any rate.
+    const design = Math.min(0.95, Math.max(0.02, this.baseLpA * this.brightnessScale * brightnessComp + this.damping * 0.35));
+    this.lpA = Math.min(0.98, Math.pow(design, 48000 / sampleRate));
     this.apC = this.baseApC;
     // Interpolate T60 geometrically between ringing and muted values.
     const t60 = Math.exp(Math.log(this.t60Ring) * (1 - this.damping) + Math.log(this.t60Muted) * this.damping);
-    // Loop gain per pass so that amplitude falls 60 dB in t60 seconds.
-    this.loopGain = Math.pow(10, -3 * period / (t60 * sampleRate));
-    // Loop length compensated for the filters' phase delay at the fundamental.
+    // Loop gain per pass so that the fundamental falls 60 dB in t60 seconds,
+    // making up for what the loop low-pass removes at f0 (never reaching 1).
     const omega = TWO_PI * frequency / sampleRate;
+    const target = Math.pow(10, -3 * period / (t60 * sampleRate));
+    this.loopGain = Math.min(MAX_LOOP_GAIN, target / lowpassMagnitude(omega, this.lpA));
+    // Loop length compensated for the filters' phase delay at the fundamental.
     const filterDelay = loopFilterPhaseDelay(omega, this.lpA, this.apC);
     const delay = Math.max(2.5, period - filterDelay);
     if (this.curDelay === this.targetDelay) this.curDelay = delay; // not gliding: follow exactly
     this.targetDelay = delay;
   }
 
-  updateTaps(period) {
+  /** Pickup tap targets for the current note; `glide` > 0 moves the taps smoothly. */
+  updateTaps(glide) {
     const n = this.pickupDistances.length;
-    if (this.tapA.length !== n) { this.tapA = new Array(n); this.tapB = new Array(n); }
-    for (let k = 0; k < n; k++) {
-      // Pickup position as a fraction of the *vibrating* length.
-      let p = this.pickupDistances[k] / this.lengthFraction;
-      p = Math.min(0.49, Math.max(0.01, p));
-      const a = Math.max(1, Math.round(p * period * 0.5));
-      const b = Math.max(a + 1, Math.round(period - p * period * 0.5));
-      this.tapA[k] = Math.min(a, MASK - 4);
-      this.tapB[k] = Math.min(b, MASK - 4);
+    if (this.tapATarget.length !== n) {
+      this.tapA = new Array(n).fill(0); this.tapB = new Array(n).fill(0);
+      this.tapATarget = new Array(n).fill(0); this.tapBTarget = new Array(n).fill(0);
+      glide = 0;
     }
+    const period = this.period;
+    for (let k = 0; k < n; k++) {
+      // Pickup position as a fraction of the *vibrating* length. The comb
+      // |sin(k·π·p)| is symmetric about the middle of the string.
+      let p = this.pickupDistances[k] / this.lengthFraction;
+      if (p > 0.5) p = 1 - p;
+      p = Math.min(0.5, Math.max(0.05, p));
+      const a = Math.max(1, p * period * 0.5);
+      const b = Math.min(MASK - 4, Math.max(a + 1, period - p * period * 0.5));
+      this.tapATarget[k] = a;
+      this.tapBTarget[k] = b;
+      if (!(glide > 0)) { this.tapA[k] = a; this.tapB[k] = b; }
+    }
+    this.tapCoef = glide > 0 ? 1 - Math.exp(-4 / (glide * sampleRate)) : 1;
   }
 
   setDamping(amount) {
-    this.damping = Math.min(1, Math.max(0, amount));
+    this.damping = Math.min(1, Math.max(0, finite(amount, 1)));
+    if (this.damping >= 0.9) this.sounding = false;
+    this.recomputeLoop();
+  }
+
+  /** Kill sympathetic residue on a string nobody is playing (the muting hand rests on it too). */
+  choke() {
+    if (this.sounding || !this.active) return;
+    this.damping = 1;
     this.recomputeLoop();
   }
 
   /** Excite the string. velocity 0..1, pickPosition = fraction of scale length from the bridge. */
   pluck(velocity, pickPosition, damping) {
-    velocity = Math.min(1, Math.max(0.02, velocity));
-    this.setDamping(damping);
-    const period = this.period || (sampleRate / this.frequency);
+    velocity = Math.min(1, Math.max(0.02, finite(velocity, 0.8)));
+    pickPosition = finite(pickPosition, 0.14);
+    this.setDamping(finite(damping, 0));
+    this.sounding = this.damping < 0.9;
+    const period = this.period;
     // Picking a ringing string: the pick briefly stops the string before releasing it.
     if (this.active) {
       const keep = 0.25;
-      for (let i = 0; i < BUFFER_SIZE; i++) this.buf[i] *= keep;
-      this.lp *= keep;
+      const live = Math.min(BUFFER_SIZE, Math.ceil(this.curDelay) + 8);
+      for (let i = 1; i <= live; i++) this.buf[(this.write - i) & MASK] *= keep;
+      this.lp *= keep; this.apX *= keep; this.apY *= keep;
     }
-    const mu = Math.min(0.45, Math.max(0.04, pickPosition / this.lengthFraction));
+    let mu = pickPosition / this.lengthFraction;
+    if (mu > 0.5) mu = 1 - mu;
+    mu = Math.min(0.5, Math.max(0.04, mu));
     const combDelay = Math.max(1, Math.round(mu * period));
-    const burst = Math.ceil(period);
+    const burst = Math.min(this.scratch.length, Math.ceil(period));
     const len = Math.min(this.exc.length, burst + combDelay);
 
     // Deterministic pluck: an impulse through two one-pole low-passes. The
@@ -269,10 +276,10 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
     // dark, a hard pick is bright. A quieter noise component adds the pick's
     // scrape so no two plucks are identical.
     const a1 = Math.exp(-TWO_PI * (0.75 * this.frequency) / sampleRate);
-    const cutoff = 1200 + Math.pow(velocity, 1.6) * 9500;
+    const cutoff = Math.min(sampleRate * 0.45, 1200 + Math.pow(velocity, 1.6) * 9500);
     const a2 = Math.exp(-TWO_PI * cutoff / sampleRate);
     const noiseLevel = 0.06 + 0.1 * velocity;
-    const tmp = new Float32Array(len);
+    const tmp = this.scratch;
     let y1 = 0, y2 = 0, nz = 0, energy = 0;
     for (let i = 0; i < burst; i++) {
       const impulse = i === 0 ? 1 : 0;
@@ -288,8 +295,9 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
     const rms = Math.sqrt(energy / burst) || 1e-6;
     const amp = (0.16 * Math.pow(velocity, 0.9)) / rms;
     for (let i = 0; i < len; i++) {
-      const direct = tmp[i] || 0;
-      const delayed = i - combDelay >= 0 ? tmp[i - combDelay] || 0 : 0;
+      const direct = i < burst ? tmp[i] : 0;
+      const j = i - combDelay;
+      const delayed = j >= 0 && j < burst ? tmp[j] : 0;
       // Pick-position comb filter: zeros at harmonics whose node is under the pick.
       let v = (direct - delayed) * amp;
       if (v > 1.5) v = 1.5; else if (v < -1.5) v = -1.5;
@@ -315,30 +323,40 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
     this.curDelay = this.targetDelay * bend;
     this.glideCoef = 1 - Math.exp(-4 / (0.06 * sampleRate));
     this.active = true;
-    this.quietBlocks = 0;
+    this.quiet = 0;
   }
 
   /** Fret/slide noise: a short band-limited burst injected into the loop. */
   noiseBurst(level, duration) {
-    const len = Math.min(this.exc.length, Math.max(8, Math.round(duration * sampleRate)));
+    level = Math.min(0.2, Math.max(0, finite(level, 0.03)));
+    const len = Math.min(this.exc.length, Math.max(8, Math.round(finite(duration, 0.03) * sampleRate)));
     const a = Math.exp(-TWO_PI * 2500 / sampleRate);
     let lp = 0;
+    let sum = 0, envSum = 0;
     for (let i = 0; i < len; i++) {
       lp = a * lp + (1 - a) * this.rng.next();
       const env = Math.sin(Math.PI * i / len);
       this.exc[i] = lp * env * level * 6;
+      sum += this.exc[i]; envSum += env;
     }
+    // Keep the burst zero-mean so it cannot leave a DC offset circulating in the loop.
+    const mean = envSum > 0 ? sum / envSum : 0;
+    for (let i = 0; i < len; i++) this.exc[i] -= mean * Math.sin(Math.PI * i / len);
     this.excLen = len; this.excPos = 0;
     this.active = true;
-    this.quietBlocks = 0;
+    this.quiet = 0;
   }
 
-  /* ------------------------------------------------------------------ */
-  /* DSP                                                                */
-  /* ------------------------------------------------------------------ */
-
-  readDelayed(delay) {
-    // Cubic (3rd-order Lagrange) fractional delay read.
+  /** Stage 1 of a sample: the wave returning from the string, after loop filters and losses. */
+  read() {
+    // Pitch glide
+    if (this.curDelay !== this.targetDelay) {
+      const diff = this.targetDelay - this.curDelay;
+      if (diff < 1e-4 && diff > -1e-4) this.curDelay = this.targetDelay;
+      else this.curDelay += diff * this.glideCoef;
+    }
+    // Cubic (3rd-order Lagrange) fractional delay read
+    const delay = this.curDelay;
     const n = delay | 0;
     const d = delay - n;
     const w = this.write;
@@ -348,91 +366,185 @@ class GuitarStringProcessor extends AudioWorkletProcessor {
     const x2 = buf[(w - (n + 1)) & MASK];
     const x3 = buf[(w - (n + 2)) & MASK];
     const dm1 = d - 1, dm2 = d - 2, dp1 = d + 1;
-    const c0 = -d * dm1 * dm2 / 6;
-    const c1 = dp1 * dm1 * dm2 / 2;
-    const c2 = -dp1 * d * dm2 / 2;
-    const c3 = dp1 * d * dm1 / 6;
-    return c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3;
+    const y = (-d * dm1 * dm2 / 6) * x0 + (dp1 * dm1 * dm2 / 2) * x1 + (-dp1 * d * dm2 / 2) * x2 + (dp1 * d * dm1 / 6) * x3;
+    // Loop low-pass (string damping, frequency dependent)
+    const a = this.lpA;
+    this.lp = a * this.lp + (1 - a) * y;
+    // Dispersion all-pass
+    const c = this.apC;
+    const ap = c * this.lp + this.apX - c * this.apY;
+    this.apX = this.lp; this.apY = ap;
+    return ap * this.loopGain;
   }
+
+  /** Stage 2 of a sample: write the wave leaving the bridge end and read the pickups. */
+  write1(v) {
+    if (this.excPos < this.excLen) v += this.exc[this.excPos++];
+    // Safety: keep the loop bounded and finite (never audible in normal operation)
+    if (!(v > -2)) v = v < 0 ? -2 : 0; else if (v > 2) v = 2;
+    const buf = this.buf;
+    const w = this.write;
+    buf[w] = v;
+    // Pickup read-out: displacement at the pickup position(s), linearly interpolated taps
+    let o = 0;
+    const taps = this.tapA.length;
+    for (let k = 0; k < taps; k++) {
+      let ta = this.tapA[k], tb = this.tapB[k];
+      if (ta !== this.tapATarget[k] || tb !== this.tapBTarget[k]) {
+        const da = this.tapATarget[k] - ta, db = this.tapBTarget[k] - tb;
+        ta = da < 1e-3 && da > -1e-3 ? this.tapATarget[k] : ta + da * this.tapCoef;
+        tb = db < 1e-3 && db > -1e-3 ? this.tapBTarget[k] : tb + db * this.tapCoef;
+        this.tapA[k] = ta; this.tapB[k] = tb;
+      }
+      const ia = ta | 0, fa = ta - ia;
+      const ib = tb | 0, fb = tb - ib;
+      const sa = buf[(w - ia) & MASK] * (1 - fa) + buf[(w - ia - 1) & MASK] * fa;
+      const sb = buf[(w - ib) & MASK] * (1 - fb) + buf[(w - ib - 1) & MASK] * fb;
+      o += (sa - sb) * this.pickupWeights[k];
+    }
+    if (this.clickPos < this.clickLen) o += this.click[this.clickPos++];
+    // Output DC blocker
+    const dc = o - this.dcX + 0.9975 * this.dcY;
+    this.dcX = o; this.dcY = dc;
+    this.write = (w + 1) & MASK;
+    const s = dc * this.outGain;
+    const abs = s < 0 ? -s : s;
+    if (abs > this.peak) this.peak = abs;
+    if (abs > 1e-5) this.active = true; // sympathetic vibration counts as activity too
+    return s;
+  }
+
+  /** Once per block: detect silence, flush residues, return idle strings to their resting damping. */
+  endBlock() {
+    if (this.peak < 1e-6 && this.excPos >= this.excLen) {
+      if (++this.quiet > 40 && this.active) {
+        this.active = false;
+        this.sounding = false;
+        this.buf.fill(0); this.lp = 0; this.apX = 0; this.apY = 0;
+        if (this.damping !== this.idleDamping) { this.damping = this.idleDamping; this.recomputeLoop(); }
+      }
+    } else {
+      this.quiet = 0;
+    }
+    this.peak = 0;
+  }
+}
+
+class GuitarStringsProcessor extends AudioWorkletProcessor {
+  constructor(options) {
+    super();
+    const o = (options && options.processorOptions) || {};
+    const configs = o.strings || [];
+    this.voices = [];
+    for (let i = 0; i < STRING_COUNT; i++) {
+      this.voices.push(new StringVoice(i, { ...(configs[i] || {}), pickupDistances: o.pickupDistances, pickupWeights: o.pickupWeights }));
+    }
+    // Bridge coupling: fraction of the summed string motion taken by the bridge
+    this.coupling = Math.min(0.01, Math.max(0, finite(o.coupling, 0.0003)));
+    this.bridgeLp = 0;
+    this.bridgeA = Math.exp(-TWO_PI * 1500 / sampleRate);
+    this.y = new Float64Array(STRING_COUNT);
+    this.events = [];
+    this.port.onmessage = (e) => this.enqueue(e.data);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Messages                                                           */
+  /* ------------------------------------------------------------------ */
+
+  enqueue(msg) {
+    if (!msg || typeof msg.type !== 'string') return;
+    if (msg.type === 'ping') { this.port.postMessage({ type: 'pong', id: msg.id }); return; }
+    if (msg.type === 'config' || msg.type === 'panic') { this.handle(msg); return; }
+    const time = Number.isFinite(msg.time) ? msg.time : -1;
+    if (time <= currentTime) { this.handle(msg); return; }
+    // keep sorted by time (stable for equal times)
+    let i = this.events.length;
+    while (i > 0 && this.events[i - 1].time > time) i--;
+    msg.time = time;
+    this.events.splice(i, 0, msg);
+  }
+
+  targets(msg) {
+    if (Number.isInteger(msg.string) && msg.string >= 0 && msg.string < STRING_COUNT) return [this.voices[msg.string]];
+    return msg.type === 'config' || msg.type === 'panic' ? this.voices : [];
+  }
+
+  handle(msg) {
+    if (msg.type === 'config' && Number.isFinite(msg.coupling)) this.coupling = Math.min(0.01, Math.max(0, msg.coupling));
+    if (msg.type === 'panic') { this.events.length = 0; this.bridgeLp = 0; }
+    for (const voice of this.targets(msg)) {
+      switch (msg.type) {
+        case 'config':
+          voice.configure(msg);
+          break;
+        case 'panic':
+          voice.panic();
+          break;
+        case 'pitch':
+          voice.setPitch(msg.frequency, finite(msg.glide, 0), msg.lengthFraction);
+          break;
+        case 'pluck':
+          if (msg.frequency) voice.setPitch(msg.frequency, 0, msg.lengthFraction);
+          voice.pluck(msg.velocity, msg.pickPosition, msg.damping);
+          break;
+        case 'damp':
+          voice.setDamping(msg.amount);
+          // A muting hand also stops strings that were only ringing in sympathy.
+          if (voice.damping >= 0.9) for (const other of this.voices) other.choke();
+          break;
+        case 'noise':
+          voice.noiseBurst(msg.level, msg.duration);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* DSP                                                                */
+  /* ------------------------------------------------------------------ */
 
   process(inputs, outputs) {
     const out = outputs[0][0];
-    const input = inputs[0] && inputs[0][0];
     const frames = out.length;
     const blockStart = currentTime;
-    const buf = this.buf;
-    let peak = 0;
-
-    // Fire scheduled events that fall inside this block (sample-accurate).
+    const dt = 1 / sampleRate;
+    const voices = this.voices;
+    const y = this.y;
+    const c = this.coupling;
+    const ba = this.bridgeA;
+    let bridge = this.bridgeLp;
     let nextEvent = this.events.length ? this.events[0] : null;
-    const secondsPerFrame = 1 / sampleRate;
 
     for (let i = 0; i < frames; i++) {
-      const t = blockStart + i * secondsPerFrame;
-      while (nextEvent && nextEvent.time <= t + secondsPerFrame * 0.5) {
-        this.events.shift();
-        this.handle(nextEvent);
-        nextEvent = this.events.length ? this.events[0] : null;
+      // Fire scheduled events that fall on this sample.
+      if (nextEvent) {
+        const t = blockStart + (i + 0.5) * dt;
+        while (nextEvent && nextEvent.time <= t) {
+          this.events.shift();
+          this.handle(nextEvent);
+          nextEvent = this.events.length ? this.events[0] : null;
+        }
       }
-
-      // Pitch glide
-      if (this.curDelay !== this.targetDelay) {
-        const diff = this.targetDelay - this.curDelay;
-        if (Math.abs(diff) < 1e-4) this.curDelay = this.targetDelay;
-        else this.curDelay += diff * this.glideCoef;
-      }
-
-      // Read the loop
-      const y = this.readDelayed(this.curDelay);
-      // Loop low-pass (string damping, frequency dependent)
-      const a = this.lpA;
-      this.lp = a * this.lp + (1 - a) * y;
-      // Dispersion all-pass
-      const c = this.apC;
-      const ap = c * this.lp + this.apX - c * this.apY;
-      this.apX = this.lp; this.apY = ap;
-
-      let v = ap * this.loopGain;
-      // Excitation
-      if (this.excPos < this.excLen) v += this.exc[this.excPos++];
-      // Sympathetic coupling from the other strings
-      if (input) v += input[i] * this.couplingGain;
-      // Safety: keep the loop bounded (never audible in normal operation)
-      if (v > 2) v = 2; else if (v < -2) v = -2;
-      buf[this.write] = v;
-
-      // Pickup read-out: displacement at the pickup position(s)
+      // Waves arriving at the bridge from every string
+      let sum = 0;
+      for (let s = 0; s < STRING_COUNT; s++) { const v = voices[s].read(); y[s] = v; sum += v; }
+      // The bridge moves a little with the summed string motion (low-passed) …
+      bridge = ba * bridge + (1 - ba) * sum;
+      if (!(bridge > -12 && bridge < 12)) bridge = 0;
+      const take = c * bridge;
+      // … and that motion is taken out of every string's reflection.
       let o = 0;
-      const w = this.write;
-      for (let k = 0; k < this.tapA.length; k++) {
-        o += (buf[(w - this.tapA[k]) & MASK] - buf[(w - this.tapB[k]) & MASK]) * this.pickupWeights[k];
-      }
-      // Pick click
-      if (this.clickPos < this.clickLen) o += this.click[this.clickPos++];
-      // Output DC blocker
-      const dc = o - this.dcX + 0.9975 * this.dcY;
-      this.dcX = o; this.dcY = dc;
-      const s = dc * this.outGain;
-      out[i] = s;
-      const abs = s < 0 ? -s : s;
-      if (abs > peak) peak = abs;
-
-      this.write = (w + 1) & MASK;
+      for (let s = 0; s < STRING_COUNT; s++) o += voices[s].write1(y[s] - take);
+      out[i] = o;
     }
-
-    if (peak < 1e-6 && this.excPos >= this.excLen) {
-      if (++this.quietBlocks > 40 && this.active) {
-        this.active = false;
-        // Flush tiny residues so a silent string is truly silent.
-        buf.fill(0); this.lp = 0; this.apX = 0; this.apY = 0;
-      }
-    } else {
-      this.quietBlocks = 0;
-    }
-    // Copy mono to any additional output channels
+    this.bridgeLp = bridge;
+    for (let s = 0; s < STRING_COUNT; s++) voices[s].endBlock();
     for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(out);
     return true;
   }
 }
 
-registerProcessor('guitar-string-processor', GuitarStringProcessor);
+registerProcessor('guitar-strings-processor', GuitarStringsProcessor);

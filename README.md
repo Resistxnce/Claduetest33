@@ -63,9 +63,12 @@ Open `index.html` through any static server (modules need http://, not file://).
 - Pickup position is modelled physically (two-tap read-out at the pickup
   position along the vibrating length, so fretting changes the comb like on a
   real guitar), plus a resonant pickup EQ per selector position.
-- Amp chain: gain → asymmetric wave-shaper (4× oversampled) → tone → cabinet,
-  then stereo chorus, feedback delay (selectable times), convolution reverb,
-  master volume and a safety limiter. Sympathetic resonance couples the strings.
+- Amp chain: gain → asymmetric wave-shaper (4× oversampled when driven hard) →
+  tone → cabinet, then stereo chorus, feedback delay (selectable times),
+  convolution reverb, master volume and a zero-latency soft limiter.
+- Sympathetic resonance: all six strings run in one worklet and share a
+  passive bridge, so strings ring in sympathy without any feedback path that
+  could ever build up.
 - Presets: Clean, Overdrive, Distortion, Acoustic (resonant body model instead
   of pickups), Chorus Clean, Lead. Every knob stays live.
 
