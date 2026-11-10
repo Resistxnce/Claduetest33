@@ -16,12 +16,21 @@ export function lanScore(address, name = '') {
   return score;
 }
 
+/**
+ * Can another device possibly reach this address? Not the documentation/test ranges that
+ * containers and cloud sandboxes hand out (192.0.2.x, 198.51.100.x, 203.0.113.x), nor the
+ * benchmarking range 198.18.0.0/15.
+ */
+export function reachable(address) {
+  return !/^(192\.0\.2\.|198\.51\.100\.|203\.0\.113\.|198\.1[89]\.|0\.|127\.)/.test(address);
+}
+
 /** IPv4 addresses of this machine on the local network, most likely Wi-Fi/Ethernet address first. */
 export function lanAddresses(interfaces = os.networkInterfaces()) {
   const out = [];
   for (const [name, list] of Object.entries(interfaces)) {
     for (const net of list || []) {
-      if ((net.family === 'IPv4' || net.family === 4) && !net.internal) out.push({ address: net.address, score: lanScore(net.address, name) });
+      if ((net.family === 'IPv4' || net.family === 4) && !net.internal && reachable(net.address)) out.push({ address: net.address, score: lanScore(net.address, name) });
     }
   }
   return out.sort((a, b) => a.score - b.score).map((entry) => entry.address);

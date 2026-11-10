@@ -3,7 +3,7 @@
  * the panels together.
  */
 import { AppState } from './state.js';
-import { GuitarAudioEngine, PRESETS } from './audio/engine.js';
+import { GuitarAudioEngine, PRESETS, isIOS } from './audio/engine.js';
 import { GuitarCanvas } from './ui/guitar-canvas.js';
 import { Player } from './ui/interaction.js';
 import { ControlPanel } from './ui/controls.js';
@@ -29,8 +29,31 @@ function boot() {
   const behind = [document.querySelector('.topbar'), document.querySelector('main')].filter(Boolean);
   for (const node of behind) node.setAttribute('inert', '');
   overlay.focus({ preventScroll: true });
+  // The LED and the hint tell the truth about the sound: lit only while the audio clock runs.
+  const soundHint = document.getElementById('sound-hint');
+  let hintTimer = 0;
+  const syncSound = () => {
+    const running = engine.running;
+    powerLed.classList.toggle('on', running);
+    clearTimeout(hintTimer);
+    if (!engine.ready || running || document.hidden) { soundHint.hidden = true; return; }
+    // Brief pauses (the moment between a tap and the clock starting) are not worth a message.
+    hintTimer = setTimeout(() => {
+      if (!engine.ready || engine.running || document.hidden) return;
+      soundHint.textContent = engine.stalled ? 'Sound has stopped — tap here to restart it' : 'Sound is paused — tap here to turn it back on';
+      soundHint.hidden = false;
+    }, 700);
+  };
+  const wakeSound = () => {
+    if (!engine.ready && !engine.stalled) return;
+    if (engine.stalled) engine.restart().then(syncSound, syncSound);
+    else engine.resume().then(syncSound, syncSound);
+  };
+  soundHint.addEventListener('click', wakeSound);
+  engine.addEventListener('state', syncSound);
+  engine.addEventListener('ready', syncSound);
   const powerOn = () => {
-    powerLed.classList.add('on');
+    syncSound();
     for (const node of behind) node.removeAttribute('inert');
     if (!overlay.isConnected || overlay.classList.contains('hidden')) return;
     // Give the keyboard back to the instrument straight away (Space strums while the overlay fades).
@@ -45,7 +68,9 @@ function boot() {
       await engine.resume();
     } catch (err) {
       console.error('Audio failed to start', err);
-      document.getElementById('start-error').textContent = `Audio could not start: ${err.message}. Tap to try again.`;
+      document.getElementById('start-error').textContent = err.permanent
+        ? `Sound cannot start here: ${err.message}.`
+        : `Audio could not start: ${err.message}. Tap to try again.`;
       return;
     }
     powerOn();
@@ -126,9 +151,12 @@ function boot() {
     playBtn.setAttribute('aria-pressed', String(on));
     playBtn.innerHTML = on ? '✕<span> Exit</span>' : '⤢<span> Full screen</span>';
     playBtn.title = on ? 'Back to the controls' : 'Fill the screen with the fretboard';
-    // Where the browser supports it (iPad, Android, desktop) also hide its own chrome.
+    // Where it helps (Android, desktop) also hide the browser's own chrome. Not on iPhone/iPad:
+    // Safari's full screen answers a few quick taps with a "you are typing in full screen"
+    // alert that pauses the page, and a downward swipe (a strum!) leaves it. There the
+    // CSS-only play mode fills the window, and "Add to Home Screen" removes the browser bars.
     const root = document.documentElement;
-    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    const request = isIOS() ? null : (root.requestFullscreen || root.webkitRequestFullscreen);
     const exit = document.exitFullscreen || document.webkitExitFullscreen;
     const active = document.fullscreenElement || document.webkitFullscreenElement;
     try {
@@ -152,11 +180,19 @@ function boot() {
 
   // iOS: pinch gestures would zoom the page under the player's fingers.
   document.addEventListener('gesturestart', (e) => e.preventDefault());
-  // If the system interrupted the audio (a call, switching apps), any touch brings it back.
+  // If the system interrupted the audio (a call, switching apps), any touch brings it back —
+  // and rebuilds it when it has stalled for good.
   for (const type of ['pointerup', 'touchend', 'click', 'keydown']) {
-    document.addEventListener(type, () => { if (engine.ready) engine.resume(); }, { passive: true });
+    document.addEventListener(type, wakeSound, { passive: true });
   }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && engine.ready) engine.resume(); });
+  // Hidden: stop the audio clock (battery, and the lock screen loses its player). Back: start it
+  // again and make sure the clock really moves (after backgrounding, iOS can leave it frozen).
+  const comeBack = () => {
+    if (document.hidden || !engine.ready) return;
+    engine.resume().then(() => { syncSound(); return engine.checkHealth(); }).then(syncSound, syncSound);
+  };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { engine.suspend(); syncSound(); } else comeBack(); });
+  window.addEventListener('pageshow', comeBack);
   // Re-layout is cheap but re-rendering the static layer is not; debounce window resizes.
   let resizeTimer = 0;
   const fitStageDebounced = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitStage, 120); };
@@ -178,7 +214,8 @@ function boot() {
   let helpOpenedByPointer = false;
   const openHelp = (section, e) => {
     helpOpenedByPointer = !!e && e.detail > 0;
-    if (!help.open) help.showModal();
+    if (typeof help.showModal === 'function') { if (!help.open) help.showModal(); }
+    else { help.setAttribute('open', ''); help.classList.add('fallback'); } // no <dialog> (iOS before 15.4)
     if (section) section.scrollIntoView({ block: 'center' }); else help.scrollTop = 0;
   };
   document.getElementById('help-btn').addEventListener('click', (e) => openHelp(null, e));
@@ -187,7 +224,10 @@ function boot() {
   help.addEventListener('close', () => {
     if (helpOpenedByPointer && document.activeElement && document.activeElement.closest('.topbar')) document.activeElement.blur();
   });
-  help.addEventListener('click', (e) => { if (e.target === help) help.close(); });
+  help.addEventListener('click', (e) => {
+    if (typeof help.close === 'function') { if (e.target === help) help.close(); return; }
+    if (e.target.closest('button[value="close"]')) { e.preventDefault(); help.removeAttribute('open'); }
+  });
 
   // When served by tools/serve.mjs on a computer: show the address (and a QR code) to open on a phone or tablet.
   const devServer = document.querySelector('meta[name="guitar-dev-server"]');

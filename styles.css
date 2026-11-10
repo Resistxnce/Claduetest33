@@ -102,7 +102,7 @@ main {
 .stage-bar-spacer { flex: 1 1 auto; }
 .stage-preset { display: none; max-width: 46vw; }
 .tool-btn {
-  appearance: none; border: 1px solid var(--border); background: #1f232c; color: var(--text);
+  -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: #1f232c; color: var(--text);
   min-width: 40px; height: 32px; padding: 0 12px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer;
   touch-action: manipulation;
 }
@@ -133,7 +133,7 @@ main {
 /* Buttons & inputs                                                   */
 /* ------------------------------------------------------------------ */
 .btn {
-  appearance: none; border: 1px solid var(--border); background: #1f232c; color: var(--text);
+  -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: #1f232c; color: var(--text);
   padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.05s;
 }
@@ -148,7 +148,7 @@ main {
 }
 
 .select {
-  appearance: none; background: #1f232c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239aa0ab' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  -webkit-appearance: none; appearance: none; background: #1f232c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239aa0ab' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center;
   color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 30px 8px 12px; font-size: 13px; cursor: pointer; max-width: 100%;
 }
 .select { min-width: 0; text-overflow: ellipsis; }
@@ -160,7 +160,7 @@ main {
 
 .preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .preset-btn {
-  appearance: none; border: 1px solid var(--border); background: #1b1f27; color: var(--text-dim);
+  -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: #1b1f27; color: var(--text-dim);
   padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
 .preset-btn:hover { color: var(--text); border-color: #3a4150; }
@@ -172,7 +172,7 @@ main {
 #guitar:focus-visible { outline: 2px solid var(--accent, #f59e0b); outline-offset: -2px; }
 #guitar:focus:not(:focus-visible) { outline: none; }
 .hint-text[hidden] { display: none; }
-.seg-btn { appearance: none; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.seg-btn { -webkit-appearance: none; appearance: none; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .seg-btn:last-child { border-right: 0; }
 .seg-btn.active { background: rgba(245, 158, 11, 0.18); color: #fde68a; }
 
@@ -225,13 +225,13 @@ main {
 .np-chord b { color: var(--accent-2); }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-.tab { appearance: none; background: transparent; border: 0; color: var(--text-dim); padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab { -webkit-appearance: none; appearance: none; background: transparent; border: 0; color: var(--text-dim); padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .tab.active { color: var(--text); border-bottom-color: var(--accent); }
 .tab-panel { display: flex; flex-direction: column; gap: 12px; }
 .tab-panel[hidden] { display: none; }
 
 .root-picker { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; }
-.root-btn { appearance: none; border: 1px solid var(--border); background: #1b1f27; color: var(--text-dim); border-radius: 8px; padding: 7px 0; font-size: 12px; font-weight: 700; cursor: pointer; }
+.root-btn { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: #1b1f27; color: var(--text-dim); border-radius: 8px; padding: 7px 0; font-size: 12px; font-weight: 700; cursor: pointer; }
 .root-btn:hover { color: var(--text); border-color: #3a4150; }
 .root-btn.active { background: rgba(45, 212, 191, 0.18); border-color: var(--accent-2); color: #ccfbf1; }
 .root-picker.notes .root-btn.active { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #d1fae5; }
@@ -239,7 +239,7 @@ main {
 .chord-title { font-size: 15px; }
 .voicing-list { display: flex; flex-wrap: wrap; gap: 10px; }
 .voicing-card {
-  appearance: none; border: 1px solid var(--border); background: #11141a; color: var(--text-dim); border-radius: 12px; padding: 8px 8px 10px;
+  -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: #11141a; color: var(--text-dim); border-radius: 12px; padding: 8px 8px 10px;
   display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 118px;
 }
 .voicing-card:hover { border-color: #3a4150; }
@@ -271,7 +271,7 @@ main {
 /* ------------------------------------------------------------------ */
 .start-overlay {
   position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
-  background: rgba(8, 9, 12, 0.78); backdrop-filter: blur(6px); cursor: pointer; transition: opacity 0.5s;
+  background: rgba(8, 9, 12, 0.78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); cursor: pointer; transition: opacity 0.5s;
 }
 .start-overlay.hidden { opacity: 0; pointer-events: none; }
 .start-card {
@@ -287,7 +287,17 @@ main {
 @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 
 .help { border: 1px solid var(--border); border-radius: 16px; background: var(--bg-panel); color: var(--text); padding: 0; max-width: 560px; width: calc(100% - 32px); }
-.help::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+/* Browsers without <dialog> (iOS before 15.4) would show the help as page text: keep it hidden until opened … */
+dialog:not([open]) { display: none; }
+/* … and show it as a plain overlay there. */
+.help.fallback { position: fixed; inset: 16px; margin: auto; z-index: 60; max-height: calc(100% - 32px); overflow: auto; display: block; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.6); }
+.sound-hint {
+  position: absolute; left: 50%; top: 52px; transform: translateX(-50%); z-index: 5; max-width: calc(100% - 24px);
+  border: 1px solid rgba(245, 158, 11, 0.7); background: rgba(24, 18, 6, 0.96); color: #fde68a; border-radius: 999px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.sound-hint[hidden] { display: none; }
+.help::backdrop { background: rgba(0, 0, 0, 0.6); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .help form { padding: 24px 28px 0; display: flex; flex-direction: column; gap: 14px; }
 .help h2 { outline: none; }
 .help ul { margin: 0; padding-left: 18px; line-height: 1.7; font-size: 14px; color: var(--text-dim); }
@@ -345,7 +355,7 @@ main {
 @media (pointer: coarse) {
   .stage { height: clamp(320px, 50vh, 500px); height: clamp(320px, 50dvh, 500px); }
   .stage.vertical { height: min(78vh, 820px); height: min(78dvh, 820px); }
-  .select { font-size: 16px; } /* iOS zooms the page when a focused control has smaller text */
+  .select, .select.small { font-size: 16px; } /* iOS zooms the page when a focused control has smaller text */
   .tool-btn { height: 36px; }
   .btn, .preset-btn, .seg-btn, .root-btn, .tab { min-height: 40px; }
 }

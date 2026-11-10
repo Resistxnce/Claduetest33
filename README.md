@@ -21,7 +21,29 @@ npm run test:e2e     # Playwright: desktop + iPad/phone interactions and offline
 
 Open `index.html` through any static server (modules need http://, not file://).
 
-## Play it on your iPad or phone
+## Play it on your iPhone or iPad — no computer needed
+
+The app is a folder of static files, so any web host can serve it. With the
+repository on GitHub the quickest way is GitHub Pages:
+
+1. On github.com open the repository → **Settings → Pages**.
+2. Under *Build and deployment* choose **Deploy from a branch**, pick the
+   branch that has this code and the folder **/ (root)**, and press **Save**.
+3. After a minute the page shows the address
+   (`https://<your-user>.github.io/<repository>/`). Open it in Safari on the
+   device and tap once to power the amp on.
+4. *Share → Add to Home Screen* installs it like an app: full screen, its own
+   icon, and (because the address is https) it keeps working offline.
+
+A hosted https address also gives the device the low-latency audio path.
+Needs iOS / iPadOS 15.4 or newer (16 or newer recommended).
+
+If the page ever cannot start on a device, the "Power on" card says why
+(blocked script, old browser, audio switched off) instead of ignoring taps;
+if the sound is interrupted by a call or another app, a "tap to turn it back
+on" hint appears and one tap restores it.
+
+## Play it from your own computer over Wi-Fi
 
 1. On your computer run `npm start`. It prints the address for other devices
    (a line like `http://192.168.1.23:8080/`) together with a QR code.
@@ -36,6 +58,10 @@ Open `index.html` through any static server (modules need http://, not file://).
 
 Good to know:
 
+- **The server must run on your own computer**, on the same Wi-Fi as the
+  device. A cloud or container machine has no address a phone can reach (the
+  server says so and prints no link or QR code there) — use a web host as
+  described above instead.
 - **Audio over plain http.** Browsers only allow the low-latency AudioWorklet
   on https or localhost, so a device that opens the `http://192.168…` address
   runs the very same string model on a fallback audio path (a few milliseconds
@@ -52,7 +78,8 @@ Good to know:
   (8080, or 8443 for https), and both devices must be on the same network.
 - If the computer has several network adapters (VPN, Docker, virtual
   machines) every address is listed; the QR code is for the most likely Wi-Fi
-  or Ethernet one. `npm start -- --no-qr` hides the code.
+  or Ethernet one. `npm start -- --no-qr` hides the code, and
+  `npm start -- --address 192.168.1.50` names the address yourself.
 - `?audio=script` in the address forces the fallback audio path on any device
   (useful for comparing).
 

@@ -4,6 +4,7 @@
 //   node tools/serve.mjs              http on port 8080 (PORT or first argument overrides)
 //   node tools/serve.mjs --https      https with a self-signed certificate on port 8443
 //   node tools/serve.mjs --no-qr      do not print the QR code for the device address
+//   node tools/serve.mjs --address 192.168.1.50   use this address for the link and QR code
 //
 // Over plain http a phone gets the main-thread audio backend (browsers only allow
 // AudioWorklet and "Add to Home Screen" offline support on https or localhost);
@@ -21,7 +22,7 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 const useHttps = args.includes('--https');
 const showQr = !args.includes('--no-qr') && (args.includes('--qr') || process.stdout.isTTY);
-const portArg = args.find((a) => /^\d+$/.test(a));
+const portArg = args.find((a, i) => /^\d+$/.test(a) && args[i - 1] !== '--address');
 const port = Number(process.env.PORT || portArg || (useHttps ? 8443 : 8080));
 
 const MIME = {
@@ -40,7 +41,10 @@ const MIME = {
 };
 
 const scheme = useHttps ? 'https' : 'http';
-const lanUrls = () => lanAddresses().map((ip) => `${scheme}://${ip}:${port}/`);
+// --address 192.168.1.50 names this computer's address yourself (when the wrong one is detected).
+const addressArg = args.includes('--address') ? args[args.indexOf('--address') + 1] : '';
+const addresses = () => (/^\d+\.\d+\.\d+\.\d+$/.test(addressArg || '') ? [addressArg] : lanAddresses());
+const lanUrls = () => addresses().map((ip) => `${scheme}://${ip}:${port}/`);
 
 function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -123,6 +127,9 @@ server.listen(port, '0.0.0.0', () => {
     if (useHttps) console.log('\nThe certificate is self-signed: accept the browser warning once on the device.');
     else console.log('\nTip: "npm run start:https" serves over https (lower-latency audio and offline install on the device).');
   } else {
-    console.log('\nNo local network address found (not connected to Wi-Fi?).');
+    console.log('\nNo address that a phone or tablet could reach was found on this machine.');
+    console.log('That is normal on a cloud or container machine: other devices cannot connect to it.');
+    console.log('Run this on your own computer (same Wi-Fi as the device), or put the folder on any');
+    console.log('static web host (GitHub Pages works as it is) and open that address on the device.');
   }
 });

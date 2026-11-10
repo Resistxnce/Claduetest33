@@ -18,16 +18,25 @@ const DEVICES = [
   // audio: 'script' = forced with ?audio=script, 'no-worklet' = AudioWorklet removed (what an insecure http origin looks like)
   { name: 'ipad-landscape', width: 1180, height: 820, scale: 2, audio: 'no-worklet', minSpacing: 40, expectVertical: false },
   { name: 'ipad-portrait', width: 820, height: 1180, scale: 2, audio: 'worklet', minSpacing: 40, expectVertical: false },
-  { name: 'phone-portrait', width: 390, height: 844, scale: 3, audio: 'script', minSpacing: 30, expectVertical: true },
+  // An iPhone user agent takes the iOS code paths: silent-switch audio element, no Fullscreen API.
+  { name: 'phone-portrait', width: 390, height: 844, scale: 3, audio: 'script', minSpacing: 30, expectVertical: true, ios: true },
   { name: 'phone-landscape', width: 844, height: 390, scale: 3, audio: 'no-worklet', minSpacing: 30, expectVertical: false, autoPlayMode: true },
 ];
 
-const server = await startServer(8129);
+// A named address, so the device link and QR code are exercised on any machine (cloud runners have none a phone could reach).
+const server = await startServer(8129, ['--address', '192.168.50.7']);
 const browser = await launchBrowser();
 try {
   for (const device of DEVICES) {
     const errors = [];
-    const context = await browser.newContext({ viewport: { width: device.width, height: device.height }, deviceScaleFactor: device.scale, hasTouch: true, isMobile: true });
+    const context = await browser.newContext({
+      viewport: { width: device.width, height: device.height }, deviceScaleFactor: device.scale, hasTouch: true, isMobile: true,
+      ...(device.ios ? { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1' } : {}),
+    });
+    if (device.ios) {
+      // Fail loudly if the page ever asks an iPhone/iPad for the Fullscreen API.
+      await context.addInitScript(() => { Element.prototype.requestFullscreen = function () { window.__fullscreenAsked = true; return Promise.reject(new Error('not on iOS')); }; });
+    }
     if (device.audio === 'no-worklet') {
       await context.addInitScript(() => {
         // An insecure origin (http://192.168.x.x) has no AudioWorklet.
@@ -120,6 +129,7 @@ try {
     });
     console.log(`${device.name} play mode:`, JSON.stringify(play));
     assert(play.on && !play.dockVisible, `${device.name}: play mode should hide the panels`);
+    if (device.ios) assert(!(await page.evaluate(() => window.__fullscreenAsked)), `${device.name}: the Fullscreen API must not be used on iOS (its typing alert and swipe-to-exit break playing)`);
     assert(play.stage[0] >= device.width - 1 && play.stage[1] >= device.height - 1, `${device.name}: play mode should fill the screen, stage is ${play.stage}`);
     assert(play.spacing >= info.spacing - 0.5 && play.spacing >= device.minSpacing, `${device.name}: play mode spacing ${play.spacing}`);
     assert(play.orientation === (device.height > device.width ? 'vertical' : 'horizontal'), `${device.name}: in play mode the neck runs along the long side`);
@@ -180,6 +190,7 @@ try {
   // On the computer the help dialog shows the device address with a QR code that encodes exactly that address
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.waitForFunction((expected) => document.getElementById('device-link').hidden !== expected, lan.urls.length > 0);
+  assert(lan.urls.length === 1 && lan.urls[0] === `http://192.168.50.7:${new URL(server.url).port}/`, `the server offers the named address: ${JSON.stringify(lan.urls)}`);
   if (lan.urls.length) {
     await page.click('#start-overlay');
     await page.click('#help-btn');

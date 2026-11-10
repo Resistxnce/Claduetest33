@@ -254,8 +254,8 @@ export class GuitarCanvas {
     // Static layer covers the whole neck; cap its pixel count on very large/zoomed necks.
     const L = this.layout;
     this.staticScale = Math.min(this.dpr, Math.sqrt(MAX_STATIC_PIXELS / (L.W * L.H)));
-    this.staticLayer.width = Math.max(1, Math.round((vertical ? L.H : L.W) * this.staticScale));
-    this.staticLayer.height = Math.max(1, Math.round((vertical ? L.W : L.H) * this.staticScale));
+    this.staticLayer.width = Math.max(1, Math.ceil((vertical ? L.H : L.W) * this.staticScale));
+    this.staticLayer.height = Math.max(1, Math.ceil((vertical ? L.W : L.H) * this.staticScale));
     this.staticDirty = true;
     if (this.nav) this.nav.resize();
     if (this.onViewChange) this.onViewChange();
@@ -447,10 +447,18 @@ export class GuitarCanvas {
     const ss = this.staticScale;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // The source rectangle is kept in whole pixels and inside the layer: Safari 15 draws
+    // nothing at all when it sticks out by even a fraction of a pixel.
+    const layer = this.staticLayer;
+    const k = this.dpr / ss; // layer pixels -> canvas pixels
     if (this.orientation === 'vertical') {
-      ctx.drawImage(this.staticLayer, 0, this.scroll * ss, L.H * ss, this.viewLen * ss, 0, 0, this.canvas.width, this.canvas.height);
+      const sy = Math.min(Math.max(0, Math.round(this.scroll * ss)), layer.height - 1);
+      const sh = Math.max(1, Math.min(Math.round(this.viewLen * ss), layer.height - sy));
+      ctx.drawImage(layer, 0, sy, layer.width, sh, 0, 0, this.canvas.width, sh * k);
     } else {
-      ctx.drawImage(this.staticLayer, this.scroll * ss, 0, this.viewLen * ss, L.H * ss, 0, 0, this.canvas.width, this.canvas.height);
+      const sx = Math.min(Math.max(0, Math.round(this.scroll * ss)), layer.width - 1);
+      const sw = Math.max(1, Math.min(Math.round(this.viewLen * ss), layer.width - sx));
+      ctx.drawImage(layer, sx, 0, sw, layer.height, 0, 0, sw * k, this.canvas.height);
     }
     this.applyTransform(ctx, this.dpr, this.scroll);
     this.drawPickStrip(ctx);  // under the strings, so they stay visible to aim at

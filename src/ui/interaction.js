@@ -78,7 +78,11 @@ export class Player {
     el.addEventListener('contextmenu', (e) => e.preventDefault());
     // Keyboard access to every fret: focus the fretboard (Tab), move the cursor with the
     // arrow keys, Enter plays the note under it (hold Enter and move to slide or sweep).
-    el.addEventListener('focus', () => { if (el.matches(':focus-visible')) this.showCursor(true); });
+    el.addEventListener('focus', () => {
+      let byKeyboard = false;
+      try { byKeyboard = el.matches(':focus-visible'); } catch { /* Safari before 15.4 does not know the selector */ }
+      if (byKeyboard) this.showCursor(true);
+    });
     el.addEventListener('blur', () => this.showCursor(false));
     window.addEventListener('keydown', this.bound.key);
     window.addEventListener('keyup', this.bound.keyUp);

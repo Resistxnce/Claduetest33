@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { qrMatrix, qrToTerminal } from '../src/ui/qr.js';
-import { lanScore, lanAddresses } from '../tools/lan.mjs';
+import { lanScore, lanAddresses, reachable } from '../tools/lan.mjs';
 
 const reference = JSON.parse(readFileSync(new URL('./fixtures/qr-reference.json', import.meta.url), 'utf8'));
 const rowsOf = (modules) => modules.map((row) => BigInt(`0b${row.map((m) => (m ? 1 : 0)).join('')}`).toString(16));
@@ -151,4 +151,10 @@ test('LAN addresses: Wi-Fi/Ethernet ranges come before virtual adapters and self
     en0: [{ address: 'fe80::1', family: 'IPv6', internal: false }, { address: '192.168.1.20', family: 'IPv4', internal: false }],
   };
   assert.deepEqual(lanAddresses(interfaces), ['192.168.1.20', '172.17.0.1', '100.64.0.9']);
+});
+
+test('LAN addresses: documentation/test ranges are never offered (a phone cannot reach them)', () => {
+  for (const ip of ['192.0.2.2', '198.51.100.7', '203.0.113.9', '198.18.0.1', '127.0.0.1']) assert.equal(reachable(ip), false, ip);
+  for (const ip of ['192.168.1.20', '10.0.0.5', '172.20.1.1', '100.64.0.9', '192.0.3.1']) assert.equal(reachable(ip), true, ip);
+  assert.deepEqual(lanAddresses({ eth0: [{ address: '192.0.2.2', family: 'IPv4', internal: false }] }), []);
 });

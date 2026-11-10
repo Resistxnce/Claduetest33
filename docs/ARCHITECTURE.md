@@ -98,6 +98,29 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
   key acts as one more finger (`'keyboard'` in `state.fingers`), so slides and
   sweeps work exactly as with a pointer.
 
+## Audio on iPhone / iPad
+
+* The first tap claims the *playback* audio session (`navigator.audioSession`,
+  or a looping silent `<audio>` element where that is missing or ignored) so
+  the ring/silent switch does not mute the instrument, then creates and
+  resumes the context inside the same gesture.
+* The engine reports the context state (`state` event, `engine.running`).
+  The amp LED follows it; when the context is not running a hint appears and
+  any tap resumes it. The page suspends the context while hidden and, on
+  return, checks that the audio clock really advances (`checkHealth`): a
+  frozen clock is kicked with suspend/resume and, if it stays frozen,
+  `engine.restart()` rebuilds the whole graph on the next tap with every
+  setting kept.
+* Plucks requested while the context is not running are held and only the
+  recent ones are played when it starts (no pile of stale notes).
+* Without a secure context there is no AudioWorklet: the same `StringBank`
+  runs in a ScriptProcessor on the main thread. If its callbacks keep arriving
+  late (a busy main thread), the node is replaced by one with blocks twice as
+  long, up to 2048 frames.
+* The Fullscreen API is not used on iOS/iPadOS (its "typing in full screen"
+  alert and swipe-to-exit make playing impossible); play mode there is CSS
+  only.
+
 ## Audio signal flow
 
 ```

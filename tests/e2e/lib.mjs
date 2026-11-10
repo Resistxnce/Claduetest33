@@ -19,9 +19,9 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
  * Start the dev server on `port` (shifted by E2E_PORT_OFFSET, so two runs on one
  * machine do not collide) and wait for its banner.
  */
-export async function startServer(port = 8123) {
+export async function startServer(port = 8123, args = []) {
   port += Number(process.env.E2E_PORT_OFFSET || 0);
-  const child = spawn(process.execPath, [resolve(root, 'tools/serve.mjs')], { env: { ...process.env, PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [resolve(root, 'tools/serve.mjs'), ...args], { env: { ...process.env, PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });
   let errors = '';
   await new Promise((res, rej) => {
     const timer = setTimeout(() => { child.kill(); rej(new Error(`the dev server did not start on port ${port} within 10 s ${errors}`)); }, 10000);

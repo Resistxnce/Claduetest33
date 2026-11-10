@@ -423,6 +423,34 @@ try {
   assert(await page.evaluate(() => window.__guitar.engine.isAudible(0) && !document.querySelector('#learning .now-playing').classList.contains('idle')), 'an open low E is still shown after a second');
   await page.evaluate(() => window.__guitar.player.releaseEverything());
 
+  // ---- The sound can be paused by the system (a call, another app) or stall: the page says so and recovers ----
+  await page.evaluate(() => window.__guitar.player.releaseEverything());
+  await page.evaluate(() => window.__guitar.engine.ctx.suspend());
+  await page.waitForFunction(() => !document.getElementById('sound-hint').hidden && !document.getElementById('power-led').classList.contains('on'), null, { timeout: 3000 });
+  // taps made while it is silent: an old one is forgotten, a fresh one sounds when the audio returns
+  await page.evaluate(() => window.__guitar.player.pluck(0));
+  await page.waitForTimeout(600);
+  await page.evaluate(() => window.__guitar.player.pluck(5));
+  await page.click('#sound-hint');
+  await page.waitForFunction(() => window.__guitar.engine.running && document.getElementById('sound-hint').hidden && document.getElementById('power-led').classList.contains('on'), null, { timeout: 3000 });
+  await page.waitForTimeout(350);
+  const woke = await page.evaluate(() => ({ levels: [...window.__guitar.engine.stringLevels].map((v) => +v.toFixed(3)), deferred: window.__guitar.engine.deferred.length }));
+  console.log('After the audio was paused and resumed:', JSON.stringify(woke));
+  assert(woke.levels[5] > 0.02 && woke.levels[0] < 0.01 && woke.deferred === 0, `only the fresh tap sounds when the audio comes back: ${JSON.stringify(woke)}`);
+  // a stalled context is rebuilt by the next tap, with every setting kept
+  await page.evaluate(() => { const g = window.__guitar; g.player.releaseEverything(); g.engine.setParam('reverb', 0.5); g.engine.stalled = true; g.engine.dispatchEvent(new CustomEvent('state', { detail: { state: 'stalled' } })); });
+  await page.waitForFunction(() => /restart/.test(document.getElementById('sound-hint').textContent) && !document.getElementById('sound-hint').hidden, null, { timeout: 3000 });
+  const oldCtx = await page.evaluateHandle(() => window.__guitar.engine.ctx);
+  await page.click('#sound-hint');
+  await page.waitForFunction((old) => { const e = window.__guitar.engine; return e.ready && e.running && e.ctx !== old; }, oldCtx, { timeout: 5000 });
+  await clearRecent();
+  await page.keyboard.press('Digit6');
+  await page.waitForTimeout(300);
+  const rebuilt = await page.evaluate(() => ({ level: window.__guitar.engine.getLevel(), reverb: window.__guitar.engine.params.reverb, played: window.__guitar.state.recent.map((n) => n.name).join(' '), hint: document.getElementById('sound-hint').hidden }));
+  console.log('After rebuilding the audio engine:', JSON.stringify(rebuilt));
+  assert(rebuilt.level > 0.005 && rebuilt.reverb === 0.5 && rebuilt.played === 'E2' && rebuilt.hint, `the rebuilt engine plays with the same settings: ${JSON.stringify(rebuilt)}`);
+  await page.evaluate(() => { window.__guitar.engine.setParam('reverb', 0.28); window.__guitar.player.releaseEverything(); });
+
   // ---- Barre chords ----
   // Dragging a pressed finger across the strings inside one fret lays it down as a barre:
   // the strings stay fretted while it is down, and the barre moves as one.

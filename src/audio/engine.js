@@ -79,41 +79,61 @@ export function isIOS() {
 
 let silentAudio = null;
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Resolves with the promise, or rejects after `ms` (some iOS versions leave resume() pending for ever). */
+const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), ms))]);
+
 /**
- * Must run synchronously inside a user gesture. Starts the context, and on
- * iOS makes the instrument audible even when the ring/silent switch is set to
- * silent (Web Audio alone is treated as "ambient" sound and muted by it).
+ * iOS treats Web Audio as "ambient" sound and mutes it with the ring/silent switch. Declare
+ * the page as media playback (Safari 16.4+); where that is missing or refused, a looping
+ * silent <audio> element moves the whole page to the playback category instead.
+ * Must run inside a user gesture, before the context is created.
  */
-function unlockAudio(ctx) {
-  try { if (ctx.state !== 'running') ctx.resume().catch(() => {}); } catch { /* older Safari returns no promise */ }
-  try {
-    // One silent buffer through the destination fully unlocks older iOS versions.
-    const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-    src.connect(ctx.destination);
-    src.start(0);
-  } catch { /* not fatal */ }
+function claimPlayback() {
+  let claimed = false;
   try {
     if (typeof navigator !== 'undefined' && navigator.audioSession) {
-      // Safari 16.4+: declare this as media playback (ignores the silent switch).
       navigator.audioSession.type = 'playback';
-    } else if (isIOS() && !silentAudio) {
-      // Older iOS: a looping silent <audio> element switches the whole page to the playback category.
+      claimed = navigator.audioSession.type === 'playback'; // WebKit ignores the assignment in some embeddings
+    }
+  } catch { /* not fatal */ }
+  if (!claimed && isIOS()) playSilentAudio();
+}
+
+function playSilentAudio() {
+  try {
+    if (!silentAudio) {
       silentAudio = document.createElement('audio');
       silentAudio.setAttribute('playsinline', '');
       silentAudio.setAttribute('x-webkit-airplay', 'deny');
       silentAudio.loop = true;
       silentAudio.src = silentWavUrl();
+    }
+    if (silentAudio.paused) {
       const p = silentAudio.play();
       if (p && typeof p.catch === 'function') p.catch(() => {});
     }
   } catch { /* not fatal */ }
 }
 
-/** Object URL of half a second of silence as a WAV file. */
+/**
+ * Must run synchronously inside a user gesture: starts the context and plays one
+ * silent buffer, which is what older iOS versions need to unlock audio output.
+ */
+function unlockAudio(ctx) {
+  try { if (ctx.state !== 'running') ctx.resume().catch(() => {}); } catch { /* older Safari returns no promise */ }
+  try {
+    const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch { /* not fatal */ }
+}
+
+/** Object URL of half a second of silence as a WAV file (at a normal rate, so it never drags the output rate down). */
 function silentWavUrl() {
-  const rate = 8000, samples = rate / 2;
+  const rate = 44100, samples = rate / 2;
   const view = new DataView(new ArrayBuffer(44 + samples * 2));
   const text = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
   text(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); text(8, 'WAVE');
@@ -164,6 +184,10 @@ export class GuitarAudioEngine extends EventTarget {
     this.stringLevels = new Float32Array(STRING_COUNT);
     this.levelsSeen = false;
     this.oversampleTimer = 0;
+    /** Plucks waiting for a context that is not running (see send / flushDeferred). */
+    this.deferred = [];
+    /** The context claims to run but its clock stands still (see checkHealth). */
+    this.stalled = false;
     this.pingId = 0;
   }
 
@@ -183,15 +207,30 @@ export class GuitarAudioEngine extends EventTarget {
     // Everything up to the first `await` runs inside the user's tap, which is
     // what iOS needs to let the context start.
     const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!existingContext && !Ctx) return Promise.reject(new Error('This browser has no Web Audio support'));
+    if (!existingContext && !Ctx) {
+      const err = new Error('Web Audio is switched off in this browser (for example by iPhone Lockdown Mode)');
+      err.permanent = true; // tapping again cannot help
+      return Promise.reject(err);
+    }
+    if (!existingContext) claimPlayback();
     const ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
-    if (!existingContext) unlockAudio(ctx);
+    if (!existingContext) {
+      unlockAudio(ctx);
+      if (typeof ctx.addEventListener === 'function') {
+        ctx.addEventListener('statechange', () => {
+          if (this.ctx !== ctx) return;
+          if (ctx.state === 'running') this.flushDeferred();
+          this.dispatchEvent(new CustomEvent('state', { detail: { state: ctx.state } }));
+        });
+      }
+    }
     this.initializing = (async () => {
       try {
         let backend = 'script';
         if (!forceScriptBackend && ctx.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
           try {
-            await ctx.audioWorklet.addModule(this.moduleUrl);
+            // A stalled request must not leave the start card hanging: after a few seconds use the fallback.
+            await withTimeout(ctx.audioWorklet.addModule(this.moduleUrl), 4000);
             backend = 'worklet';
           } catch (err) {
             console.warn('AudioWorklet unavailable, using the ScriptProcessor backend', err);
@@ -220,12 +259,117 @@ export class GuitarAudioEngine extends EventTarget {
     return this.initializing;
   }
 
+  /** Is sound really coming out? (The context exists and its clock is running.) */
+  get running() {
+    return !!this.ctx && this.ctx.state === 'running' && !this.stalled;
+  }
+
   /** Resume after the browser suspended or (on iOS) interrupted the context. Call from a user gesture. */
   async resume() {
     if (!this.ctx) return;
+    if (silentAudio && silentAudio.paused) playSilentAudio();
     if (this.ctx.state !== 'running' && typeof this.ctx.resume === 'function') {
-      try { await this.ctx.resume(); } catch { /* ignored: offline contexts */ }
+      // Never wait for ever: on some iOS versions this promise stays pending while audio cannot start.
+      try { await withTimeout(this.ctx.resume(), 1500); } catch { /* still not running: the caller shows a hint */ }
     }
+  }
+
+  /** Stop the audio clock while the page is hidden (saves battery, frees the lock-screen player). */
+  suspend() {
+    if (this.ctx && this.ctx.state === 'running' && typeof this.ctx.suspend === 'function' && typeof this.ctx.startRendering !== 'function') {
+      try { this.ctx.suspend().catch(() => {}); } catch { /* ignore */ }
+    }
+  }
+
+  /**
+   * After coming back from the background iOS can report a 'running' context whose clock
+   * stands still: nothing sounds until it is suspended and resumed. Detect that and kick it;
+   * if it stays frozen, mark the engine `stalled` so the next tap can rebuild it (`restart`).
+   */
+  async checkHealth() {
+    const ctx = this.ctx;
+    if (!ctx || !this.ready || this.checking || ctx.state !== 'running' || typeof ctx.startRendering === 'function') return;
+    this.checking = true;
+    try {
+      const t0 = ctx.currentTime;
+      await sleep(280);
+      if (this.ctx !== ctx || ctx.state !== 'running' || ctx.currentTime > t0) return;
+      try { await withTimeout(ctx.suspend(), 800); await withTimeout(ctx.resume(), 800); } catch { /* fall through to the re-check */ }
+      await sleep(280);
+      if (this.ctx === ctx && ctx.currentTime <= t0) {
+        this.stalled = true;
+        this.dispatchEvent(new CustomEvent('state', { detail: { state: 'stalled' } }));
+      }
+    } finally {
+      this.checking = false;
+    }
+  }
+
+  /** Throw the audio graph away and build a new one, keeping every setting. Call from a user gesture. */
+  async restart() {
+    const old = this.ctx;
+    this.ready = false;
+    this.initializing = null;
+    this.ctx = null;
+    this.stringsNode = null;
+    this.bank = null;
+    this.stalled = false;
+    this.levelsSeen = false;
+    this.deferred.length = 0;
+    try { if (old && typeof old.close === 'function') old.close().catch(() => {}); } catch { /* ignore */ }
+    return this.init();
+  }
+
+  /**
+   * Plucks asked for while the context was not running (an interruption, the first moments after
+   * a tap): the recent ones sound now, older ones are dropped instead of ringing out together.
+   */
+  flushDeferred() {
+    const now = performance.now();
+    const recent = this.deferred.filter((d) => now - d.at < 350);
+    this.deferred.length = 0;
+    for (const d of recent) this.send({ ...d.msg, time: undefined });
+  }
+
+  /**
+   * The string model on the main thread, in blocks of `size` frames. If the page keeps the
+   * main thread busy for longer than a block (a slow tablet, a heavy frame) the browser has
+   * nothing to play and the sound stutters: when callbacks keep arriving late, the node is
+   * replaced by one with blocks twice as long (more latency, no stutter). The model itself
+   * does not care about the block size.
+   */
+  makeScriptNode(size) {
+    const ctx = this.ctx;
+    const node = ctx.createScriptProcessor(size, 1, 1);
+    const blockMs = (size / ctx.sampleRate) * 1000;
+    let last = 0, late = 0, windowStart = 0;
+    node.onaudioprocess = (e) => {
+      const out = e.outputBuffer.getChannelData(0);
+      // Scheduled plucks are timed against ctx.currentTime, so the block must be stamped on the
+      // same clock: use the event's playbackTime only when it is on that clock (some WebKit
+      // versions report 0 or nothing), otherwise the context time itself.
+      const now = ctx.currentTime;
+      const t = e.playbackTime;
+      this.bank.process(out, Number.isFinite(t) && Math.abs(t - now) < 0.25 ? t : now);
+      const wall = performance.now();
+      if (last && wall - last > blockMs * 1.8 && size < 2048 && this.stringsNode === node) {
+        if (wall - windowStart > 4000) { windowStart = wall; late = 0; }
+        if (++late >= 4) setTimeout(() => this.growScriptBuffer(node, size * 2), 0);
+      }
+      last = wall;
+    };
+    this.scriptBufferSize = size;
+    return node;
+  }
+
+  growScriptBuffer(oldNode, size) {
+    if (this.stringsNode !== oldNode || !this.ctx) return;
+    const node = this.makeScriptNode(size);
+    node.connect(this.stringMix);
+    oldNode.onaudioprocess = null;
+    try { oldNode.disconnect(); } catch { /* ignore */ }
+    this.stringsNode = node;
+    console.info(`Audio blocks lengthened to ${size} frames to keep the sound steady`);
   }
 
   buildGraph() {
@@ -251,16 +395,7 @@ export class GuitarAudioEngine extends EventTarget {
       // Same model on the main thread. 512 frames ≈ 11 ms at 48 kHz: small enough
       // to feel immediate, large enough to survive a busy frame.
       this.bank = new StringBank(ctx.sampleRate, stringOptions);
-      this.stringsNode = ctx.createScriptProcessor(SCRIPT_BUFFER_SIZE, 1, 1);
-      this.stringsNode.onaudioprocess = (e) => {
-        const out = e.outputBuffer.getChannelData(0);
-        // Scheduled plucks are timed against ctx.currentTime, so the block must be stamped on the
-        // same clock: use the event's playbackTime only when it is on that clock (some WebKit
-        // versions report 0 or nothing), otherwise the context time itself.
-        const now = ctx.currentTime;
-        const t = e.playbackTime;
-        this.bank.process(out, Number.isFinite(t) && Math.abs(t - now) < 0.25 ? t : now);
-      };
+      this.stringsNode = this.makeScriptNode(SCRIPT_BUFFER_SIZE);
     }
     for (let i = 0; i < STRING_COUNT; i++) {
       this.post(i, { type: 'pitch', frequency: this.stringState[i].frequency, glide: 0, lengthFraction: this.stringState[i].lengthFraction });
@@ -587,8 +722,15 @@ export class GuitarAudioEngine extends EventTarget {
 
   /** Deliver a message to the string model on whichever backend is running. */
   send(msg) {
+    const ctx = this.ctx;
+    if ((msg.type === 'pluck' || msg.type === 'noise') && ctx.state !== 'running' && typeof ctx.startRendering !== 'function') {
+      // The clock is not running (yet): keep the note for the moment it starts.
+      this.deferred.push({ msg, at: performance.now() });
+      if (this.deferred.length > 24) this.deferred.shift();
+      return;
+    }
     if (this.backend === 'worklet') this.stringsNode.port.postMessage(msg);
-    else if (this.bank) this.bank.enqueue(msg, this.ctx.currentTime);
+    else if (this.bank) this.bank.enqueue(msg, ctx.currentTime);
   }
 
   /**
