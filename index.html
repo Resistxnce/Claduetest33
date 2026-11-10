@@ -44,7 +44,8 @@
       </div>
       <div class="stage-body">
         <div class="stage-neck">
-          <canvas id="guitar" aria-label="Interactive 24-fret fretboard: tap a string at a fret to play it" role="application"></canvas>
+          <canvas id="guitar" tabindex="0" aria-label="Interactive 24-fret fretboard. Tap a string at a fret to play it. Keyboard: arrow keys move the cursor, Enter plays the note." aria-describedby="cursor-status" role="application"></canvas>
+          <span id="cursor-status" class="sr-only" aria-live="polite"></span>
         </div>
         <canvas id="neck-nav" class="neck-nav" aria-label="Neck position: drag to move along the fretboard" hidden></canvas>
       </div>
@@ -80,6 +81,7 @@
         <li><b>Bend / vibrato:</b> set "Dragging across strings" to <i>Bends the string</i> in <i>Playing</i>, then pull a held note sideways.</li>
         <li><b>Release:</b> notes ring out when you lift; turn on "Lifting a finger mutes the string" in <i>Playing</i> for fret-hand muting.</li>
         <li><b>Controls:</b> presets, amp knobs, pickup selector, tuning and capo live in the panel below the neck.</li>
+        <li class="keyboard-only"><b>Every fret from the keyboard:</b> press <kbd>Tab</kbd> until the fretboard is focused, move the cursor with the arrow keys (<kbd>Home</kbd>/<kbd>End</kbd> jump to the open string / 24th fret) and press <kbd>Enter</kbd> to play; keep <kbd>Enter</kbd> held while moving to slide.</li>
         <li class="keyboard-only"><b>Keyboard:</b> <kbd>1</kbd>–<kbd>6</kbd> pick strings (1 = high E), <kbd>Space</kbd> strum down, <kbd>Shift</kbd>+<kbd>Space</kbd> strum up, <kbd>←</kbd>/<kbd>→</kbd> move along the neck, hold <kbd>M</kbd> to palm mute, <kbd>Esc</kbd> mutes everything.</li>
         <li><b>Learn:</b> pick a chord to see the fingering, "Hold chord" to have it pressed for you, show scales and note positions.</li>
         <li><b>Phone or iPad:</b> turn the device sideways and tap <i>Full screen</i> for a bigger neck; use <i>Add to Home Screen</i> to run it like an app.</li>

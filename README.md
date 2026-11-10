@@ -62,13 +62,15 @@ Good to know:
 - A top-down 24-fret rosewood neck in the classic fretboard-trainer style:
   nickel frets at mathematically correct positions (`1 − 2^(−n/12)` of the
   scale length), numbered inlays at 3/5/7/9/15/17/19/21 and double dots at 12
-  and 24, a bone nut, and six strings of realistic relative thickness with the
+  and 24, a marble nut, and six strings of realistic relative thickness with the
   thick low E at the bottom (tablature orientation).
 - Every string is tappable at every fret; the zone before the nut plays the
   open strings. Played notes show as glossy dots with their note name.
-- On desktop all 24 frets fit the screen. On phones the neck is zoomed so the
-  frets stay finger-sized, with a minimap to move along it; in portrait it
-  rotates to the chord-diagram orientation (nut at the top, low E on the left).
+- With a mouse all 24 frets fit the screen. On touch screens (phones and
+  tablets) the neck is zoomed so that even the 24th fret is a finger-sized
+  target, with a minimap to move along it; on a portrait phone it rotates to
+  the chord-diagram orientation (nut at the top, low E on the left). "Neck
+  view" switches between the whole neck and the zoomed one on any device.
 - **Full-screen play mode** (toolbar button; automatic on a phone held
   sideways): the neck fills the screen with quick strum / mute / preset
   controls, and on tablets shows the notes and chord being played.
@@ -88,6 +90,9 @@ Good to know:
 - Keyboard: `1`–`6` pick strings (1 = high E), `Space` strum down,
   `Shift+Space` strum up, `←`/`→` move along the neck, hold `M` for palm mute,
   `Esc` mutes everything.
+- Every fret from the keyboard: `Tab` to the fretboard, move the cursor with
+  the arrow keys (`Home`/`End`: open string / 24th fret), `Enter` plays the
+  note; keep `Enter` held while moving to slide along the string.
 - Capo (frets 1–7).
 
 **Sound** (`src/audio/`)
@@ -154,6 +159,8 @@ tools/serve.mjs, lan.mjs      tiny static server (LAN address + QR code, optiona
   independent specification-derived suite, the chord-library validation
   (pitch content, bass note, barre/finger consistency, coverage), the string
   model in Node, and the QR encoder against a reference implementation.
+- The end-to-end tests need Playwright (`npm install --no-save playwright &&
+  npx playwright install chromium`); the app itself has no dependencies.
 - `npm run test:e2e` starts the server and drives Chromium (Playwright with its
   bundled Chromium): powers the amp on, taps and slides with the mouse, sweeps
   strums across open and fretted strings, holds two strings with simulated

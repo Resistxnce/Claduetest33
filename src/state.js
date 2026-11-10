@@ -124,12 +124,6 @@ export class AppState extends EventTarget {
     return best;
   }
 
-  fingersOn(string) {
-    const out = [];
-    for (const [id, f] of this.fingers) if (f.string === string) out.push({ id, ...f });
-    return out;
-  }
-
   /** The fret that determines the sounding pitch: -1 = muted, 0 = open, n = fret. */
   soundingFret(string) {
     const finger = this.fingerFret(string);

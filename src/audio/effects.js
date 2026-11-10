@@ -4,11 +4,8 @@
  */
 
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-export const lerp = (a, b, t) => a + (b - a) * t;
 /** Exponential (logarithmic-feeling) mapping of t in [0,1] onto [min,max]. */
 export const expMap = (min, max, t) => min * Math.pow(max / min, clamp(t, 0, 1));
-export const dbToGain = (db) => Math.pow(10, db / 20);
-export const gainToDb = (g) => 20 * Math.log10(Math.max(1e-9, g));
 
 /**
  * Soft-clipping transfer curve for the amp stage. `amount` 0 is a gentle tube
@@ -67,14 +64,12 @@ export function makeReverbImpulse(ctx, { duration = 2.6, decay = 2.8, predelay =
     const data = buffer.getChannelData(ch);
     let lp = 0;
     for (let i = pre; i < length; i++) {
-      const t = (i - pre) / rate;
       const env = Math.pow(1 - (i - pre) / (length - pre), decay);
       // Progressive low-pass: cutoff falls as the tail decays.
       const coef = clamp(damping + (1 - damping) * (i - pre) / (length - pre) * 0.85, 0, 0.98);
       const n = rand();
       lp = coef * lp + (1 - coef) * n;
       data[i] = lp * env;
-      void t;
     }
     for (const e of early) {
       const idx = pre + e.at + (ch === 1 ? 37 : 0);

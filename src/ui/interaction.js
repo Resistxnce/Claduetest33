@@ -23,6 +23,9 @@ import { STRING_COUNT } from '../theory/fretboard.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+/** Finger id used by the keyboard cursor (pointer ids are numbers). */
+const KEYBOARD_FINGER = 'keyboard';
+
 export class Player {
   /**
    * @param {object} o
@@ -56,6 +59,8 @@ export class Player {
     engine.addEventListener('ready', () => this.refreshAllPitches(0, true));
     // Panning or re-laying out the neck moves the frets under any held finger.
     canvas.onViewChange = () => this.dropPointers();
+    this.cursor = { string: 0, fret: 0 };
+    this.cursorActive = false;
   }
 
   attach() {
@@ -67,6 +72,10 @@ export class Player {
     el.addEventListener('pointercancel', this.bound.up);
     el.addEventListener('pointerleave', this.bound.leave);
     el.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Keyboard access to every fret: focus the fretboard (Tab), move the cursor with the
+    // arrow keys, Enter plays the note under it (hold Enter and move to slide or sweep).
+    el.addEventListener('focus', () => { if (el.matches(':focus-visible')) this.showCursor(true); });
+    el.addEventListener('blur', () => this.showCursor(false));
     window.addEventListener('keydown', this.bound.key);
     window.addEventListener('keyup', this.bound.keyUp);
     const lostFocus = () => { this.endMomentaryMute(); this.releaseEverything(); };
@@ -434,7 +443,7 @@ export class Player {
         this.pressFinger(e.pointerId, hit.string, hit.fret, this.sweepVelocity(speed));
       }
     }
-    rec.x = g.x; rec.y = g.y; rec.t = now; rec.speed = speed;
+    rec.x = g.x; rec.y = g.y; rec.t = now;
     if (e.pointerType === 'mouse') this.canvas.setHover(this.canvas.hitTest(g.x, g.y));
   }
 
@@ -531,6 +540,7 @@ export class Player {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (document.querySelector('dialog[open]')) return; // a modal owns the keyboard
     if (this.isTyping(e) || this.controlUsesKey(e)) return;
+    if (this.cursorActive && e.target === this.canvas.canvas && this.cursorKey(e)) return;
     // String keys by physical position (1 = high E … 6 = low E) on any keyboard layout.
     const digit = /^(?:Digit|Numpad)([1-6])$/.exec(e.code || '');
     if (digit) {
@@ -561,5 +571,62 @@ export class Player {
 
   onKeyUp(e) {
     if (e.code === 'KeyM') this.endMomentaryMute();
+    if (e.key === 'Enter' && this.state.fingers.has(KEYBOARD_FINGER)) this.liftFinger(KEYBOARD_FINGER);
+  }
+
+  /* ---------------- keyboard cursor ---------------- */
+
+  showCursor(on) {
+    this.cursorActive = on;
+    if (!on && this.state.fingers.has(KEYBOARD_FINGER)) this.liftFinger(KEYBOARD_FINGER);
+    this.canvas.setCursor(on ? this.cursor : null);
+    if (on) this.announceCursor();
+  }
+
+  announceCursor() {
+    const { string, fret } = this.cursor;
+    const note = this.state.fretboard.noteAt(string, Math.max(fret, this.state.capo), { flats: this.state.options.flats });
+    const status = document.getElementById('cursor-status');
+    if (status) status.textContent = `String ${6 - string}, ${fret === 0 ? 'open' : `fret ${fret}`}: ${note.name}`;
+  }
+
+  /** Keys for the focused fretboard. Returns true when the key was used. */
+  cursorKey(e) {
+    const c = this.cursor;
+    const vertical = this.canvas.orientation === 'vertical';
+    const last = this.canvas.layout.N;
+    let dString = 0, dFret = 0;
+    // Directions follow the screen: on the horizontal neck the high E is on top and
+    // frets run to the right; on the upright neck the low E is on the left and frets run down.
+    if (e.key === 'ArrowUp') { if (vertical) dFret = -1; else dString = 1; }
+    else if (e.key === 'ArrowDown') { if (vertical) dFret = 1; else dString = -1; }
+    else if (e.key === 'ArrowLeft') { if (vertical) dString = -1; else dFret = -1; }
+    else if (e.key === 'ArrowRight') { if (vertical) dString = 1; else dFret = 1; }
+    else if (e.key === 'Home') dFret = -c.fret;
+    else if (e.key === 'End') dFret = last - c.fret;
+    else if (e.key === 'PageUp') dFret = -12;
+    else if (e.key === 'PageDown') dFret = 12;
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.repeat) return true;
+      this.ensureAudio();
+      if (c.fret === 0) this.pluck(c.string);
+      else this.pressFinger(KEYBOARD_FINGER, c.string, c.fret);
+      return true;
+    } else return false;
+    e.preventDefault();
+    const string = clamp(c.string + dString, 0, STRING_COUNT - 1);
+    const fret = clamp(c.fret + dFret, 0, last);
+    if (string === c.string && fret === c.fret) return true;
+    this.cursor = { string, fret };
+    this.canvas.ensureFretsVisible(fret, fret);
+    this.canvas.setCursor(this.cursor);
+    this.announceCursor();
+    // With Enter held the fretting finger follows the cursor: a slide along the string or a sweep across.
+    if (this.state.fingers.has(KEYBOARD_FINGER)) {
+      if (fret === 0) this.liftFinger(KEYBOARD_FINGER);
+      else this.moveFinger(KEYBOARD_FINGER, string, fret, 1);
+    }
+    return true;
   }
 }

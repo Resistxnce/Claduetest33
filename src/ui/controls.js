@@ -2,7 +2,7 @@
  * Control panel: tone presets, amp/effect knobs, pickup selector, tuning,
  * capo, delay time and display/playing options. Everything is wired to the
  * engine and the state in both directions so the panel always reflects
- * reality (e.g. turning the body knob on the guitar moves the panel knob).
+ * reality (e.g. choosing a preset moves the knobs and the pickup selector).
  */
 import { Knob } from './knob.js';
 import { PRESETS, PARAM_DEFS, PICKUP_SELECTOR, DELAY_TIMES } from '../audio/engine.js';

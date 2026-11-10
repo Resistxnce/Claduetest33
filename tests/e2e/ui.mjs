@@ -358,6 +358,46 @@ try {
   assert((await recentNames()).length === 0, 'ArrowDown does not strum');
   await page.evaluate(() => window.scrollTo(0, 0));
 
+  // Every fret can be played from the keyboard: Tab to the fretboard, arrows move a cursor, Enter plays
+  await page.evaluate(() => document.getElementById('help-btn').focus());
+  for (let i = 0; i < 14; i++) {
+    await page.keyboard.press('Tab');
+    if (await page.evaluate(() => document.activeElement.id === 'guitar')) break;
+  }
+  const focused = await page.evaluate(() => ({ id: document.activeElement.id, cursor: window.__guitar.canvas.cursor }));
+  assert(focused.id === 'guitar' && focused.cursor && focused.cursor.string === 0 && focused.cursor.fret === 0, `Tab reaches the fretboard and shows the cursor: ${JSON.stringify(focused)}`);
+  await clearRecent();
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.down('Enter');
+  await page.waitForTimeout(40);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(40);
+  const slidTo = await page.evaluate(() => ({ note: window.__guitar.state.ringing[1] && window.__guitar.state.ringing[1].name, hz: window.__guitar.engine.stringState[1].frequency, fingers: window.__guitar.state.fingers.size }));
+  await page.keyboard.up('Enter');
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(60);
+  const kbd = await page.evaluate(() => ({ played: window.__guitar.state.recent.map((n) => n.name), status: document.getElementById('cursor-status').textContent, fingers: window.__guitar.state.fingers.size, cursor: window.__guitar.canvas.cursor }));
+  console.log('Keyboard cursor:', JSON.stringify({ slidTo, ...kbd }));
+  assert(kbd.played.join(' ') === 'G2 C3 A4', `cursor notes should be G2 C3 A4, got ${kbd.played.join(' ')}`);
+  assert(slidTo.note === 'D3' && Math.abs(slidTo.hz - 146.83) < 0.05 && slidTo.fingers === 1, `holding Enter while moving slides the note: ${JSON.stringify(slidTo)}`);
+  assert(kbd.status === 'String 5, fret 24: A4' && kbd.fingers === 0, `the cursor position is announced: ${kbd.status}`);
+  await page.screenshot({ path: `${outDir}/06b-keyboard-cursor.png` });
+  await page.keyboard.press('Tab');
+  assert(await page.evaluate(() => window.__guitar.canvas.cursor === null), 'the cursor disappears when the fretboard loses focus');
+  await page.evaluate(() => { document.activeElement.blur(); window.scrollTo(0, 0); });
+
+  // Tabs: arrow keys move between them and they are tied to their panels
+  await page.focus('#tab-chords');
+  await page.keyboard.press('ArrowRight');
+  const tabState = await page.evaluate(() => ({ active: document.activeElement.id, selected: document.getElementById('tab-scales').getAttribute('aria-selected'), panel: !document.getElementById('panel-scales').hidden, controls: document.getElementById('tab-scales').getAttribute('aria-controls') }));
+  assert(tabState.active === 'tab-scales' && tabState.selected === 'true' && tabState.panel && tabState.controls === 'panel-scales', `arrow keys switch tabs: ${JSON.stringify(tabState)}`);
+  await page.keyboard.press('ArrowLeft');
+  await page.evaluate(() => { document.activeElement.blur(); window.scrollTo(0, 0); });
+
   // When nothing sounds the page goes idle: no animation-frame loops keep running
   await page.evaluate(() => window.__guitar.player.releaseEverything());
   await page.waitForTimeout(6000);

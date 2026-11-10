@@ -25,9 +25,16 @@ function boot() {
   // Start overlay (browsers require a gesture before audio can play).
   const overlay = document.getElementById('start-overlay');
   const powerLed = document.getElementById('power-led');
+  // Until the amp is on, the overlay is the only thing to operate: it has the focus and the page behind it is inert.
+  const behind = [document.querySelector('.topbar'), document.querySelector('main')].filter(Boolean);
+  for (const node of behind) node.setAttribute('inert', '');
+  overlay.focus({ preventScroll: true });
   const powerOn = () => {
     powerLed.classList.add('on');
-    if (!overlay.isConnected) return;
+    for (const node of behind) node.removeAttribute('inert');
+    if (!overlay.isConnected || overlay.classList.contains('hidden')) return;
+    // Give the keyboard back to the instrument straight away (Space strums while the overlay fades).
+    if (overlay.contains(document.activeElement)) document.activeElement.blur();
     overlay.classList.add('hidden');
     overlay.setAttribute('inert', '');
     setTimeout(() => overlay.remove(), 600);
@@ -44,7 +51,10 @@ function boot() {
     powerOn();
   };
   overlay.addEventListener('click', start);
-  overlay.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); start(); } });
+  overlay.addEventListener('keydown', (e) => {
+    if (overlay.classList.contains('hidden')) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); start(); }
+  });
   player.onAudioStart = powerOn;
   engine.addEventListener('ready', powerOn);
 

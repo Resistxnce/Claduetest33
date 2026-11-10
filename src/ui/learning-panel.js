@@ -129,10 +129,26 @@ export class LearningPanel {
     const tabs = el('div', { class: 'tabs', role: 'tablist' });
     const panels = {};
     for (const [id, label] of [['chords', 'Chords'], ['scales', 'Scales'], ['notes', 'Notes']]) {
-      const btn = el('button', { class: 'tab', type: 'button', role: 'tab', 'data-tab': id, text: label, onclick: () => this.showTab(id) });
+      const btn = el('button', { class: 'tab', type: 'button', role: 'tab', id: `tab-${id}`, 'aria-controls': `panel-${id}`, 'data-tab': id, text: label, onclick: () => this.showTab(id) });
       tabs.append(btn);
-      panels[id] = el('div', { class: 'tab-panel', 'data-panel': id, role: 'tabpanel' });
+      panels[id] = el('div', { class: 'tab-panel', id: `panel-${id}`, 'data-panel': id, role: 'tabpanel', 'aria-labelledby': `tab-${id}` });
     }
+    // Arrow keys move between tabs, as in any tab list.
+    tabs.addEventListener('keydown', (e) => {
+      const list = [...tabs.querySelectorAll('.tab')];
+      const i = list.indexOf(document.activeElement);
+      if (i < 0) return;
+      let j = i;
+      if (e.key === 'ArrowRight') j = (i + 1) % list.length;
+      else if (e.key === 'ArrowLeft') j = (i + list.length - 1) % list.length;
+      else if (e.key === 'Home') j = 0;
+      else if (e.key === 'End') j = list.length - 1;
+      else return;
+      e.preventDefault();
+      e.stopPropagation(); // not a neck pan
+      this.showTab(list[j].dataset.tab);
+      list[j].focus();
+    });
     this.tabs = tabs;
     this.panels = panels;
     root.append(el('section', { class: 'control-group learning' }, [tabs, panels.chords, panels.scales, panels.notes]));
@@ -148,6 +164,7 @@ export class LearningPanel {
       const on = b.dataset.tab === id;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1; // one tab stop for the whole tab list
     }
     for (const [pid, p] of Object.entries(this.panels)) p.hidden = pid !== id;
   }

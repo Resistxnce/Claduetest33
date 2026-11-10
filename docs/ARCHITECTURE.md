@@ -26,7 +26,7 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/audio/string-processor.js` | `StringBank`: six extended Karplus-Strong / waveguide strings coupled through a passive bridge. Platform independent (unit-tested in Node); registers the AudioWorklet processor when loaded as a worklet module |
 | `src/audio/engine.js` | `GuitarAudioEngine`: context (with iOS unlock), string backend (`'worklet'` or the `'script'` fallback running the same `StringBank` in a ScriptProcessorNode when AudioWorklet is unavailable, e.g. plain http on a LAN), pickup EQ, amp (gain, distortion), tone, cabinet, chorus, delay, reverb, master, soft limiter, presets |
 | `src/audio/effects.js` | Distortion curves, reverb impulse generation, helpers |
-| `src/audio/presets.js` | Tone presets (clean, overdrive, distortion, acoustic) |
+| `src/audio/presets.js` | Tone presets (clean, overdrive, distortion, acoustic, chorus clean, lead) |
 | `src/state.js` | Observable app state (tuning, capo, fingers, chord/scale overlays, options) |
 | `src/ui/guitar-canvas.js` | 24-fret fretboard: layout (geometry in "guitar space"), rendering (cached wood/frets/inlays layer + dynamic strings, note dots, overlays), hit-testing, panning; `NeckNavigator` minimap |
 | `src/ui/interaction.js` | Pointer/multi-touch/keyboard → tap-to-play, slide, hammer-on/pull-off, sweep strums, release |
@@ -44,9 +44,15 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
   the strings with the high E at the top and the low E at the bottom
   (tablature orientation). Portrait phones rotate it: nut at the top, low E on
   the left (chord-diagram orientation).
-* All 24 frets always exist. If the viewport is shorter than ~900 px along the
-  neck, the neck is laid out larger than the viewport and `scroll` pans it
-  (minimap drag, ←/→, shift+wheel; chord selection auto-reveals the shape).
+* All 24 frets always exist. When the main pointer is a finger
+  (`pointer: coarse`) the neck is laid out at least 1700 px long, so the 24th
+  fret is ~31 px wide; with a mouse it is zoomed only if the viewport is
+  shorter than ~900 px along the neck. A neck larger than the viewport is
+  panned by `scroll` (minimap drag, ←/→, shift+wheel; chord selection
+  auto-reveals the shape).
+* The canvas re-lays itself out on window resizes and, through a
+  ResizeObserver, whenever page layout changes its box; pointer coordinates
+  are mapped through the drawn scale.
 
 ## Playing model
 
@@ -71,6 +77,13 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 * Sweeping a pointer across strings plucks each string it reaches (a strum);
   velocity comes from pointer speed. Keyboard/buttons strum all six strings
   ~14 ms apart.
+* Messages for one string reach the string model in the order they were sent,
+  even when some are scheduled ahead (a strum) and others are immediate (a
+  mute, a retune): an immediate message waits for anything already queued for
+  its string. "Mute everything" cancels what is still queued.
+* The focused fretboard has a keyboard cursor (arrows, Home/End, Enter); the
+  key acts as one more finger (`'keyboard'` in `state.fingers`), so slides and
+  sweeps work exactly as with a pointer.
 
 ## Audio signal flow
 

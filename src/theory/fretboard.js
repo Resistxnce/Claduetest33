@@ -14,8 +14,6 @@ import { getTuning } from './tunings.js';
 
 export const STRING_COUNT = 6;
 export const DEFAULT_FRET_COUNT = 22;
-/** Fender-style scale length in inches (25.5"). Only ratios matter for drawing. */
-export const DEFAULT_SCALE_LENGTH_INCHES = 25.5;
 
 /** Distance from the nut to fret `n` as a fraction of the scale length. */
 export function fretDistanceFraction(n) {

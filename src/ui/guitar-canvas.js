@@ -165,6 +165,8 @@ export class GuitarCanvas {
     this.vib = Array.from({ length: STRING_COUNT }, () => ({ amp: 0, t0: 0, tau: 1, phase: 0, freq: 6 }));
     /** time + fret of the last pluck per string (for ring indicators) */
     this.lastPluck = Array.from({ length: STRING_COUNT }, () => ({ t: 0, fret: 0, name: '' }));
+    /** Keyboard cursor {string, fret}, shown while the fretboard has keyboard focus. */
+    this.cursor = null;
     this.rafId = 0;
     this.frame = this.frame.bind(this);
     /** Called when the neck moves under the pointers (pan or re-layout). */
@@ -444,6 +446,7 @@ export class GuitarCanvas {
     this.drawRinging(ctx, now);
     this.drawFingers(ctx);
     this.drawHover(ctx);
+    this.drawCursor(ctx);
     this.drawHud(ctx, now);
   }
 
@@ -1029,6 +1032,32 @@ export class GuitarCanvas {
         this.text(ctx, c.x, y, label, { font, color: '#ffffff' });
       }
     }
+  }
+
+  /** Show (or hide, with null) the keyboard cursor: the position the Enter key plays. */
+  setCursor(cursor) {
+    this.cursor = cursor ? { string: cursor.string, fret: cursor.fret } : null;
+    this.requestRender();
+  }
+
+  drawCursor(ctx) {
+    const k = this.cursor;
+    if (!k) return;
+    const L = this.layout;
+    const c = L.positionCenter(k.string, k.fret);
+    const sp = L.spacing;
+    const x0 = k.fret === 0 ? L.openW * 0.4 : L.fretX(k.fret - 1) + L.cellWidth(k.fret) * 0.06;
+    const w = k.fret === 0 ? L.openW * 0.56 : L.cellWidth(k.fret) * 0.88;
+    ctx.save();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(251,191,36,0.7)'; ctx.shadowBlur = 8;
+    roundRect(ctx, x0, c.y - sp * 0.47, w, sp * 0.94, 6);
+    ctx.stroke();
+    ctx.restore();
+    const note = this.state.fretboard.noteAt(k.string, Math.max(k.fret, this.state.capo), { flats: this.state.options.flats });
+    const above = c.y - sp * 0.7 > L.fbTop - 2;
+    this.text(ctx, x0 + w / 2, above ? c.y - sp * 0.68 : c.y + sp * 0.68, note.name, { font: '800 12px system-ui, sans-serif', color: '#fde68a' });
   }
 
   drawHover(ctx) {

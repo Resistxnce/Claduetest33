@@ -164,10 +164,6 @@ export class GuitarAudioEngine extends EventTarget {
     return this.ctx ? this.ctx.currentTime : 0;
   }
 
-  get sampleRate() {
-    return this.ctx ? this.ctx.sampleRate : 48000;
-  }
-
   /**
    * Create the context and graph. Safe to call many times; must be triggered
    * from a user gesture the first time so the browser allows audio output.
@@ -623,12 +619,6 @@ export class GuitarAudioEngine extends EventTarget {
     this.post(stringIdx, { type: 'damp', amount, time: when, cancel });
   }
 
-  /** Let a damped string ring again (e.g. palm mute lifted). */
-  undamp(stringIdx, { when } = {}) {
-    if (!this.ready) return;
-    this.post(stringIdx, { type: 'damp', amount: this.palmMute ? 0.62 : 0, time: when });
-  }
-
   /** Finger-on-string noise for slides. */
   slideNoise(stringIdx, level = 0.03, { when } = {}) {
     if (!this.ready) return;
@@ -653,16 +643,6 @@ export class GuitarAudioEngine extends EventTarget {
       this.pending.set(id, resolve);
       this.stringsNode.port.postMessage({ type: 'ping', id });
     });
-  }
-
-  /** Mute all strings immediately. */
-  releaseAll() {
-    for (let i = 0; i < STRING_COUNT; i++) this.release(i);
-  }
-
-  panic() {
-    this.postAll({ type: 'panic' });
-    for (const st of this.stringState) st.ringing = false;
   }
 
   /** Output level 0..1 (RMS) for meters. */
