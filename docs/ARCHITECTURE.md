@@ -23,8 +23,8 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/theory/scales.js` | Scale formulas and fretboard positions |
 | `src/theory/chords.js` | Chord formulas, naming, detection, voicing validation + generator for any tuning, curated-library access |
 | `src/theory/chord-voicings.js` | Curated standard-tuning voicings: `OPEN_VOICINGS` (keyed `${rootPc}:${quality}`) and `MOVABLE_SHAPES` |
-| `src/audio/string-processor.js` | AudioWorklet: six extended Karplus-Strong / waveguide strings in one processor, coupled through a passive bridge |
-| `src/audio/engine.js` | `GuitarAudioEngine`: context, strings worklet, pickup EQ, amp (gain, distortion), tone, cabinet, chorus, delay, reverb, master, soft limiter, presets |
+| `src/audio/string-processor.js` | `StringBank`: six extended Karplus-Strong / waveguide strings coupled through a passive bridge. Platform independent (unit-tested in Node); registers the AudioWorklet processor when loaded as a worklet module |
+| `src/audio/engine.js` | `GuitarAudioEngine`: context (with iOS unlock), string backend (`'worklet'` or the `'script'` fallback running the same `StringBank` in a ScriptProcessorNode when AudioWorklet is unavailable, e.g. plain http on a LAN), pickup EQ, amp (gain, distortion), tone, cabinet, chorus, delay, reverb, master, soft limiter, presets |
 | `src/audio/effects.js` | Distortion curves, reverb impulse generation, helpers |
 | `src/audio/presets.js` | Tone presets (clean, overdrive, distortion, acoustic) |
 | `src/state.js` | Observable app state (tuning, capo, fingers, chord/scale overlays, options) |
@@ -33,7 +33,9 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/ui/knob.js` | Rotary knob component (pointer drag, wheel, keyboard, ARIA slider) |
 | `src/ui/controls.js` | Control panel wiring (presets, knobs, pickup selector, tuning, options) |
 | `src/ui/learning-panel.js` | Chord/scale/note libraries and the "now playing" read-out |
-| `src/main.js` | Boots everything |
+| `src/main.js` | Boots everything; stage toolbar, full-screen play mode, service-worker registration |
+| `manifest.webmanifest`, `sw.js`, `icons/` | Installable web app: home-screen icon, standalone display, network-first offline cache |
+| `tools/serve.mjs` | Static server: binds all interfaces, prints the LAN address, `/__lan.json`, optional `--https` with a self-signed certificate |
 
 ## Fretboard view
 
@@ -83,13 +85,32 @@ string motion out of every string's reflection), so there is no feedback cycle
 in the node graph and the coupling can never add energy. The clean path adds no
 latency beyond the device's own; the limiter is linear below 0.8 of full scale.
 
+## Touch devices
+
+* The page is laid out for coarse pointers (taller stage, larger controls,
+  safe-area insets, no text selection / callouts / pinch zoom while playing).
+* Play mode (`body.play-mode`) makes the stage fill the viewport; the neck then
+  runs along the longer screen side and never gets wider than 470 px across
+  the strings — spare space shows the sounding notes and chord. The Fullscreen
+  API is used as well where the browser has it (not on iPhone).
+* Audio is started synchronously inside the first tap (`unlockAudio`), declared
+  as media playback so the iPhone silent switch does not mute it, and resumed
+  on the next touch after an interruption.
+
 ## Testing
 
 * `npm test` — `node --test` unit tests: `tests/theory.test.js` (note math,
   tunings, fretboard, scales, chords), `tests/spec-theory.test.js` (an
   independent suite derived from the specification, with its own expectation
-  helpers) and `tests/chords.test.js` (curated voicing library validation).
-* `npm run test:e2e` — `tests/e2e/run.mjs` runs `ui.mjs` (Playwright drives the
+  helpers), `tests/chords.test.js` (curated voicing library validation),
+  `tests/state.test.js` (capo, held chords, ringing notes, bends) and
+  `tests/dsp.test.js` (the string model itself: pitch at three sample rates,
+  identical output at worklet and fallback block sizes, decay, muting,
+  coupling stability, garbage input).
+* `npm run test:e2e` — `tests/e2e/run.mjs` runs `mobile.mjs` (emulated iPad and
+  phone, both orientations, touch input: fallback audio backend, sound output,
+  multi-touch, play mode, target sizes, manifest/service worker), `ui.mjs`
+  (Playwright drives the
   real page: power on, fret + slide, strum, keyboard, multi-touch, tuning,
   chord hold, presets, phone layouts, screenshots in `tests/e2e/output/`) and
   `audio-pitch.mjs` (renders every string/fret through the real engine in an

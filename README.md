@@ -13,12 +13,44 @@ No build step and no dependencies: plain ES modules, Web Audio API and Canvas 2D
 <img src="docs/screenshot-phone.png" alt="Phone layout: zoomed vertical neck with a minimap" width="280">
 
 ```sh
-npm start            # serves the app at http://localhost:8080/
-npm test             # music-theory + chord-library unit tests (node:test)
-npm run test:e2e     # Playwright: real UI interactions + offline audio pitch verification
+npm start            # serves the app at http://localhost:8080/ and prints the address for phones/tablets
+npm run start:https  # same over https (self-signed certificate) on port 8443
+npm test             # music-theory, chord-library, app-state and string-synthesis unit tests (node:test)
+npm run test:e2e     # Playwright: desktop + iPad/phone interactions and offline audio pitch verification
 ```
 
 Open `index.html` through any static server (modules need http://, not file://).
+
+## Play it on your iPad or phone
+
+1. On your computer run `npm start`. It prints a line like
+   `http://192.168.1.23:8080/` under "On a phone or iPad connected to the same
+   Wi-Fi, open:".
+2. Open that address in Safari (iPad/iPhone) or Chrome (Android) on the device,
+   tap once to power the amp on, and play. Turn a phone sideways for the
+   biggest neck; tap **Full screen** on a tablet. The neck is zoomed on small
+   screens — drag the minimap to move along all 24 frets.
+3. Optional: use the browser's *Share → Add to Home Screen* to get an app icon
+   that opens without browser bars.
+
+Good to know:
+
+- **Audio over plain http.** Browsers only allow the low-latency AudioWorklet
+  on https or localhost, so a device that opens the `http://192.168…` address
+  runs the very same string model on a fallback audio path (a few milliseconds
+  more latency). Nothing to configure.
+- **Lowest latency / offline install.** `npm run start:https` serves over
+  https with a certificate generated on your machine. Open the printed
+  `https://…:8443/` address on the device and accept the certificate warning
+  once: the device then uses the AudioWorklet path, and an app added to the
+  Home Screen keeps working with the server switched off.
+- **iPhone silent switch.** The app asks iOS to treat it as media playback, so
+  it sounds even when the ring/silent switch is on silent. If you hear nothing,
+  check the volume buttons.
+- Your computer's firewall must allow incoming connections to the port
+  (8080, or 8443 for https), and both devices must be on the same network.
+- `?audio=script` in the address forces the fallback audio path on any device
+  (useful for comparing).
 
 ## What it does
 
@@ -33,6 +65,9 @@ Open `index.html` through any static server (modules need http://, not file://).
 - On desktop all 24 frets fit the screen. On phones the neck is zoomed so the
   frets stay finger-sized, with a minimap to move along it; in portrait it
   rotates to the chord-diagram orientation (nut at the top, low E on the left).
+- **Full-screen play mode** (toolbar button; automatic on a phone held
+  sideways): the neck fills the screen with quick strum / mute / preset
+  controls, and on tablets shows the notes and chord being played.
 
 **Playing**
 - Mouse, touch and **multi-touch**: play and hold several strings at once.
@@ -52,8 +87,9 @@ Open `index.html` through any static server (modules need http://, not file://).
 - Capo (frets 1–7).
 
 **Sound** (`src/audio/`)
-- Each string is a digital-waveguide / extended Karplus-Strong voice running in
-  an `AudioWorklet`: deterministic pluck excitation with velocity-dependent
+- Each string is a digital-waveguide / extended Karplus-Strong voice. All six
+  run in an `AudioWorklet` (or, where that is unavailable, the same code in a
+  `ScriptProcessorNode`): deterministic pluck excitation with velocity-dependent
   brightness, pick-position comb filter, frequency-dependent loop damping,
   dispersion (string stiffness), tension-modulation pitch bend on hard plucks,
   pitch glides for slides, fret-noise bursts, pick click, release/mute damping.
@@ -102,7 +138,9 @@ src/audio/                    worklet string model, engine, effects, presets
 src/ui/                       fretboard canvas + minimap, interaction, knobs, panels
 tests/*.test.js               unit tests (node --test)
 tests/e2e/                    Playwright UI test + offline audio analysis
-tools/serve.mjs               tiny static server
+manifest.webmanifest, sw.js   installable web app + offline cache
+icons/                        app icons
+tools/serve.mjs               tiny static server (LAN address, optional https)
 ```
 
 ## Testing
@@ -122,6 +160,11 @@ tools/serve.mjs               tiny static server
 
 ## Browser support
 
-Chrome, Edge, Firefox and Safari (desktop and mobile) with AudioWorklet
-support. Sound starts after the first tap/click, as browsers require.
-Headphones recommended.
+Chrome, Edge, Firefox and Safari on desktop, iPadOS, iOS and Android. Sound
+starts after the first tap/click, as browsers require. Headphones recommended.
+
+The automated tests run in Chromium, including emulated iPad and phone screens
+with touch input and the fallback audio path. Safari on real iOS/iPadOS
+hardware and Firefox are supported by design (standard Web Audio, pointer
+events, no browser-specific code paths beyond the documented iOS audio unlock)
+but are not part of the automated suite.

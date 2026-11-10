@@ -1,5 +1,15 @@
 /**
- * GuitarStringsProcessor — one AudioWorkletProcessor modelling all six strings.
+ * The string synthesis core: six waveguide strings coupled through a bridge.
+ *
+ * This file is used two ways:
+ *   - as an AudioWorklet module (`audioWorklet.addModule`): it registers
+ *     'guitar-strings-processor', which runs a StringBank on the audio thread;
+ *   - as an ordinary ES module: `StringBank` is exported so the engine can run
+ *     the very same model in a ScriptProcessorNode where AudioWorklet is not
+ *     available (plain-http pages on a phone or tablet), and so the DSP can be
+ *     unit-tested in Node.
+ * It has no imports and touches no globals except the worklet registration at
+ * the bottom.
  *
  * Per string (extended Karplus-Strong / digital waveguide, after Jaffe & Smith):
  *
@@ -25,18 +35,17 @@
  *    takes a small fraction of the summed string motion and that same amount is
  *    removed from every string's reflection (v = y − c·lowpass(Σy)). The
  *    coupling is passive — it can only move or absorb energy, never create it —
- *    so it is stable for any combination of notes, and it lives entirely inside
- *    this processor (no feedback cycle in the audio graph).
+ *    so it is stable for any combination of notes.
  *
- * Messages (port.postMessage); `string` is the string index 0..5 (omit on
- * 'config'/'panic' to address all strings):
+ * Messages (StringBank.enqueue / port.postMessage); `string` is the string
+ * index 0..5 (omit on 'config'/'panic' to address all strings):
  *   { type:'config', string?, ... }            parameters (t60, brightness, pickups, coupling…)
  *   { type:'pitch', string, frequency, glide, lengthFraction, time? }
  *   { type:'pluck', string, velocity, pickPosition, damping, frequency?, lengthFraction?, time? }
  *   { type:'damp', string, amount, time? }     0 = ring freely, 1 = full mute
  *   { type:'noise', string, level, duration, time? }  fret/slide noise burst
  *   { type:'panic' }                           clear everything
- *   { type:'ping', id }                        echoed back as { type:'pong', id } once all earlier messages were received
+ *   { type:'ping', id }                        (worklet only) echoed back as { type:'pong', id }
  */
 
 const TWO_PI = Math.PI * 2;
@@ -75,8 +84,9 @@ function lowpassMagnitude(omega, a) {
 
 /** One string: delay loop, excitation, pickup taps. */
 class StringVoice {
-  constructor(index, o = {}) {
+  constructor(index, o = {}, fs = 48000) {
     this.index = index;
+    this.fs = fs; // sample rate
     this.buf = new Float32Array(BUFFER_SIZE);
     this.write = 0;
 
@@ -91,7 +101,7 @@ class StringVoice {
     this.apC = -0.05;    // dispersion all-pass coefficient (negative = stiff string)
     this.frequency = 110;
     this.lengthFraction = 1;
-    this.period = sampleRate / 110;
+    this.period = this.fs / 110;
 
     // Per-string character (brightness is specified for 48 kHz and converted)
     this.t60Ring = o.t60 ?? 5;
@@ -165,10 +175,10 @@ class StringVoice {
    */
   setPitch(frequency, glide, lengthFraction) {
     if (!(frequency > 10) || !Number.isFinite(frequency)) return;
-    frequency = Math.min(frequency, sampleRate / 8);
+    frequency = Math.min(frequency, this.fs / 8);
     this.frequency = frequency;
     this.lengthFraction = Math.max(0.05, Math.min(1, finite(lengthFraction, this.lengthFraction) || 1));
-    this.period = sampleRate / frequency;
+    this.period = this.fs / frequency;
     const previousDelay = this.curDelay;
     this.recomputeLoop();
     const gliding = glide > 0 && this.active;
@@ -176,7 +186,7 @@ class StringVoice {
       // Glide from where the string currently is towards the new length:
       // exponential approach reaching ~98% of the change in `glide` seconds.
       this.curDelay = previousDelay;
-      this.glideCoef = 1 - Math.exp(-4 / (glide * sampleRate));
+      this.glideCoef = 1 - Math.exp(-4 / (glide * this.fs));
     } else {
       this.curDelay = this.targetDelay;
       this.glideCoef = 1;
@@ -195,14 +205,14 @@ class StringVoice {
     const brightnessComp = Math.min(1, Math.max(0.55, 1 - (frequency - 150) / 1800));
     // Brightness values are designed at 48 kHz; keep the same analogue corner at any rate.
     const design = Math.min(0.95, Math.max(0.02, this.baseLpA * this.brightnessScale * brightnessComp + this.damping * 0.35));
-    this.lpA = Math.min(0.98, Math.pow(design, 48000 / sampleRate));
+    this.lpA = Math.min(0.98, Math.pow(design, 48000 / this.fs));
     this.apC = this.baseApC;
     // Interpolate T60 geometrically between ringing and muted values.
     const t60 = Math.exp(Math.log(this.t60Ring) * (1 - this.damping) + Math.log(this.t60Muted) * this.damping);
     // Loop gain per pass so that the fundamental falls 60 dB in t60 seconds,
     // making up for what the loop low-pass removes at f0 (never reaching 1).
-    const omega = TWO_PI * frequency / sampleRate;
-    const target = Math.pow(10, -3 * period / (t60 * sampleRate));
+    const omega = TWO_PI * frequency / this.fs;
+    const target = Math.pow(10, -3 * period / (t60 * this.fs));
     this.loopGain = Math.min(MAX_LOOP_GAIN, target / lowpassMagnitude(omega, this.lpA));
     // Loop length compensated for the filters' phase delay at the fundamental.
     const filterDelay = loopFilterPhaseDelay(omega, this.lpA, this.apC);
@@ -232,7 +242,7 @@ class StringVoice {
       this.tapBTarget[k] = b;
       if (!(glide > 0)) { this.tapA[k] = a; this.tapB[k] = b; }
     }
-    this.tapCoef = glide > 0 ? 1 - Math.exp(-4 / (glide * sampleRate)) : 1;
+    this.tapCoef = glide > 0 ? 1 - Math.exp(-4 / (glide * this.fs)) : 1;
   }
 
   setDamping(amount) {
@@ -275,9 +285,9 @@ class StringVoice {
     // second (velocity dependent) sets the attack brightness: a soft touch is
     // dark, a hard pick is bright. A quieter noise component adds the pick's
     // scrape so no two plucks are identical.
-    const a1 = Math.exp(-TWO_PI * (0.75 * this.frequency) / sampleRate);
-    const cutoff = Math.min(sampleRate * 0.45, 1200 + Math.pow(velocity, 1.6) * 9500);
-    const a2 = Math.exp(-TWO_PI * cutoff / sampleRate);
+    const a1 = Math.exp(-TWO_PI * (0.75 * this.frequency) / this.fs);
+    const cutoff = Math.min(this.fs * 0.45, 1200 + Math.pow(velocity, 1.6) * 9500);
+    const a2 = Math.exp(-TWO_PI * cutoff / this.fs);
     const noiseLevel = 0.06 + 0.1 * velocity;
     const tmp = this.scratch;
     let y1 = 0, y2 = 0, nz = 0, energy = 0;
@@ -307,7 +317,7 @@ class StringVoice {
     this.excPos = 0;
 
     // Pick click: a few ms of bright noise straight to the output.
-    const clickLen = Math.min(this.click.length, Math.round(sampleRate * 0.0025));
+    const clickLen = Math.min(this.click.length, Math.round(this.fs * 0.0025));
     const clickAmp = this.clickLevel * velocity * velocity;
     let hp = 0, prev = 0;
     for (let i = 0; i < clickLen; i++) {
@@ -321,7 +331,7 @@ class StringVoice {
     // Tension modulation: a hard pluck starts slightly sharp and relaxes.
     const bend = 1 - 0.006 * velocity * velocity;
     this.curDelay = this.targetDelay * bend;
-    this.glideCoef = 1 - Math.exp(-4 / (0.06 * sampleRate));
+    this.glideCoef = 1 - Math.exp(-4 / (0.06 * this.fs));
     this.active = true;
     this.quiet = 0;
   }
@@ -329,8 +339,8 @@ class StringVoice {
   /** Fret/slide noise: a short band-limited burst injected into the loop. */
   noiseBurst(level, duration) {
     level = Math.min(0.2, Math.max(0, finite(level, 0.03)));
-    const len = Math.min(this.exc.length, Math.max(8, Math.round(finite(duration, 0.03) * sampleRate)));
-    const a = Math.exp(-TWO_PI * 2500 / sampleRate);
+    const len = Math.min(this.exc.length, Math.max(8, Math.round(finite(duration, 0.03) * this.fs)));
+    const a = Math.exp(-TWO_PI * 2500 / this.fs);
     let lp = 0;
     let sum = 0, envSum = 0;
     for (let i = 0; i < len; i++) {
@@ -430,34 +440,40 @@ class StringVoice {
   }
 }
 
-class GuitarStringsProcessor extends AudioWorkletProcessor {
-  constructor(options) {
-    super();
-    const o = (options && options.processorOptions) || {};
+/**
+ * Six coupled strings. Platform independent: give it a sample rate, feed it
+ * messages with `enqueue(msg, now)` and pull audio with `process(out, blockStart)`.
+ */
+export class StringBank {
+  /**
+   * @param {number} fs sample rate in Hz
+   * @param {object} [o] { strings:[{t60, brightness, dispersion, outGain}], pickupDistances, pickupWeights, coupling }
+   */
+  constructor(fs, o = {}) {
+    this.fs = fs;
     const configs = o.strings || [];
     this.voices = [];
     for (let i = 0; i < STRING_COUNT; i++) {
-      this.voices.push(new StringVoice(i, { ...(configs[i] || {}), pickupDistances: o.pickupDistances, pickupWeights: o.pickupWeights }));
+      this.voices.push(new StringVoice(i, { ...(configs[i] || {}), pickupDistances: o.pickupDistances, pickupWeights: o.pickupWeights }, fs));
     }
     // Bridge coupling: fraction of the summed string motion taken by the bridge
     this.coupling = Math.min(0.01, Math.max(0, finite(o.coupling, 0.0003)));
     this.bridgeLp = 0;
-    this.bridgeA = Math.exp(-TWO_PI * 1500 / sampleRate);
+    this.bridgeA = Math.exp(-TWO_PI * 1500 / fs);
     this.y = new Float64Array(STRING_COUNT);
     this.events = [];
-    this.port.onmessage = (e) => this.enqueue(e.data);
   }
 
   /* ------------------------------------------------------------------ */
   /* Messages                                                           */
   /* ------------------------------------------------------------------ */
 
-  enqueue(msg) {
+  /** Apply a message now, or queue it for its `time` (seconds on the caller's audio clock). */
+  enqueue(msg, now = 0) {
     if (!msg || typeof msg.type !== 'string') return;
-    if (msg.type === 'ping') { this.port.postMessage({ type: 'pong', id: msg.id }); return; }
     if (msg.type === 'config' || msg.type === 'panic') { this.handle(msg); return; }
     const time = Number.isFinite(msg.time) ? msg.time : -1;
-    if (time <= currentTime) { this.handle(msg); return; }
+    if (time <= now) { this.handle(msg); return; }
     // keep sorted by time (stable for equal times)
     let i = this.events.length;
     while (i > 0 && this.events[i - 1].time > time) i--;
@@ -506,11 +522,14 @@ class GuitarStringsProcessor extends AudioWorkletProcessor {
   /* DSP                                                                */
   /* ------------------------------------------------------------------ */
 
-  process(inputs, outputs) {
-    const out = outputs[0][0];
+  /**
+   * Render one block of mono audio.
+   * @param {Float32Array} out
+   * @param {number} blockStart time of out[0] on the same clock as message times
+   */
+  process(out, blockStart) {
     const frames = out.length;
-    const blockStart = currentTime;
-    const dt = 1 / sampleRate;
+    const dt = 1 / this.fs;
     const voices = this.voices;
     const y = this.y;
     const c = this.coupling;
@@ -542,9 +561,32 @@ class GuitarStringsProcessor extends AudioWorkletProcessor {
     }
     this.bridgeLp = bridge;
     for (let s = 0; s < STRING_COUNT; s++) voices[s].endBlock();
-    for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(out);
-    return true;
   }
 }
 
-registerProcessor('guitar-strings-processor', GuitarStringsProcessor);
+/* -------------------------------------------------------------------------- */
+/* AudioWorklet wrapper (only when loaded with audioWorklet.addModule)        */
+/* -------------------------------------------------------------------------- */
+
+if (typeof AudioWorkletProcessor !== 'undefined' && typeof registerProcessor === 'function') {
+  class GuitarStringsProcessor extends AudioWorkletProcessor {
+    constructor(options) {
+      super();
+      // `sampleRate` and `currentTime` are globals of the worklet scope.
+      this.bank = new StringBank(sampleRate, (options && options.processorOptions) || {});
+      this.port.onmessage = (e) => {
+        const msg = e.data;
+        if (msg && msg.type === 'ping') this.port.postMessage({ type: 'pong', id: msg.id });
+        else this.bank.enqueue(msg, currentTime);
+      };
+    }
+
+    process(inputs, outputs) {
+      const out = outputs[0][0];
+      this.bank.process(out, currentTime);
+      for (let ch = 1; ch < outputs[0].length; ch++) outputs[0][ch].set(out);
+      return true;
+    }
+  }
+  registerProcessor('guitar-strings-processor', GuitarStringsProcessor);
+}

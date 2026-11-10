@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const dir = resolve(fileURLToPath(new URL('.', import.meta.url)));
-const suites = ['ui.mjs', 'audio-pitch.mjs'];
+const suites = ['ui.mjs', 'mobile.mjs', 'audio-pitch.mjs'];
 for (const suite of suites) {
   console.log(`\n=== ${suite} ===`);
   const code = await new Promise((res) => {

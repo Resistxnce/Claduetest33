@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
   <title>Electric Guitar Simulator</title>
   <meta name="description" content="A playable, musically accurate six-string electric guitar in your browser: real string synthesis, tunings, chords, scales and effects.">
   <meta name="theme-color" content="#0c0d11">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Guitar">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c0d11'/%3E%3Cpath d='M6 24 L26 8' stroke='%23f59e0b' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='22' r='5' fill='%23b4652a'/%3E%3C/svg%3E">
 </head>
@@ -27,10 +33,20 @@
 
   <main>
     <section class="stage" id="stage" aria-label="Guitar fretboard">
-      <div class="stage-neck">
-        <canvas id="guitar" aria-label="Interactive 24-fret fretboard: tap a string at a fret to play it" role="application"></canvas>
+      <div class="stage-bar" role="toolbar" aria-label="Quick playing controls">
+        <select class="select small stage-preset" id="stage-preset" aria-label="Amp preset"></select>
+        <span class="stage-bar-spacer"></span>
+        <button class="tool-btn" id="tool-strum-down" type="button" aria-label="Strum down" title="Strum down (Space)">⬇<span> Strum</span></button>
+        <button class="tool-btn" id="tool-strum-up" type="button" aria-label="Strum up" title="Strum up (Shift+Space)">⬆</button>
+        <button class="tool-btn" id="tool-mute" type="button" aria-label="Mute all strings" title="Mute all (Esc)">Mute</button>
+        <button class="tool-btn accent" id="play-mode-btn" type="button" aria-pressed="false" title="Fill the screen with the fretboard">⤢<span> Full screen</span></button>
       </div>
-      <canvas id="neck-nav" class="neck-nav" aria-label="Neck position: drag to move along the fretboard" hidden></canvas>
+      <div class="stage-body">
+        <div class="stage-neck">
+          <canvas id="guitar" aria-label="Interactive 24-fret fretboard: tap a string at a fret to play it" role="application"></canvas>
+        </div>
+        <canvas id="neck-nav" class="neck-nav" aria-label="Neck position: drag to move along the fretboard" hidden></canvas>
+      </div>
     </section>
     <p class="stage-caption">Tap a string at any fret to play it · tap left of the nut for open strings · drag along a string to slide · sweep across the strings to strum · <kbd>Space</kbd> strums</p>
 
@@ -65,6 +81,7 @@
         <li><b>Controls:</b> presets, amp knobs, pickup selector, tuning and capo live in the panel below the neck.</li>
         <li><b>Keyboard:</b> <kbd>1</kbd>–<kbd>6</kbd> pick strings (1 = high E), <kbd>Space</kbd> strum down, <kbd>Shift</kbd>+<kbd>Space</kbd> strum up, <kbd>←</kbd>/<kbd>→</kbd> move along the neck, hold <kbd>M</kbd> to palm mute, <kbd>Esc</kbd> mutes everything.</li>
         <li><b>Learn:</b> pick a chord to see the fingering, "Hold chord" to have it pressed for you, show scales and note positions.</li>
+        <li><b>Phone or iPad:</b> turn the device sideways and tap <i>Full screen</i> for a bigger neck; use <i>Add to Home Screen</i> to run it like an app. <span id="lan-hint"></span></li>
       </ul>
       <button class="btn primary" value="close">Got it</button>
     </form>

@@ -18,9 +18,9 @@
  * a dynamic layer (strings, note dots, overlays) redrawn on demand.
  */
 import { fretDistanceFraction, SINGLE_MARKER_FRETS, DOUBLE_MARKER_FRETS, STRING_GAUGES_INCHES, STRING_WOUND, STRING_COUNT } from '../theory/fretboard.js';
-import { pitchClassName } from '../theory/notes.js';
+import { pitchClassName, pitchClass, midiToName } from '../theory/notes.js';
 import { scalePositions } from '../theory/scales.js';
-import { voicingBarres } from '../theory/chords.js';
+import { voicingBarres, detectChord } from '../theory/chords.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -30,6 +30,8 @@ const FIT_THRESHOLD = 900;
 const ZOOMED_LENGTH = 1040;
 /** Upper bound for the cached static layer, in device pixels. */
 const MAX_STATIC_PIXELS = 7e6;
+/** The neck never gets wider than this across the strings (CSS px), however tall the screen. */
+const MAX_NECK_CROSS = 470;
 
 /* -------------------------------------------------------------------------- */
 /* Layout                                                                     */
@@ -50,8 +52,11 @@ export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
   const rightPad = Math.max(10, W * 0.012);        // a little wood past the last fret
   const L = (W - rightPad - nutX) / fretDistanceFraction(N); // scale length in px
   const fretX = (n) => nutX + L * fretDistanceFraction(n);
-  const fbTop = Math.max(6, H * 0.04);
-  const fbBottom = H - Math.max(18, H * 0.085);    // margin below carries the fret numbers
+  // On tall screens the neck is a centred band rather than a stretched fretboard.
+  const band = Math.min(H, MAX_NECK_CROSS);
+  const bandTop = (H - band) / 2;
+  const fbTop = bandTop + Math.max(6, band * 0.04);
+  const fbBottom = bandTop + band - Math.max(18, band * 0.085); // margin below carries the fret numbers
   const fbH = fbBottom - fbTop;
   const inset = fbH * 0.095;
   const spacing = (fbH - 2 * inset) / (STRING_COUNT - 1);
@@ -63,7 +68,7 @@ export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
     return { x, y: stringY(string) };
   };
   return {
-    W, H, N, openW, nutW, nutX, L, fretX, fbTop, fbBottom, fbH, inset, spacing, stringY, cellWidth, positionCenter,
+    W, H, N, openW, nutW, nutX, L, fretX, fbTop, fbBottom, fbH, inset, spacing, stringY, cellWidth, positionCenter, band, bandTop,
     openLabelX: openW * 0.22, lastX: fretX(N), bridgeX: nutX + L,
   };
 }
@@ -183,7 +188,11 @@ export class GuitarCanvas {
   resolveOrientation() {
     const o = this.state.options.orientation;
     if (o !== 'auto') return o;
-    return window.innerHeight > window.innerWidth && window.innerWidth < 760 ? 'vertical' : 'horizontal';
+    const portrait = window.innerHeight > window.innerWidth;
+    // Filling the screen: the neck runs along the longer side. Otherwise only
+    // narrow (phone-sized) portrait screens turn the neck upright.
+    if (document.body.classList.contains('play-mode')) return portrait ? 'vertical' : 'horizontal';
+    return portrait && window.innerWidth < 760 ? 'vertical' : 'horizontal';
   }
 
   /** Full neck length in guitar space for a viewport length. */
@@ -415,6 +424,43 @@ export class GuitarCanvas {
     this.drawRinging(ctx, now);
     this.drawFingers(ctx);
     this.drawHover(ctx);
+    this.drawHud(ctx, now);
+  }
+
+  /**
+   * When the neck does not fill the screen across the strings (full-screen
+   * play mode on a tablet), the free space shows what is sounding: the notes
+   * and, when they form one, the chord.
+   */
+  drawHud(ctx, now) {
+    const L = this.layout;
+    if (L.bandTop < 54) return;
+    const st = this.state;
+    const notes = [];
+    for (let s = 0; s < STRING_COUNT; s++) {
+      const ring = st.ringing[s];
+      const lp = this.lastPluck[s];
+      if (ring && lp.t && now - lp.t < 3200) notes.push(ring);
+    }
+    if (!notes.length) return;
+    notes.sort((a, b) => a.midi - b.midi);
+    const flats = st.options.flats;
+    const names = notes.map((n) => midiToName(n.midi, { flats })).join('  ');
+    const pcs = new Set(notes.map((n) => pitchClass(n.midi)));
+    const chord = pcs.size >= 2 ? detectChord(pcs, { bassPc: pitchClass(notes[0].midi), flats }) : null;
+    const headline = chord ? chord.name : (notes.length === 1 ? names : '');
+    const gy = L.bandTop * 0.5;
+    const big = `800 ${Math.min(34, Math.max(20, L.bandTop * 0.3))}px system-ui, sans-serif`;
+    const small = '600 14px system-ui, sans-serif';
+    if (this.orientation === 'vertical') {
+      const x = this.scroll + 34;
+      if (headline) this.text(ctx, x, gy, headline, { font: big, color: '#fde68a' });
+      if (headline !== names) this.text(ctx, x + (headline ? 34 : 0), gy, names, { font: small, color: 'rgba(231,233,238,0.75)' });
+    } else {
+      const x = this.scroll + 20;
+      if (headline) this.text(ctx, x, gy - (headline !== names ? 10 : 0), headline, { font: big, color: '#fde68a', align: 'left' });
+      if (headline !== names) this.text(ctx, x, gy + (headline ? 20 : 0), names, { font: small, color: 'rgba(231,233,238,0.75)', align: 'left' });
+    }
   }
 
   renderStatic() {
@@ -608,7 +654,7 @@ export class GuitarCanvas {
   drawFretNumbers(ctx) {
     if (!this.state.options.fretNumbers) return;
     const L = this.layout;
-    const margin = L.H - L.fbBottom;
+    const margin = L.bandTop + L.band - L.fbBottom;
     const y = L.fbBottom + margin * 0.5;
     const size = clamp(margin * 0.55, 8, 12);
     for (let n = 1; n <= L.N; n++) {

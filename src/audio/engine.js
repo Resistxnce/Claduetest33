@@ -8,12 +8,20 @@
  *
  * The graph is a straight chain (no feedback cycles outside the delay effect's
  * own DelayNode loop), so it renders identically in every browser.
+ *
+ * Two backends run the same string model (StringBank):
+ *   - 'worklet': an AudioWorkletNode on the audio thread (lowest latency). Needs
+ *     a secure context — https or localhost.
+ *   - 'script': a ScriptProcessorNode on the main thread. Used automatically
+ *     when AudioWorklet is unavailable, which is the case on a phone or tablet
+ *     that opens the app over plain http from a computer on the local network.
  * All timing uses AudioContext time; `when` arguments default to "now".
  * The engine is theory-agnostic: callers pass frequencies and vibrating
  * length fractions (which the processor needs for pickup/pick positions).
  */
 import { makeDistortionCurve, makeSoftLimiterCurve, makeReverbImpulse, expMap, clamp, setParamSmooth } from './effects.js';
 import { PRESETS, getPreset } from './presets.js';
+import { StringBank } from './string-processor.js';
 
 export const STRING_COUNT = 6;
 
@@ -57,6 +65,61 @@ export const DELAY_TIMES = Object.freeze([
   { id: 'slap', name: 'Slapback (110 ms)', seconds: 0.11 },
 ]);
 
+/** Block size of the ScriptProcessor fallback (frames). */
+const SCRIPT_BUFFER_SIZE = 512;
+
+/** iPhone / iPad (iPadOS reports itself as a Mac with touch). */
+export function isIOS() {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+let silentAudio = null;
+
+/**
+ * Must run synchronously inside a user gesture. Starts the context, and on
+ * iOS makes the instrument audible even when the ring/silent switch is set to
+ * silent (Web Audio alone is treated as "ambient" sound and muted by it).
+ */
+function unlockAudio(ctx) {
+  try { if (ctx.state !== 'running') ctx.resume().catch(() => {}); } catch { /* older Safari returns no promise */ }
+  try {
+    // One silent buffer through the destination fully unlocks older iOS versions.
+    const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch { /* not fatal */ }
+  try {
+    if (typeof navigator !== 'undefined' && navigator.audioSession) {
+      // Safari 16.4+: declare this as media playback (ignores the silent switch).
+      navigator.audioSession.type = 'playback';
+    } else if (isIOS() && !silentAudio) {
+      // Older iOS: a looping silent <audio> element switches the whole page to the playback category.
+      silentAudio = document.createElement('audio');
+      silentAudio.setAttribute('playsinline', '');
+      silentAudio.setAttribute('x-webkit-airplay', 'deny');
+      silentAudio.loop = true;
+      silentAudio.src = silentWavUrl();
+      const p = silentAudio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    }
+  } catch { /* not fatal */ }
+}
+
+/** Object URL of half a second of silence as a WAV file. */
+function silentWavUrl() {
+  const rate = 8000, samples = rate / 2;
+  const view = new DataView(new ArrayBuffer(44 + samples * 2));
+  const text = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
+  text(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); text(8, 'WAVE');
+  text(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  text(36, 'data'); view.setUint32(40, samples * 2, true);
+  return URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
+}
+
 function makeWetDry(ctx) {
   const input = ctx.createGain();
   const output = ctx.createGain();
@@ -69,8 +132,13 @@ function makeWetDry(ctx) {
 }
 
 export class GuitarAudioEngine extends EventTarget {
-  constructor() {
+  /**
+   * @param {object} [o]
+   * @param {boolean} [o.forceScriptBackend] always use the ScriptProcessor backend (testing / troubleshooting)
+   */
+  constructor({ forceScriptBackend = false } = {}) {
     super();
+    this.forceScriptBackend = forceScriptBackend;
     this.ctx = null;
     this.ready = false;
     this.initializing = null;
@@ -81,6 +149,9 @@ export class GuitarAudioEngine extends EventTarget {
     this.delayTimeId = 'dotted';
     this.palmMute = false;
     this.stringsNode = null;
+    /** 'worklet' | 'script' once initialised */
+    this.backend = null;
+    this.bank = null; // StringBank instance when running the 'script' backend
     // Default open-string pitches (standard tuning); the UI overrides these from the active tuning.
     const defaults = [82.4069, 110, 146.8324, 195.9977, 246.9417, 329.6276];
     this.stringState = Array.from({ length: STRING_COUNT }, (_, i) => ({ frequency: defaults[i], lengthFraction: 1, ringing: false, lastPluck: 0 }));
@@ -103,20 +174,37 @@ export class GuitarAudioEngine extends EventTarget {
    * @param {AudioContext} [existingContext] optional (e.g. an OfflineAudioContext for tests)
    */
   async init(existingContext = null) {
+    const forceScriptBackend = this.forceScriptBackend;
     if (this.ready) return this;
     if (this.initializing) return this.initializing;
+    // Everything up to the first `await` runs inside the user's tap, which is
+    // what iOS needs to let the context start.
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!existingContext && !Ctx) return Promise.reject(new Error('This browser has no Web Audio support'));
+    const ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
+    if (!existingContext) unlockAudio(ctx);
     this.initializing = (async () => {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
       try {
-        if (!ctx.audioWorklet) throw new Error('AudioWorklet is not available (needs a secure context and a modern browser)');
-        await ctx.audioWorklet.addModule(this.moduleUrl);
+        let backend = 'script';
+        if (!forceScriptBackend && ctx.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
+          try {
+            await ctx.audioWorklet.addModule(this.moduleUrl);
+            backend = 'worklet';
+          } catch (err) {
+            console.warn('AudioWorklet unavailable, using the ScriptProcessor backend', err);
+          }
+        }
+        if (backend === 'script' && typeof ctx.createScriptProcessor !== 'function') {
+          throw new Error('Neither AudioWorklet nor ScriptProcessor is available in this browser');
+        }
         this.ctx = ctx;
+        this.backend = backend;
         this.buildGraph();
       } catch (err) {
         // Leave the engine in a state where the next user gesture can try again.
         this.initializing = null;
         this.ctx = null;
+        this.backend = null;
         if (!existingContext && typeof ctx.close === 'function') ctx.close().catch(() => {});
         throw err;
       }
@@ -129,6 +217,7 @@ export class GuitarAudioEngine extends EventTarget {
     return this.initializing;
   }
 
+  /** Resume after the browser suspended or (on iOS) interrupted the context. Call from a user gesture. */
   async resume() {
     if (!this.ctx) return;
     if (this.ctx.state !== 'running' && typeof this.ctx.resume === 'function') {
@@ -139,20 +228,32 @@ export class GuitarAudioEngine extends EventTarget {
   buildGraph() {
     const ctx = this.ctx;
     const selector = PICKUP_SELECTOR.find((p) => p.position === this.pickupPosition);
-    // All six strings and their bridge coupling live in one worklet.
-    this.stringsNode = new AudioWorkletNode(ctx, 'guitar-strings-processor', {
-      numberOfInputs: 0,
-      numberOfOutputs: 1,
-      outputChannelCount: [1],
-      processorOptions: {
-        strings: STRING_T60.map((t60, i) => ({ t60, brightness: STRING_BRIGHTNESS[i], dispersion: STRING_DISPERSION[i], outGain: STRING_OUT_GAIN[i] })),
-        pickupDistances: selector.pickups.map((p) => PICKUP_DISTANCES[p]),
-        pickupWeights: selector.pickups.map(() => (selector.pickups.length > 1 ? 0.72 : 1)),
-        coupling: BRIDGE_COUPLING,
-      },
-    });
-    this.stringsNode.onprocessorerror = (e) => console.error('String processor error', e);
-    this.stringsNode.port.onmessage = (e) => this.onStringMessage(e.data);
+    // All six strings and their bridge coupling live in one StringBank.
+    const stringOptions = {
+      strings: STRING_T60.map((t60, i) => ({ t60, brightness: STRING_BRIGHTNESS[i], dispersion: STRING_DISPERSION[i], outGain: STRING_OUT_GAIN[i] })),
+      pickupDistances: selector.pickups.map((p) => PICKUP_DISTANCES[p]),
+      pickupWeights: selector.pickups.map(() => (selector.pickups.length > 1 ? 0.72 : 1)),
+      coupling: BRIDGE_COUPLING,
+    };
+    if (this.backend === 'worklet') {
+      this.stringsNode = new AudioWorkletNode(ctx, 'guitar-strings-processor', {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+        processorOptions: stringOptions,
+      });
+      this.stringsNode.onprocessorerror = (e) => console.error('String processor error', e);
+      this.stringsNode.port.onmessage = (e) => this.onStringMessage(e.data);
+    } else {
+      // Same model on the main thread. 512 frames ≈ 11 ms at 48 kHz: small enough
+      // to feel immediate, large enough to survive a busy frame.
+      this.bank = new StringBank(ctx.sampleRate, stringOptions);
+      this.stringsNode = ctx.createScriptProcessor(SCRIPT_BUFFER_SIZE, 1, 1);
+      this.stringsNode.onaudioprocess = (e) => {
+        const out = e.outputBuffer.getChannelData(0);
+        this.bank.process(out, Number.isFinite(e.playbackTime) ? e.playbackTime : ctx.currentTime);
+      };
+    }
     for (let i = 0; i < STRING_COUNT; i++) {
       this.post(i, { type: 'pitch', frequency: this.stringState[i].frequency, glide: 0, lengthFraction: this.stringState[i].lengthFraction });
     }
@@ -446,12 +547,18 @@ export class GuitarAudioEngine extends EventTarget {
   /* ------------------------------------------------------------------ */
 
   post(stringIdx, msg) {
-    if (this.stringsNode) this.stringsNode.port.postMessage({ ...msg, string: stringIdx });
+    this.send({ ...msg, string: stringIdx });
   }
 
   /** Send a message addressed to every string (config / panic). */
   postAll(msg) {
-    if (this.stringsNode) this.stringsNode.port.postMessage(msg);
+    this.send(msg);
+  }
+
+  /** Deliver a message to the string model on whichever backend is running. */
+  send(msg) {
+    if (this.backend === 'worklet') this.stringsNode.port.postMessage(msg);
+    else if (this.bank) this.bank.enqueue(msg, this.ctx.currentTime);
   }
 
   /**
@@ -537,7 +644,7 @@ export class GuitarAudioEngine extends EventTarget {
    * far (useful before offline rendering, or to detect a dead worklet).
    */
   sync() {
-    if (!this.ready) return Promise.resolve();
+    if (!this.ready || this.backend !== 'worklet') return Promise.resolve();
     return new Promise((resolve) => {
       const id = ++this.pingId;
       this.pending.set(id, resolve);
