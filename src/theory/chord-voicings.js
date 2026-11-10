@@ -41,10 +41,11 @@
  *   - Everything in OPEN_VOICINGS stays below fret 8. A closed voicing that a
  *     MOVABLE_SHAPE already produces for the same root (F barre = E shape at
  *     fret 1, Bm = Am shape at fret 2, C9 x32333 = the A-string 9th shape at
- *     fret 3, fretted power chords, ...) is NOT repeated here. Closed
- *     voicings appear here only when they need an open string (Dadd9
- *     x54230) or are the small four-string form that should lead a chord
- *     whose lowest shape is a jazz grip (F#maj7 xx4321).
+ *     fret 3, fretted power chords, ...) is NOT repeated here. Voicings
+ *     without open strings appear here only when no shape produces them:
+ *     low-position forms tied to one root (Small F xx3211, D x54232) and the
+ *     four-string maj7 form that leads the chords whose lowest shape is a
+ *     jazz grip (F#maj7 xx4321).
  */
 export const OPEN_VOICINGS = {
   /* ---------------------------------------------------------------- major */
@@ -384,22 +385,26 @@ export const MOVABLE_SHAPES = [
   { quality: '5', rootString: 1, frets: [-1, 0, 2, -1, -1, -1], fingers: [0, 1, 3, 0, 0, 0], name: 'A-string root (two strings)' },
   { quality: '5', rootString: 2, frets: [-1, -1, 0, 2, 3, -1], fingers: [0, 0, 1, 3, 4, 0], name: 'D-string root' },
   /* ---------------------------------------------------------- dominant 7th */
+  /* The jazz grips with the A string muted (F7 1x121x, Fm7 1x111x) are not
+   * offered for 7 and m7: they sit on the same base fret as the full barre
+   * with a lower top fret, so they would be the first card for F, F#, G and
+   * G#. Unlike maj7 (xx4321-type forms in OPEN_VOICINGS) those chords have
+   * no other standard low form that could lead instead. */
   { quality: '7', rootString: 0, frets: [0, 2, 0, 1, 0, 0], fingers: [1, 3, 1, 2, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'E7 shape' },
   { quality: '7', rootString: 0, frets: [0, 2, 0, 1, 3, 0], fingers: [1, 3, 1, 2, 4, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'E7 shape (7th on B string)' },
   { quality: '7', rootString: 1, frets: [-1, 0, 2, 0, 2, 0], fingers: [0, 1, 3, 1, 4, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'A7 shape' },
   { quality: '7', rootString: 1, frets: [-1, 0, 2, 0, 2, -1], fingers: [0, 1, 3, 1, 4, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'A7 shape (four strings)' },
   { quality: '7', rootString: 2, frets: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4], name: 'D7 shape' },
   /* ------------------------------------------------------------- major 7th */
+  /* The E-string jazz grip (F#maj7 2x332x) mutes the A string; it never leads
+   * because F, F#, G, G# and A all have an OPEN_VOICINGS entry. */
   { quality: 'maj7', rootString: 0, frets: [0, -1, 1, 1, 0, -1], fingers: [1, 0, 3, 4, 2, 0], name: 'E-string root (jazz)' },
   { quality: 'maj7', rootString: 0, frets: [0, 2, 1, 1, 0, 0], fingers: [1, 4, 2, 3, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Emaj7 shape' },
   { quality: 'maj7', rootString: 1, frets: [-1, 0, 2, 1, 2, -1], fingers: [0, 1, 3, 2, 4, 0], name: 'A-string root (jazz)' },
   { quality: 'maj7', rootString: 1, frets: [-1, 0, 2, 1, 2, 0], fingers: [0, 1, 3, 2, 4, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Amaj7 shape' },
   { quality: 'maj7', rootString: 2, frets: [-1, -1, 0, 2, 2, 2], fingers: [0, 0, 1, 3, 3, 3], barre: { fret: 2, from: 3, to: 5 }, name: 'Dmaj7 shape' },
   /* ------------------------------------------------------------- minor 7th */
-  /* The jazz grips with the A string muted (F7 1x121x, Fm7 1x111x) are not
-   * offered for 7 and m7: they sit on the same base fret as the full barre
-   * with a lower top fret, so they would be the first card for F, F#, G and
-   * G#, and no open-string form exists to lead those chords instead. */
+  /* No E-string jazz grip (Fm7 1x111x): see the note on the dominant 7th. */
   { quality: 'm7', rootString: 0, frets: [0, 2, 0, 0, 0, 0], fingers: [1, 3, 1, 1, 1, 1], barre: { fret: 0, from: 0, to: 5 }, name: 'Em7 shape' },
   { quality: 'm7', rootString: 1, frets: [-1, 0, 2, 0, 1, 0], fingers: [0, 1, 3, 1, 2, 1], barre: { fret: 0, from: 1, to: 5 }, name: 'Am7 shape' },
   { quality: 'm7', rootString: 1, frets: [-1, 0, 2, 0, 1, -1], fingers: [0, 1, 3, 1, 2, 0], barre: { fret: 0, from: 1, to: 3 }, name: 'A-string root (jazz)' },
