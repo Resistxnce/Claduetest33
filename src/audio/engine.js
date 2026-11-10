@@ -247,7 +247,12 @@ export class GuitarAudioEngine extends EventTarget {
       this.stringsNode = ctx.createScriptProcessor(SCRIPT_BUFFER_SIZE, 1, 1);
       this.stringsNode.onaudioprocess = (e) => {
         const out = e.outputBuffer.getChannelData(0);
-        this.bank.process(out, Number.isFinite(e.playbackTime) ? e.playbackTime : ctx.currentTime);
+        // Scheduled plucks are timed against ctx.currentTime, so the block must be stamped on the
+        // same clock: use the event's playbackTime only when it is on that clock (some WebKit
+        // versions report 0 or nothing), otherwise the context time itself.
+        const now = ctx.currentTime;
+        const t = e.playbackTime;
+        this.bank.process(out, Number.isFinite(t) && Math.abs(t - now) < 0.25 ? t : now);
       };
     }
     for (let i = 0; i < STRING_COUNT; i++) {

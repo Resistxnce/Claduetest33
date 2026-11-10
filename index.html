@@ -67,6 +67,7 @@
       <p>Click or tap anywhere to enable sound. Then tap any string at any fret to play it, and sweep across the strings to strum.</p>
       <p class="start-small">Multi-touch supported · best with headphones</p>
       <p class="start-error" id="start-error" role="alert"></p>
+      <noscript><p class="start-error">JavaScript is switched off in this browser. Turn it on (Settings → Safari → Advanced → JavaScript on an iPhone or iPad) and reload.</p></noscript>
     </div>
   </div>
 
@@ -98,6 +99,46 @@
     </form>
   </dialog>
 
+  <script>
+    /*
+     * Start-up watchdog. If the app cannot start on this device, the card says why
+     * instead of ignoring taps. Deliberately old-style JavaScript: it has to run in
+     * browsers that cannot run the app itself.
+     */
+    (function () {
+      var problems = [];
+      var box = document.getElementById('start-error');
+      function started() { return !!window.__guitar; }
+      function show() {
+        if (!box || started()) return;
+        box.textContent = 'The simulator could not start here: ' + problems.join('; ') +
+          '. Reload the page; it needs an up-to-date Safari or Chrome (iOS / iPadOS 15.4 or newer).';
+      }
+      function note(text) {
+        if (started()) return;
+        if (problems.indexOf(text) < 0 && problems.length < 4) problems.push(text);
+        show();
+      }
+      function fileOf(url) { return String(url).split('#')[0].split('?')[0].split('/').pop() || 'a file'; }
+      window.addEventListener('error', function (e) {
+        var el = e.target;
+        if (el && el !== window && (el.src || el.href)) note('could not load ' + fileOf(el.src || el.href));
+        else note((e.message || 'script error') + (e.filename ? ' (' + fileOf(e.filename) + ':' + (e.lineno || 0) + ')' : ''));
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        note(String((r && r.message) || r || 'a start-up step failed'));
+      });
+      // Module scripts do nothing at all in very old browsers, and stall silently on a blocked connection.
+      setTimeout(function () {
+        if (!started() && !problems.length) note('the app scripts did not load (slow or blocked connection, or a browser without module support)');
+      }, 8000);
+      var overlay = document.getElementById('start-overlay');
+      if (overlay) overlay.addEventListener('click', function () {
+        if (!started() && box && !problems.length) box.textContent = 'Still loading… tap again in a moment.';
+      });
+    })();
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

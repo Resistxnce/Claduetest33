@@ -281,7 +281,7 @@ main {
 .start-card h2 { font-size: 22px; }
 .start-card p { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
 .start-small { font-size: 12px !important; color: var(--text-faint) !important; }
-.start-error { color: var(--danger) !important; font-size: 12px !important; min-height: 1em; }
+.start-error { color: var(--danger) !important; font-size: 13px !important; min-height: 1em; overflow-wrap: anywhere; }
 .start-icon { width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2a2f3a, #14161c); border: 1px solid #343a46; display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
 .start-led { width: 16px; height: 16px; border-radius: 50%; background: #ff5a3c; box-shadow: 0 0 14px #ff5a3c; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }

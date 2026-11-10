@@ -143,6 +143,21 @@ try {
     await context.close();
   }
 
+  // If a script cannot load (blocked connection, old browser) the start card says so instead of ignoring taps
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const broken = await context.newPage();
+    await broken.route('**/src/ui/knob.js', (route) => route.abort());
+    await broken.goto(`${server.url}/?nosw`);
+    await broken.waitForFunction(() => /could not start here/.test(document.getElementById('start-error').textContent), null, { timeout: 12000 });
+    const message = await broken.textContent('#start-error');
+    assert(/could not load/.test(message) && !(await broken.evaluate(() => !!window.__guitar)), `a failed start is explained on the page: ${message}`);
+    const box = await broken.locator('#start-error').boundingBox();
+    assert(box && box.width > 100 && box.x >= 0 && box.x + box.width <= 390, 'the explanation is visible inside the start card');
+    console.log('start-up watchdog:', message);
+    await context.close();
+  }
+
   // The manifest and service worker are served and valid
   const page = await (await browser.newContext()).newPage();
   const manifest = await (await page.request.get(`${server.url}/manifest.webmanifest`)).json();

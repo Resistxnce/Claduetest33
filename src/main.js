@@ -201,6 +201,8 @@ function boot() {
 
   // Debug / test hooks (used by the end-to-end tests)
   window.__guitar = { state, engine, canvas, player, controls, learning, setPlayMode };
+  // The start-up watchdog in index.html may have said "still loading": the app is ready now.
+  document.getElementById('start-error').textContent = '';
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
