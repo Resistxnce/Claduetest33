@@ -513,6 +513,9 @@ test('chordVoicings offers at least two distinct, playable curated voicings for 
         assert.deepEqual(problems, [], `${chordName(root, q)} ${show(v)}: ${problems.join('; ')}`);
         assert.equal(v.frets.length, 6);
         assert.equal(v.fingers.length, 6);
+        // The chord diagram draws five frets from the base fret: every dot must fit.
+        assert.ok(Math.max(0, ...v.frets) - diagramBaseFret(v.frets) <= 4,
+          `${chordName(root, q)} ${show(v)}: does not fit a five-fret diagram starting at fret ${diagramBaseFret(v.frets)}`);
       }
       // No two cards may show the same fret pattern (the panel renders every
       // entry; a second fingering of the same frets is not a second voicing).

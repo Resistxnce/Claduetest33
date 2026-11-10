@@ -28,9 +28,10 @@
  *     muted string between two sounding strings. A grip that mutes an inner
  *     string (jazz forms with the A string damped, 3x0013, ...) is therefore
  *     never the first OPEN_VOICINGS entry, and as a movable shape it is only
- *     kept when a fully strummable shape always sorts before it (same base
- *     fret and top fret, listed earlier) or the roots where it would lead
- *     have an OPEN_VOICINGS entry.
+ *     kept when it can never be first: for every root either a fully
+ *     strummable shape sorts before it (a lower position, or the same base
+ *     and top fret and listed earlier) or the chord has an OPEN_VOICINGS
+ *     entry.
  *   - One card per fret pattern: chordVoicings() drops any later voicing
  *     that repeats the frets of an earlier one, so each fret pattern is
  *     listed once, with its most conventional fingering.
@@ -344,7 +345,7 @@ export const OPEN_VOICINGS = {
   ],
   /* Cm9 x31333, Dm9 x53555 ... are the 'A-string root' shape; for B its D
    * string is open, which a closed shape cannot be. For A# both shapes land
-   * above fret 7 (686668 and x 13 11 13 13 13), and the only playable form
+   * above fret 7 (686668 and x 13 11 13 13 13); the one conventional form
    * below that is the four-string 6465xx (root, b3, b7, 9th). It is listed
    * for this root only: as a movable shape it would push the standard barre
    * out of first place for Gm9 and G#m9. */
