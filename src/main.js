@@ -55,7 +55,11 @@ function boot() {
     const button = e.target.closest && e.target.closest('button');
     if (button && e.detail > 0 && !button.closest('dialog')) button.blur();
   });
-  document.addEventListener('change', (e) => { if (e.target.tagName === 'SELECT') e.target.blur(); });
+  // Menus: only when chosen with the pointer/touch — stepping through a menu with the arrow keys keeps it focused.
+  let pointerSelect = null;
+  document.addEventListener('pointerdown', (e) => { pointerSelect = e.target.closest ? e.target.closest('select') : null; }, true);
+  document.addEventListener('keydown', () => { pointerSelect = null; }, true);
+  document.addEventListener('change', (e) => { if (e.target.tagName === 'SELECT' && e.target === pointerSelect) e.target.blur(); });
 
   // Level meter
   const meter = document.getElementById('level-meter');
@@ -130,6 +134,13 @@ function boot() {
   const fitStageDebounced = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitStage, 120); };
   window.addEventListener('resize', fitStageDebounced);
   window.addEventListener('orientationchange', fitStageDebounced);
+  // The canvas box can also change without a window resize (a scrollbar appearing, panels reflowing).
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => {
+      const box = canvasEl.getBoundingClientRect();
+      if (Math.abs(box.width - canvas.cssW) > 0.5 || Math.abs(box.height - canvas.cssH) > 0.5) fitStageDebounced();
+    }).observe(canvasEl);
+  }
   state.addEventListener('option', (e) => { if (e.detail.key === 'orientation' || e.detail.key === 'view') fitStage(); });
   fitStage();
 

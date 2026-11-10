@@ -195,7 +195,7 @@ export class Player {
     this.state.liftAll();
     this.dropPointers();
     for (let s = 0; s < STRING_COUNT; s++) {
-      this.engine.release(s);
+      this.engine.release(s, { cancel: true });
       this.canvas.stopVisual(s);
       this.state.setRinging(s, null);
     }

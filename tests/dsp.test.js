@@ -145,3 +145,37 @@ test('panic silences everything', () => {
   bank.process(after, 0.3);
   assert.ok(rms(after, 0.01, 0.1, fs) < 1e-6);
 });
+
+test('messages for a string keep their order: a mute sent after a scheduled pluck still mutes it', () => {
+  const bank = makeBank();
+  // a strum schedules its plucks slightly ahead; the mute and the retune are sent "now" (no time)
+  bank.enqueue({ type: 'pluck', string: 2, velocity: 0.9, pickPosition: 0.14, damping: 0, frequency: 146.83, lengthFraction: 1, time: 0.05 }, 0);
+  bank.enqueue({ type: 'damp', string: 2, amount: 1 }, 0);
+  bank.enqueue({ type: 'pluck', string: 4, velocity: 0.9, pickPosition: 0.14, damping: 0, frequency: 246.94, lengthFraction: 1, time: 0.06 }, 0);
+  bank.enqueue({ type: 'pitch', string: 4, frequency: 261.63, glide: 0, lengthFraction: 0.944 }, 0);
+  const out = render(bank, 1.2);
+  // string 2 was choked right after its pluck; string 4 rings at the pitch sent last
+  const pitch = measurePitch(out, bank.fs, 261.63, 0.4, 1.1);
+  assert.ok(Math.abs(1200 * Math.log2(pitch / 261.63)) < 3, `the later pitch message wins (${pitch.toFixed(2)} Hz)`);
+  const solo = makeBank();
+  solo.enqueue({ type: 'pluck', string: 2, velocity: 0.9, pickPosition: 0.14, damping: 0, frequency: 146.83, lengthFraction: 1, time: 0.05 }, 0);
+  solo.enqueue({ type: 'damp', string: 2, amount: 1 }, 0);
+  const muted = render(solo, 1.0);
+  assert.ok(rms(muted, 0.5, 1.0, solo.fs) < 1e-4, `scheduled pluck followed by a mute is silent (${rms(muted, 0.5, 1.0, solo.fs)})`);
+});
+
+test('a cancelling mute drops plucks that are still scheduled', () => {
+  const bank = makeBank();
+  for (let i = 0; i < 6; i++) bank.enqueue({ type: 'pluck', string: i, velocity: 0.9, pickPosition: 0.14, damping: 0, frequency: 110 * (i + 1), lengthFraction: 1, time: 0.02 + i * 0.014 }, 0);
+  for (let i = 0; i < 6; i++) bank.enqueue({ type: 'damp', string: i, amount: 1, cancel: true }, 0);
+  assert.equal(bank.events.length, 0, 'nothing left in the queue');
+  const out = render(bank, 0.5);
+  let peak = 0;
+  for (const v of out) peak = Math.max(peak, Math.abs(v));
+  assert.ok(peak < 1e-6, `no pluck sounds after mute-all (${peak})`);
+  // and the strings play normally afterwards
+  bank.enqueue({ type: 'pluck', string: 0, velocity: 0.9, pickPosition: 0.14, damping: 0, frequency: 82.41, lengthFraction: 1 }, 0.5);
+  const after = new Float32Array(4800);
+  bank.process(after, 0.5);
+  assert.ok(rms(after, 0, 0.1, bank.fs) > 1e-3);
+});

@@ -28,6 +28,11 @@ export const FRET_COUNT = 24;
 /** Below this viewport length (CSS px) the neck is zoomed and pannable in the "auto" view. */
 const FIT_THRESHOLD = 900;
 const ZOOMED_LENGTH = 1040;
+/**
+ * On touch screens the "auto" view makes the neck at least this long, so even the
+ * 24th fret is a finger-sized target (about 31 px) with real fret spacing.
+ */
+const TOUCH_NECK_LENGTH = 1700;
 /** Upper bound for the cached static layer, in device pixels. */
 const MAX_STATIC_PIXELS = 7e6;
 /** The neck never gets wider than this across the strings (CSS px), however tall the screen. */
@@ -64,8 +69,11 @@ export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
   const stringY = (i) => fbTop + inset + (STRING_COUNT - 1 - i) * spacing;
   const cellWidth = (fret) => (fret <= 0 ? openW : fretX(fret) - fretX(fret - 1));
   const positionCenter = (string, fret) => {
-    const x = fret <= 0 ? openW * 0.66 : fretX(fret) - cellWidth(fret) * 0.42;
-    return { x, y: stringY(string) };
+    if (fret <= 0) return { x: openW * 0.66, y: stringY(string) };
+    // Just behind the fret wire, like a real fingertip; centred in cells too narrow for that
+    // (the tap target is the whole cell, so the dot should leave equal margin on both sides).
+    const cell = cellWidth(fret);
+    return { x: fretX(fret) - cell * clamp(0.5 - (cell - 30) * 0.004, 0.42, 0.5), y: stringY(string) };
   };
   return {
     W, H, N, openW, nutW, nutX, L, fretX, fbTop, fbBottom, fbH, inset, spacing, stringY, cellWidth, positionCenter, band, bandTop,
@@ -200,7 +208,13 @@ export class GuitarCanvas {
     const v = this.state.options.view;
     if (v === 'fit') return viewLen;
     if (v === 'zoom') return Math.max(viewLen * 1.6, 1500);
+    if (this.coarsePointer()) return Math.max(viewLen, TOUCH_NECK_LENGTH);
     return viewLen >= FIT_THRESHOLD ? viewLen : ZOOMED_LENGTH;
+  }
+
+  /** Is the main pointer a finger (phone, tablet)? */
+  coarsePointer() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
   }
 
   resize() {
@@ -303,8 +317,10 @@ export class GuitarCanvas {
   /** Guitar-space point for a client (viewport) coordinate. */
   toGuitar(clientX, clientY) {
     const rect = this.canvas.getBoundingClientRect();
-    const sx = clientX - rect.left;
-    const sy = clientY - rect.top;
+    // If the page squeezed the canvas since the last layout, map through the drawn scale
+    // so the fret under the pointer is the fret that is drawn there.
+    const sx = (clientX - rect.left) * (rect.width > 0 ? this.cssW / rect.width : 1);
+    const sy = (clientY - rect.top) * (rect.height > 0 ? this.cssH / rect.height : 1);
     if (this.orientation === 'vertical') return { x: sy + this.scroll, y: this.layout.H - sx };
     return { x: sx + this.scroll, y: sy };
   }

@@ -59,6 +59,7 @@ try {
     assert(info.backend === (device.audio === 'worklet' ? 'worklet' : 'script'), `${device.name}: expected ${device.audio} backend, got ${info.backend}`);
     assert((info.orientation === 'vertical') === device.expectVertical, `${device.name}: orientation ${info.orientation}`);
     assert(info.spacing >= device.minSpacing, `${device.name}: string spacing ${info.spacing} px is too small for fingers`);
+    assert(info.coarse && info.fret24 >= 30, `${device.name}: the 24th fret is ${info.fret24} px wide — too small for a finger`);
     assert(info.fret12 >= 30, `${device.name}: fret 12 is only ${info.fret12} px wide`);
     assert(info.overflowX <= 0, `${device.name}: page overflows horizontally by ${info.overflowX} px`);
     if (device.autoPlayMode) assert(info.playMode, `${device.name}: a phone held sideways should start in play mode`);

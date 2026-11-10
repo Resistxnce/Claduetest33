@@ -15,10 +15,14 @@ const server = await startServer(8128);
 const browser = await launchBrowser();
 const errors = [];
 try {
-  const context = await browser.newContext({ viewport: { width: 1400, height: 860 }, deviceScaleFactor: 1, hasTouch: true });
-  const page = await context.newPage();
-  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') { errors.push(m.text()); console.log('[console]', m.type(), m.text()); } });
-  page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+  // A desktop with a mouse; touch input is switched on only for the multi-touch and phone parts below.
+  const context = await browser.newContext({ viewport: { width: 1400, height: 860 }, deviceScaleFactor: 1 });
+  const watch = (pg) => {
+    pg.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') { errors.push(m.text()); console.log('[console]', m.type(), m.text()); } });
+    pg.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+  };
+  let page = await context.newPage();
+  watch(page);
   await page.goto(`${server.url}/`);
   await page.waitForFunction(() => window.__guitar && window.__guitar.canvas.layout);
   await page.screenshot({ path: `${outDir}/01-start.png` });
@@ -35,7 +39,9 @@ try {
   assert(desktopFrets === 24, `desktop should show 24 frets, got ${desktopFrets}`);
   const fret24 = await page.evaluate(() => window.__guitar.state.fretboard.noteNameAt(5, 24));
   assert(fret24 === 'E6', 'fret 24 on the high E is E6');
-  const canvasBox = await page.locator('#guitar').boundingBox();
+  let canvasBox = await page.locator('#guitar').boundingBox();
+  const desktop = await page.evaluate(() => ({ coarse: matchMedia('(pointer: coarse)').matches, pannable: window.__guitar.canvas.pannable }));
+  assert(!desktop.coarse && !desktop.pannable, 'with a mouse the whole 24-fret neck fits the desktop window');
   const screenPos = async (string, fret) => {
     const p = await page.evaluate(([s, f]) => window.__guitar.canvas.positionCenterScreen(s, f), [string, fret]);
     return { x: canvasBox.x + p.x, y: canvasBox.y + p.y };
@@ -241,32 +247,6 @@ try {
   console.log('Space strum:', names.join(' '));
   assert(names.join(' ') === 'E2 A2 D3 G3 B3 E4', `keyboard strum, got ${names.join(' ')}`);
 
-  // Multi-touch: two fingers on different strings (A string fret 2 = B2, D string fret 2 = E3), then strum
-  await clearRecent();
-  const t1 = await screenPos(1, 2);
-  const t2 = await screenPos(2, 2);
-  const cdp = await context.newCDPSession(page);
-  const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((pt, i) => ({ x: pt.x, y: pt.y, id: i + 1 })) });
-  await touch('touchStart', [t1]);
-  await touch('touchStart', [t1, t2]);
-  await page.waitForTimeout(80);
-  fingers = await page.evaluate(() => [...window.__guitar.state.fingers.values()]);
-  console.log('Multi-touch fingers:', JSON.stringify(fingers));
-  assert(fingers.length === 2, `two fingers expected, got ${fingers.length}`);
-  const held = await page.evaluate(() => [window.__guitar.state.noteOn(1).name, window.__guitar.state.noteOn(2).name]);
-  assert(held.join(' ') === 'B2 E3', `held notes should be B2 E3, got ${held.join(' ')}`);
-  await clearRecent();
-  await page.evaluate(() => window.__guitar.player.strum('down'));
-  await page.waitForTimeout(250);
-  names = await recentNames();
-  console.log('Strum with two fingers held:', names.join(' '));
-  assert(names.join(' ') === 'E2 B2 E3 G3 B3 E4', `expected E2 B2 E3 G3 B3 E4, got ${names.join(' ')}`);
-  await page.screenshot({ path: `${outDir}/04-multitouch.png` });
-  await touch('touchEnd', []);
-  await page.waitForTimeout(50);
-  fingers = await page.evaluate(() => window.__guitar.state.fingers.size);
-  assert(fingers === 0, 'all touches lifted');
-
   // Tuning change updates everything
   await page.selectOption('#tuning-select', 'drop-d');
   const dropD = await page.evaluate(() => [0, 1, 2, 3, 4, 5].map((s) => window.__guitar.state.noteOn(s).name));
@@ -337,17 +317,103 @@ try {
   assert(preset.id === 'distortion' && preset.pickup === 1, 'distortion preset applied');
   await page.click('[data-preset="clean"]');
 
+  // A mute sent right after a strum silences it (the strum's later strings must not sound afterwards)
+  await page.evaluate(() => { const g = window.__guitar; g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.player.releaseEverything(); });
+  await page.waitForFunction(() => window.__guitar.engine.getLevel() < 0.0005, null, { timeout: 8000 }); // let earlier notes' reverb die away
+  await page.evaluate(() => { const g = window.__guitar; g.player.strum('down'); g.player.releaseEverything(); });
+  await page.waitForTimeout(600);
+  const afterMute = await page.evaluate(() => ({ level: window.__guitar.engine.getLevel(), ringing: window.__guitar.state.ringing.filter(Boolean).length }));
+  console.log('Strum then immediate mute:', JSON.stringify(afterMute));
+  assert(afterMute.level < 0.003 && afterMute.ringing === 0, `mute right after a strum must be silent, level ${afterMute.level}`);
+
+  // "Lifting a finger mutes the string": a very fast sweep must not leave strings ringing that the app shows as silent
+  await page.evaluate(() => window.__guitar.state.setOption('releaseMutes', true));
+  await page.mouse.move(s5a.x, s5a.y);
+  await page.mouse.down();
+  await page.mouse.move(s5b.x, s5b.y, { steps: 1 });
+  await page.mouse.up();
+  await page.waitForTimeout(1500);
+  const fastMuted = await page.evaluate(() => ({ level: window.__guitar.engine.getLevel(), ringing: window.__guitar.state.ringing.filter(Boolean).length }));
+  console.log('Fast sweep with lift-to-mute:', JSON.stringify(fastMuted));
+  assert(fastMuted.level < 0.003 && fastMuted.ringing === 0, `fast sweep with lift-to-mute must end silent, level ${fastMuted.level}`);
+  await page.evaluate(() => window.__guitar.state.setOption('releaseMutes', false));
+
+  // Keyboard users can step through a menu: it keeps focus and the arrow keys do not strum
+  await clearRecent();
+  await page.focus('#tuning-select');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(80);
+  const menu = await page.evaluate(() => ({ active: document.activeElement.id, index: document.getElementById('tuning-select').selectedIndex, tuning: window.__guitar.state.tuning.id, played: window.__guitar.state.recent.length }));
+  console.log('Keyboard menu:', JSON.stringify(menu));
+  assert(menu.active === 'tuning-select' && menu.index === 2 && menu.played === 0, `stepping a menu with the keyboard keeps focus there: ${JSON.stringify(menu)}`);
+  await page.selectOption('#tuning-select', 'standard');
+  await page.evaluate(() => document.activeElement.blur());
+
+  // The canvas box can change without a window resize; the layout follows and taps still hit the drawn fret
+  await page.evaluate(() => { window.scrollTo(0, 0); document.getElementById('stage').style.marginRight = '60px'; });
+  await page.waitForFunction(() => { const c = window.__guitar.canvas; return Math.abs(c.cssW - c.canvas.getBoundingClientRect().width) < 0.6; }, null, { timeout: 3000 });
+  const squeezed = await page.evaluate(() => { const c = window.__guitar.canvas; const b = c.canvas.getBoundingClientRect(); const q = c.positionCenterScreen(5, 24); return { x: b.left + q.x, y: b.top + q.y, w: b.width }; });
+  await page.mouse.click(squeezed.x, squeezed.y);
+  await page.waitForTimeout(60);
+  note = await lastNote();
+  assert(note && note.name === 'E6', `after the stage was resized by layout, fret 24 still plays E6 (got ${note && note.name})`);
+  await page.evaluate(() => { document.getElementById('stage').style.marginRight = ''; });
+  await page.waitForFunction(() => { const c = window.__guitar.canvas; return Math.abs(c.cssW - c.canvas.getBoundingClientRect().width) < 0.6; }, null, { timeout: 3000 });
+  console.log('Layout-driven canvas resize: ok');
+
+  // ---- From here on the device has a touch screen as its main pointer (a large tablet first, then phones) ----
+  await page.close();
+  const touchContext = await browser.newContext({ viewport: { width: 1400, height: 860 }, deviceScaleFactor: 1, hasTouch: true });
+  page = await touchContext.newPage();
+  watch(page);
+  await page.goto(`${server.url}/`);
+  await page.waitForFunction(() => window.__guitar && window.__guitar.canvas.layout);
+  await page.click('#start-overlay');
+  await page.waitForFunction(() => window.__guitar.engine.ready);
+  canvasBox = await page.locator('#guitar').boundingBox();
+  const tablet = await page.evaluate(() => ({ coarse: matchMedia('(pointer: coarse)').matches, pannable: window.__guitar.canvas.pannable, fret24: window.__guitar.canvas.layout.cellWidth(24) }));
+  console.log('Touch screen layout:', JSON.stringify(tablet));
+  assert(tablet.coarse && tablet.pannable && tablet.fret24 >= 30, 'on a touch screen the neck is zoomed so that the 24th fret is finger-sized');
+
+  // Multi-touch: two fingers on different strings (A string fret 2 = B2, D string fret 2 = E3), then strum
+  await clearRecent();
+  const t1 = await screenPos(1, 2);
+  const t2 = await screenPos(2, 2);
+  const cdp = await touchContext.newCDPSession(page);
+  const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((pt, i) => ({ x: pt.x, y: pt.y, id: i + 1 })) });
+  await touch('touchStart', [t1]);
+  await touch('touchStart', [t1, t2]);
+  await page.waitForTimeout(80);
+  fingers = await page.evaluate(() => [...window.__guitar.state.fingers.values()]);
+  console.log('Multi-touch fingers:', JSON.stringify(fingers));
+  assert(fingers.length === 2, `two fingers expected, got ${fingers.length}`);
+  const held = await page.evaluate(() => [window.__guitar.state.noteOn(1).name, window.__guitar.state.noteOn(2).name]);
+  assert(held.join(' ') === 'B2 E3', `held notes should be B2 E3, got ${held.join(' ')}`);
+  await clearRecent();
+  await page.evaluate(() => window.__guitar.player.strum('down'));
+  await page.waitForTimeout(250);
+  names = await recentNames();
+  console.log('Strum with two fingers held:', names.join(' '));
+  assert(names.join(' ') === 'E2 B2 E3 G3 B3 E4', `expected E2 B2 E3 G3 B3 E4, got ${names.join(' ')}`);
+  await page.screenshot({ path: `${outDir}/04-multitouch.png` });
+  await touch('touchEnd', []);
+  await page.waitForTimeout(50);
+  fingers = await page.evaluate(() => window.__guitar.state.fingers.size);
+  assert(fingers === 0, 'all touches lifted');
+
   // Mobile portrait
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(300);
-  const mobile = await page.evaluate(() => { const c = window.__guitar.canvas; return { orientation: c.orientation, frets: c.fretCount, spacing: c.layout.spacing, pannable: c.pannable, fret12Cell: c.layout.cellWidth(12), navHidden: document.getElementById('neck-nav').hidden, lowELeft: c.positionCenterScreen(0, 3).x < c.positionCenterScreen(5, 3).x, nutTop: c.positionCenterScreen(0, 1).y < c.positionCenterScreen(0, 5).y }; });
+  const mobile = await page.evaluate(() => { const c = window.__guitar.canvas; return { coarse: matchMedia('(pointer: coarse)').matches, orientation: c.orientation, frets: c.fretCount, spacing: c.layout.spacing, pannable: c.pannable, fret12Cell: c.layout.cellWidth(12), navHidden: document.getElementById('neck-nav').hidden, lowELeft: c.positionCenterScreen(0, 3).x < c.positionCenterScreen(5, 3).x, nutTop: c.positionCenterScreen(0, 1).y < c.positionCenterScreen(0, 5).y }; });
   console.log('Mobile layout:', JSON.stringify(mobile));
   assert(mobile.orientation === 'vertical', 'portrait phone uses vertical layout');
+  assert(mobile.coarse, 'the phone part runs with a touch screen as the main pointer');
   assert(mobile.frets === 24, 'all 24 frets exist on a phone');
   assert(mobile.pannable && !mobile.navHidden, 'the neck is zoomed and the minimap is shown on a phone');
   assert(mobile.spacing >= 26, `string spacing on a phone should be >= 26 px, got ${mobile.spacing}`);
-  assert(mobile.fret12Cell >= 24, `fret 12 should be at least 24 px wide on a phone, got ${mobile.fret12Cell}`);
+  assert(mobile.fret12Cell >= 44, `fret 12 should be finger-sized on a phone, got ${mobile.fret12Cell}`);
   assert(mobile.lowELeft && mobile.nutTop, 'vertical layout: nut at the top, low E on the left');
   await page.screenshot({ path: `${outDir}/07-mobile.png`, fullPage: false });
   const mBox = await page.locator('#guitar').boundingBox();

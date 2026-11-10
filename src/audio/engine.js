@@ -612,12 +612,15 @@ export class GuitarAudioEngine extends EventTarget {
     return st.ringing && this.now - st.lastPluck < STRING_T60[stringIdx] * 0.85;
   }
 
-  /** Fret-hand release / mute: the string rings down quickly. */
-  release(stringIdx, { amount = 1, when } = {}) {
+  /**
+   * Fret-hand release / mute: the string rings down quickly. `cancel` also drops
+   * plucks still scheduled for the string (the tail of a strum), for "mute everything".
+   */
+  release(stringIdx, { amount = 1, when, cancel = false } = {}) {
     const st = this.stringState[stringIdx];
     st.ringing = false;
     if (!this.ready) return;
-    this.post(stringIdx, { type: 'damp', amount, time: when });
+    this.post(stringIdx, { type: 'damp', amount, time: when, cancel });
   }
 
   /** Let a damped string ring again (e.g. palm mute lifted). */

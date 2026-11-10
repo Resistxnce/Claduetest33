@@ -472,7 +472,15 @@ export class StringBank {
   enqueue(msg, now = 0) {
     if (!msg || typeof msg.type !== 'string') return;
     if (msg.type === 'config' || msg.type === 'panic') { this.handle(msg); return; }
-    const time = Number.isFinite(msg.time) ? msg.time : -1;
+    let time = Number.isFinite(msg.time) ? msg.time : -1;
+    // `cancel` drops whatever is still scheduled for the string (mute all: no late plucks from a strum).
+    if (msg.cancel) this.events = this.events.filter((e) => e.string !== msg.string);
+    // Messages for one string take effect in the order they were sent: a mute or pitch
+    // change sent right after a strum waits for that string's scheduled pluck instead of
+    // overtaking it (the queue is sorted, so the last match is the latest).
+    for (let i = this.events.length - 1; i >= 0; i--) {
+      if (this.events[i].string === msg.string) { if (this.events[i].time > time) time = this.events[i].time; break; }
+    }
     if (time <= now) { this.handle(msg); return; }
     // keep sorted by time (stable for equal times)
     let i = this.events.length;
