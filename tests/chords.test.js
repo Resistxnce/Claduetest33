@@ -398,7 +398,8 @@ test('the curated library covers the standard chords with their conventional fin
   expectCurated(1, 'm9', [-1, 4, 2, 4, 4, 4]);                       // C#m9
   expectCurated(3, 'm9', [-1, 6, 4, 6, 6, 6]);                       // D#m9
   expectCurated(5, 'm9', [1, 3, 1, 1, 1, 3], [1, 3, 1, 1, 1, 4]);   // Fm9 (Em9 shape)
-  expectCurated(10, 'm9', [6, 4, 6, 5, -1, -1], [3, 1, 4, 2, 0, 0]); // A#m9 (E-string root)
+  expect('10:m9', [6, 4, 6, 5, -1, -1], [3, 1, 4, 2, 0, 0]);        // A#m9 (four strings, the only form below fret 8)
+  expectCurated(7, 'm9', [3, 5, 3, 3, 3, 5], [1, 3, 1, 1, 1, 4]);   // Gm9 (Em9 shape)
   for (const key of ['9:dim', '4:dim', '4:dim7', '7:add9', '7:aug']) assert.ok(OPEN_VOICINGS[key]?.length, `${key} present`);
   // Slash voicing: C/G declares its bass.
   const cg = OPEN_VOICINGS['0:maj'].find((v) => v.frets.join(',') === '3,3,2,0,1,0');
@@ -625,4 +626,5 @@ test('cards are ordered: open voicings in library order, then every movable shap
   assert.equal(lead(5, 'aug'), 'x,x,3,2,2,1');      // Faug before 1x322x
   assert.equal(lead(6, 'maj7'), 'x,x,4,3,2,1');     // F#maj7 before 2x332x
   assert.equal(lead(6, 'maj9'), '2,1,3,1,2,x');     // F#maj9 before 2x3324
+  assert.equal(lead(7, 'm9'), '3,5,3,3,3,5');       // Gm9: the Em9 barre
 });

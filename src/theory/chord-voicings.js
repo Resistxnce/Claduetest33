@@ -43,9 +43,9 @@
  *     fret 1, Bm = Am shape at fret 2, C9 x32333 = the A-string 9th shape at
  *     fret 3, fretted power chords, ...) is NOT repeated here. Voicings
  *     without open strings appear here only when no shape produces them:
- *     low-position forms tied to one root (Small F xx3211, D x54232) and the
- *     four-string maj7 form that leads the chords whose lowest shape is a
- *     jazz grip (F#maj7 xx4321).
+ *     low-position forms tied to one root (Small F xx3211, D x54232, A#m9
+ *     6465xx) and the four-string maj7 form that leads the chords whose
+ *     lowest shape is a jazz grip (F#maj7 xx4321).
  */
 export const OPEN_VOICINGS = {
   /* ---------------------------------------------------------------- major */
@@ -343,7 +343,14 @@ export const OPEN_VOICINGS = {
     { frets: [-1, 0, 5, 5, 0, 0], fingers: [0, 0, 1, 1, 0, 0], barre: { fret: 5, from: 2, to: 3 }, name: 'Am9 (open B and E)' },
   ],
   /* Cm9 x31333, Dm9 x53555 ... are the 'A-string root' shape; for B its D
-   * string is open, which a closed shape cannot be. */
+   * string is open, which a closed shape cannot be. For A# both shapes land
+   * above fret 7 (686668 and x 13 11 13 13 13), and the only playable form
+   * below that is the four-string 6465xx (root, b3, b7, 9th). It is listed
+   * for this root only: as a movable shape it would push the standard barre
+   * out of first place for Gm9 and G#m9. */
+  '10:m9': [ // A#m9
+    { frets: [6, 4, 6, 5, -1, -1], fingers: [3, 1, 4, 2, 0, 0], name: 'A#m9 (four strings)' },
+  ],
   '11:m9': [ // Bm9
     { frets: [-1, 2, 0, 2, 2, 2], fingers: [0, 1, 0, 2, 3, 4], name: 'Open Bm9' },
   ],
@@ -499,9 +506,8 @@ export const MOVABLE_SHAPES = [
   { quality: 'maj9', rootString: 1, frets: [-1, 1, 0, 2, 1, 1], fingers: [0, 2, 1, 4, 3, 3], barre: { fret: 1, from: 4, to: 5 }, name: 'A-string root (five strings)' },
   /* -------------------------------------------------------------- m9 */
   /* A-string root: Cm9 x31333 (or x3133x). E-string root: the Em9 barre
-   * (Fm9 131113) and the four-string 6465xx (A#m9: root, b3, b7, 9th). */
+   * (Fm9 131113). */
   { quality: 'm9', rootString: 0, frets: [0, 2, 0, 0, 0, 2], fingers: [1, 3, 1, 1, 1, 4], barre: { fret: 0, from: 0, to: 5 }, name: 'Em9 shape' },
-  { quality: 'm9', rootString: 0, frets: [2, 0, 2, 1, -1, -1], fingers: [3, 1, 4, 2, 0, 0], name: 'E-string root (four strings)' },
   { quality: 'm9', rootString: 1, frets: [-1, 2, 0, 2, 2, 2], fingers: [0, 2, 1, 3, 3, 3], barre: { fret: 2, from: 3, to: 5 }, name: 'A-string root' },
   { quality: 'm9', rootString: 1, frets: [-1, 2, 0, 2, 2, -1], fingers: [0, 2, 1, 3, 3, 0], barre: { fret: 2, from: 3, to: 4 }, name: 'A-string root (four strings)' },
 ];
