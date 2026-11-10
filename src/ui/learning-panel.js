@@ -95,6 +95,7 @@ export class LearningPanel {
     this.scaleId = 'minor-pentatonic';
     this.build();
     state.addEventListener('played', () => this.renderNowPlaying());
+    state.addEventListener('ringing', () => this.renderNowPlaying());
     state.addEventListener('finger', () => this.renderNowPlaying());
     state.addEventListener('chord', () => { this.renderNowPlaying(); this.renderChordVoicings(); });
     state.addEventListener('tuning', () => { this.renderChordVoicings(); this.renderNowPlaying(); });
@@ -288,7 +289,8 @@ export class LearningPanel {
     for (let s = 0; s < STRING_COUNT; s++) {
       const es = this.engine.stringState[s];
       if (es.ringing && this.engine.now - es.lastPluck < 3.5) {
-        const note = st.noteOn(s);
+        // The note that was actually played keeps ringing after the finger lifts.
+        const note = st.ringing[s] || st.noteOn(s);
         if (note) ringing.push(note);
       }
     }
@@ -301,7 +303,7 @@ export class LearningPanel {
       if (held.length) {
         this.nowPlaying.innerHTML = held.map((n) => `<span class="np-chip">${n.name}</span>`).join('') + '<span class="muted"> fretted — pick or strum to hear it</span>';
       } else {
-        this.nowPlaying.innerHTML = '<span class="muted">Press a fret and pick a string, or strum over the pickups.</span>';
+        this.nowPlaying.innerHTML = '<span class="muted">Tap any string at any fret to play it — sweep across the strings to strum.</span>';
       }
       return;
     }
@@ -320,7 +322,7 @@ export class LearningPanel {
           <span>string ${6 - latest.string} · fret ${latest.fret}</span>
         </div>
       </div>`;
-    const chips = chordNotes.map((n) => `<span class="np-chip${n === latest ? ' latest' : ''}">${n.name}</span>`).join('');
+    const chips = chordNotes.map((n) => `<span class="np-chip${n.string === latest.string && n.midi === latest.midi ? ' latest' : ''}">${n.name}</span>`).join('');
     const chordHtml = chord ? `<div class="np-chord">Chord: <b>${chord.name}</b></div>` : (pcs.size >= 2 ? '<div class="np-chord muted">No chord match</div>' : '');
     this.nowPlaying.innerHTML = main + `<div class="np-ringing">${chips}</div>` + chordHtml;
   }

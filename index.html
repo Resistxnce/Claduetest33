@@ -26,12 +26,13 @@
   </header>
 
   <main>
-    <section class="stage" id="stage" aria-label="Guitar">
-      <canvas id="guitar" aria-label="Interactive guitar: press frets and strum over the pickups" role="application"></canvas>
-      <div class="stage-caption">
-        <span>Press frets with fingers or mouse · drag along a string to slide · strum over the pickups · <kbd>Space</kbd> strums</span>
+    <section class="stage" id="stage" aria-label="Guitar fretboard">
+      <div class="stage-neck">
+        <canvas id="guitar" aria-label="Interactive 24-fret fretboard: tap a string at a fret to play it" role="application"></canvas>
       </div>
+      <canvas id="neck-nav" class="neck-nav" aria-label="Neck position: drag to move along the fretboard" hidden></canvas>
     </section>
+    <p class="stage-caption">Tap a string at any fret to play it · tap left of the nut for open strings · drag along a string to slide · sweep across the strings to strum · <kbd>Space</kbd> strums</p>
 
     <section class="dock">
       <div class="panel" id="controls" aria-label="Amp and guitar controls"></div>
@@ -45,7 +46,7 @@
         <span class="start-led"></span>
       </div>
       <h2>Power on the amp</h2>
-      <p>Click or tap anywhere to enable sound. Then press the frets, pick the strings over the pickups, and play.</p>
+      <p>Click or tap anywhere to enable sound. Then tap any string at any fret to play it, and sweep across the strings to strum.</p>
       <p class="start-small">Multi-touch supported · best with headphones</p>
       <p class="start-error" id="start-error" role="alert"></p>
     </div>
@@ -55,12 +56,13 @@
     <form method="dialog">
       <h2>How to play</h2>
       <ul>
-        <li><b>Fret a note:</b> press a string between two frets. Several fingers can hold several strings at once (multi-touch).</li>
-        <li><b>Pick / strum:</b> tap a string over the pickups, or drag across the strings to strum. Faster = louder, closer to the bridge = brighter.</li>
+        <li><b>Play a note:</b> tap a string between two frets — it sounds that note (the thick low E is the bottom string, as in tablature). Tap a string before the nut for the open string. Several fingers can play several strings at once (multi-touch).</li>
+        <li><b>Strum:</b> sweep your finger across the strings (before the nut for open strings or a held chord). Faster = louder.</li>
+        <li><b>All 24 frets:</b> on small screens the neck is zoomed — drag the minimap (or press <kbd>←</kbd>/<kbd>→</kbd>) to move along it.</li>
         <li><b>Slide:</b> drag a pressed finger along the string. <b>Hammer-on / pull-off:</b> add or lift a finger while the note rings.</li>
-        <li><b>Release:</b> lift your finger to mute the string (configurable in <i>Playing</i>).</li>
-        <li><b>Guitar controls:</b> the volume and tone knobs and the pickup switch on the body are live; so is everything in the panel.</li>
-        <li><b>Keyboard:</b> <kbd>1</kbd>–<kbd>6</kbd> pick strings (1 = high E), <kbd>Space</kbd> strum down, <kbd>Shift</kbd>+<kbd>Space</kbd> strum up, hold <kbd>M</kbd> to palm mute, <kbd>Esc</kbd> mutes everything.</li>
+        <li><b>Release:</b> notes ring out when you lift; turn on "Lifting a finger mutes the string" in <i>Playing</i> for fret-hand muting.</li>
+        <li><b>Controls:</b> presets, amp knobs, pickup selector, tuning and capo live in the panel below the neck.</li>
+        <li><b>Keyboard:</b> <kbd>1</kbd>–<kbd>6</kbd> pick strings (1 = high E), <kbd>Space</kbd> strum down, <kbd>Shift</kbd>+<kbd>Space</kbd> strum up, <kbd>←</kbd>/<kbd>→</kbd> move along the neck, hold <kbd>M</kbd> to palm mute, <kbd>Esc</kbd> mutes everything.</li>
         <li><b>Learn:</b> pick a chord to see the fingering, "Hold chord" to have it pressed for you, show scales and note positions.</li>
       </ul>
       <button class="btn primary" value="close">Got it</button>

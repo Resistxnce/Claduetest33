@@ -28,25 +28,39 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/audio/effects.js` | Distortion curves, reverb impulse generation, helpers |
 | `src/audio/presets.js` | Tone presets (clean, overdrive, distortion, acoustic) |
 | `src/state.js` | Observable app state (tuning, capo, fingers, chord/scale overlays, options) |
-| `src/ui/guitar-canvas.js` | Guitar layout (geometry in "guitar space"), rendering (static hardware layer + dynamic strings/fingers), hit-testing |
-| `src/ui/interaction.js` | Pointer/multi-touch/keyboard → fret, slide, release, pluck, strum |
+| `src/ui/guitar-canvas.js` | 24-fret fretboard: layout (geometry in "guitar space"), rendering (cached wood/frets/inlays layer + dynamic strings, note dots, overlays), hit-testing, panning; `NeckNavigator` minimap |
+| `src/ui/interaction.js` | Pointer/multi-touch/keyboard → tap-to-play, slide, hammer-on/pull-off, sweep strums, release |
 | `src/ui/knob.js` | Rotary knob component (pointer drag, wheel, keyboard, ARIA slider) |
 | `src/ui/controls.js` | Control panel wiring (presets, knobs, pickup selector, tuning, options) |
 | `src/ui/learning-panel.js` | Chord/scale/note libraries and the "now playing" read-out |
 | `src/main.js` | Boots everything |
+
+## Fretboard view
+
+* Guitar space: x along the neck (open-string zone, nut, frets 1–24), y across
+  the strings with the high E at the top and the low E at the bottom
+  (tablature orientation). Portrait phones rotate it: nut at the top, low E on
+  the left (chord-diagram orientation).
+* All 24 frets always exist. If the viewport is shorter than ~900 px along the
+  neck, the neck is laid out larger than the viewport and `scroll` pans it
+  (minimap drag, ←/→, shift+wheel; chord selection auto-reveals the shape).
 
 ## Playing model
 
 * Each string has a set of *fingers* (pointer id → fret). The **sounding fret** is
   the highest fretted finger, or the capo, or 0 (open). Chord mode adds virtual
   fingers; a chord's muted strings (`x`) mute that string.
-* `pluck(string, velocity, pickPosition)` excites the string at its sounding pitch.
-  Re-plucking a ringing string adds energy to the existing vibration (no voice
-  stealing — a string is one voice, like the real thing).
+* Tapping a string at a fret presses it and plucks it; tapping before the nut
+  plucks the open string. `pluck(string, velocity)` excites the string at its
+  sounding pitch. Re-plucking a ringing string adds energy to the existing
+  vibration (no voice stealing — a string is one voice, like the real thing).
 * Changing the sounding fret while the string rings glides the pitch (slide /
-  hammer-on / pull-off). Lifting the last finger mutes with a fret-hand release.
-* Strumming = plucking strings in order with ~10–25 ms between them; velocity
-  from pointer speed; pick position from pointer x in the strum zone.
+  hammer-on / pull-off). Lifting the last finger lets the note ring out at its
+  own pitch (default) or mutes it ("Lifting a finger mutes the string").
+  `state.ringing[string]` records the note actually ringing for the read-out.
+* Sweeping a pointer across strings plucks each string it reaches (a strum);
+  velocity comes from pointer speed. Keyboard/buttons strum all six strings
+  ~14 ms apart.
 
 ## Audio signal flow
 

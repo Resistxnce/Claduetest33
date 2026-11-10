@@ -31,6 +31,10 @@ try {
   console.log('AudioContext state:', ctxState);
   await page.screenshot({ path: `${outDir}/02-desktop.png` });
 
+  const desktopFrets = await page.evaluate(() => window.__guitar.canvas.fretCount);
+  assert(desktopFrets === 24, `desktop should show 24 frets, got ${desktopFrets}`);
+  const fret24 = await page.evaluate(() => window.__guitar.state.fretboard.noteNameAt(5, 24));
+  assert(fret24 === 'E6', 'fret 24 on the high E is E6');
   const canvasBox = await page.locator('#guitar').boundingBox();
   const screenPos = async (string, fret) => {
     const p = await page.evaluate(([s, f]) => window.__guitar.canvas.positionCenterScreen(s, f), [string, fret]);
@@ -62,24 +66,66 @@ try {
   await page.mouse.up();
   fingers = await page.evaluate(() => window.__guitar.state.fingers.size);
   assert(fingers === 0, 'finger lifted');
+  let stillRinging = await page.evaluate(() => window.__guitar.engine.stringState[0].ringing && Math.abs(window.__guitar.engine.stringState[0].frequency - 110) < 0.01);
+  assert(stillRinging, 'tapped note should keep ringing at its own pitch (A2) after lifting');
+  // Turn on fret-hand muting: lifting now mutes
+  await page.evaluate(() => window.__guitar.state.setOption('releaseMutes', true));
+  p = await screenPos(2, 2);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.waitForTimeout(40);
+  await page.mouse.up();
+  await page.waitForTimeout(30);
+  const mutedAfterLift = await page.evaluate(() => window.__guitar.engine.stringState[2].ringing === false);
+  assert(mutedAfterLift, 'with "lifting mutes" on, the string is muted on release');
+  await page.evaluate(() => window.__guitar.state.setOption('releaseMutes', false));
 
-  // Strum open strings by dragging through the strum zone (top to bottom = high E to low E)
+  // Strum open strings by sweeping down the open zone (top to bottom = low E to high E)
   await clearRecent();
   const strum = await page.evaluate(() => {
     const L = window.__guitar.canvas.layout;
     const c = window.__guitar.canvas;
-    const a = c.toScreen(L.strum.xm, L.strum.y0 - 2);
-    const b = c.toScreen(L.strum.xm, L.strum.y1 + 2);
+    const a = c.toScreen(L.openW * 0.5, L.fbTop - 2);
+    const b = c.toScreen(L.openW * 0.5, L.fbBottom + 2);
     return { a, b };
   });
   await page.mouse.move(canvasBox.x + strum.a.x, canvasBox.y + strum.a.y);
   await page.mouse.down();
-  await page.mouse.move(canvasBox.x + strum.b.x, canvasBox.y + strum.b.y, { steps: 12 });
+  await page.mouse.move(canvasBox.x + strum.b.x, canvasBox.y + strum.b.y, { steps: 14 });
   await page.mouse.up();
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(120);
   let names = await recentNames();
-  console.log('Strummed (high to low):', names.join(' '));
-  assert(names.join(' ') === 'E4 B3 G3 D3 A2 E2', `open strum should be E4 B3 G3 D3 A2 E2, got ${names.join(' ')}`);
+  console.log('Swept open strings (top to bottom):', names.join(' '));
+  // High E is the top string and low E the bottom one (tablature orientation).
+  assert(names.join(' ') === 'E4 B3 G3 D3 A2 E2', `open sweep should be E4 B3 G3 D3 A2 E2, got ${names.join(' ')}`);
+  const order = await page.evaluate(() => { const c = window.__guitar.canvas; return c.positionCenterScreen(5, 3).y < c.positionCenterScreen(0, 3).y; });
+  assert(order, 'high E must be drawn above low E');
+
+  // Tap an open string directly
+  await clearRecent();
+  const openB = await screenPos(4, 0);
+  await page.mouse.click(openB.x, openB.y);
+  await page.waitForTimeout(60);
+  note = await lastNote();
+  console.log('Tapped open B ->', note && note.name);
+  assert(note && note.name === 'B3', `open tap should play B3, got ${note && note.name}`);
+
+  // Sweep across the strings on the fretboard at fret 5 plays each string's 5th-fret note
+  await clearRecent();
+  const s5a = await screenPos(0, 5);
+  const s5b = await screenPos(5, 5);
+  await page.mouse.move(s5a.x, s5a.y);
+  await page.mouse.down();
+  await page.waitForTimeout(30);
+  await page.mouse.move(s5b.x, s5b.y, { steps: 14 });
+  await page.mouse.up();
+  await page.waitForTimeout(120);
+  names = await recentNames();
+  console.log('Swept fret 5:', names.join(' '));
+  assert(names.join(' ') === 'A2 D3 G3 C4 E4 A4', `fret-5 sweep should be A2 D3 G3 C4 E4 A4, got ${names.join(' ')}`);
+  // With "lifting mutes" off, the swept notes keep ringing in the engine
+  const ringing = await page.evaluate(() => window.__guitar.engine.stringState.filter((s) => s.ringing).length);
+  assert(ringing === 6, `all six strings should still ring after the sweep, got ${ringing}`);
 
   // Keyboard: Space strums down (low to high)
   await clearRecent();
@@ -159,9 +205,14 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(300);
-  const mobile = await page.evaluate(() => ({ orientation: window.__guitar.canvas.orientation, view: window.__guitar.canvas.view, frets: window.__guitar.canvas.fretCount }));
+  const mobile = await page.evaluate(() => { const c = window.__guitar.canvas; return { orientation: c.orientation, frets: c.fretCount, spacing: c.layout.spacing, pannable: c.pannable, fret12Cell: c.layout.cellWidth(12), navHidden: document.getElementById('neck-nav').hidden, lowELeft: c.positionCenterScreen(0, 3).x < c.positionCenterScreen(5, 3).x, nutTop: c.positionCenterScreen(0, 1).y < c.positionCenterScreen(0, 5).y }; });
   console.log('Mobile layout:', JSON.stringify(mobile));
   assert(mobile.orientation === 'vertical', 'portrait phone uses vertical layout');
+  assert(mobile.frets === 24, 'all 24 frets exist on a phone');
+  assert(mobile.pannable && !mobile.navHidden, 'the neck is zoomed and the minimap is shown on a phone');
+  assert(mobile.spacing >= 26, `string spacing on a phone should be >= 26 px, got ${mobile.spacing}`);
+  assert(mobile.fret12Cell >= 24, `fret 12 should be at least 24 px wide on a phone, got ${mobile.fret12Cell}`);
+  assert(mobile.lowELeft && mobile.nutTop, 'vertical layout: nut at the top, low E on the left');
   await page.screenshot({ path: `${outDir}/07-mobile.png`, fullPage: false });
   const mBox = await page.locator('#guitar').boundingBox();
   const mp = await page.evaluate(() => window.__guitar.canvas.positionCenterScreen(5, 1));
@@ -172,13 +223,31 @@ try {
   note = await lastNote();
   console.log('Mobile tap high E fret 1 ->', note && note.name);
   assert(note && note.name === 'F4', `mobile tap should play F4, got ${note && note.name}`);
+  // Pan to the top of the neck with the minimap and tap fret 24 on the high E (E6).
+  const navBox = await page.locator('#neck-nav').boundingBox();
+  await touch('touchStart', [{ x: navBox.x + navBox.width / 2, y: navBox.y + navBox.height - 3 }]);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(80);
+  const panned = await page.evaluate(() => ({ scroll: window.__guitar.canvas.scroll, max: window.__guitar.canvas.maxScroll }));
+  console.log('Minimap pan:', JSON.stringify(panned));
+  assert(panned.max > 0 && Math.abs(panned.scroll - panned.max) < 1, 'minimap tap at the end scrolls to the last frets');
+  const p24 = await page.evaluate(() => window.__guitar.canvas.positionCenterScreen(5, 24));
+  await clearRecent();
+  await touch('touchStart', [{ x: mBox.x + p24.x, y: mBox.y + p24.y }]);
+  await page.waitForTimeout(60);
+  await touch('touchEnd', []);
+  note = await lastNote();
+  console.log('Mobile tap high E fret 24 ->', note && note.name, note && note.frequency.toFixed(2));
+  assert(note && note.name === 'E6' && Math.abs(note.frequency - 1318.51) < 0.01, `fret 24 should play E6, got ${note && note.name}`);
+  await page.screenshot({ path: `${outDir}/08b-mobile-high-frets.png` });
+  await page.evaluate(() => window.__guitar.canvas.setScroll(0));
   await page.screenshot({ path: `${outDir}/08-mobile-full.png`, fullPage: true });
 
   // Landscape phone
   await page.setViewportSize({ width: 844, height: 390 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(300);
-  const land = await page.evaluate(() => ({ orientation: window.__guitar.canvas.orientation, view: window.__guitar.canvas.view, frets: window.__guitar.canvas.fretCount }));
+  const land = await page.evaluate(() => ({ orientation: window.__guitar.canvas.orientation, frets: window.__guitar.canvas.fretCount, spacing: window.__guitar.canvas.layout.spacing }));
   console.log('Landscape phone layout:', JSON.stringify(land));
   await page.screenshot({ path: `${outDir}/09-landscape-phone.png` });
 

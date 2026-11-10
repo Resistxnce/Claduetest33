@@ -129,8 +129,8 @@ export class ControlPanel {
       el('h3', { text: 'Playing' }),
       strumRow,
       el('div', { class: 'options' }, [
-        opt('tapToPlay', 'Tap a fret to pick it'),
-        opt('releaseMutes', 'Lifting a finger mutes'),
+        opt('tapToPlay', 'Tapping a string plays it'),
+        opt('releaseMutes', 'Lifting a finger mutes the string'),
         opt('palmMute', 'Palm mute'),
       ]),
     ]));
@@ -140,7 +140,7 @@ export class ControlPanel {
         opt('noteNames', 'Note names', { type: 'select', values: [['off', 'Hidden'], ['played', 'Played notes'], ['all', 'All positions']] }),
         opt('fretNumbers', 'Fret numbers'),
         opt('flats', 'Prefer flats (D♭ instead of C♯)'),
-        opt('view', 'Fretboard view', { type: 'select', values: [['auto', 'Auto'], ['full', 'Whole guitar'], ['15', 'Frets 1–15'], ['12', 'Frets 1–12']] }),
+        opt('view', 'Neck view', { type: 'select', values: [['auto', 'Auto'], ['fit', 'Fit all 24 frets'], ['zoom', 'Zoomed (pan with the minimap)']] }),
         opt('orientation', 'Orientation', { type: 'select', values: [['auto', 'Auto'], ['horizontal', 'Horizontal'], ['vertical', 'Vertical']] }),
       ]),
     ]));

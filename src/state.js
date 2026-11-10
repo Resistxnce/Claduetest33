@@ -14,9 +14,9 @@ export const DEFAULT_OPTIONS = Object.freeze({
   fretNumbers: true,
   flats: false,
   tapToPlay: true,     // pressing a fret also picks the string
-  releaseMutes: true,  // lifting the last finger mutes the string
+  releaseMutes: false, // lifting the last finger mutes the string (off: tapped notes ring out)
   palmMute: false,
-  view: 'auto',        // 'auto' | 'full' | '12' | '15'
+  view: 'auto',        // 'auto' | 'fit' | 'zoom' — how the 24-fret neck fills the screen
   orientation: 'auto', // 'auto' | 'horizontal' | 'vertical'
   scaleLabels: 'degrees', // 'degrees' | 'names'
 });
@@ -25,7 +25,7 @@ export class AppState extends EventTarget {
   constructor() {
     super();
     this.tuning = getTuning(DEFAULT_TUNING_ID);
-    this.fretboard = new Fretboard({ tuning: this.tuning });
+    this.fretboard = new Fretboard({ tuning: this.tuning, fretCount: 24 });
     this.capo = 0;
     /** @type {Map<number, {string:number, fret:number}>} pointerId -> finger */
     this.fingers = new Map();
@@ -35,6 +35,8 @@ export class AppState extends EventTarget {
     this.highlightPc = null;
     this.options = { ...DEFAULT_OPTIONS };
     this.recent = [];       // recently played notes (newest last)
+    /** note currently ringing on each string (null when silent/muted) */
+    this.ringing = Array.from({ length: 6 }, () => null);
   }
 
   emit(type, detail = {}) {
@@ -170,6 +172,12 @@ export class AppState extends EventTarget {
     const entry = { ...note, velocity, time: performance.now() };
     this.recent.push(entry);
     if (this.recent.length > 12) this.recent.shift();
+    this.ringing[note.string] = entry;
     this.emit('played', { note: entry });
+  }
+
+  setRinging(string, note) {
+    this.ringing[string] = note;
+    this.emit('ringing', { string, note });
   }
 }

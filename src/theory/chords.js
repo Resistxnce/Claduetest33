@@ -156,23 +156,32 @@ export function voicingBaseFret(voicing) {
   return max <= 4 ? 1 : min;
 }
 
-/** Instantiate a movable shape for a chord root. */
+/**
+ * Instantiate a movable shape for a chord root.
+ *
+ * Shape frets are relative to the shape's lowest fretted fret (which is 0).
+ * `frets[rootString]` is where the root sits inside the shape: 0 for the
+ * classic barre forms, > 0 for shapes with strings below the root fret
+ * (e.g. the C9 grip x3233x is [-1, 1, 0, 1, 1, -1] with rootString 1).
+ */
 function shapeToVoicing(shape, rootPc, openMidi) {
+  const rootRel = shape.frets[shape.rootString];
+  if (!(rootRel >= 0)) return null;
   const rootOpen = openMidi[shape.rootString];
-  let rootFret = pitchClass(rootPc - rootOpen);
   const minRel = Math.min(...shape.frets.filter((f) => f >= 0));
-  // Shapes are stored relative to the root fret; frets below the root are negative.
-  if (rootFret + minRel < 1) rootFret += 12;
-  const frets = shape.frets.map((f) => (f < 0 ? -1 : f + rootFret));
+  let base = pitchClass(rootPc - rootOpen - rootRel);
+  // Closed shapes need a finger on their lowest fret: never place it on the nut.
+  if (base + minRel < 1) base += 12;
+  const frets = shape.frets.map((f) => (f < 0 ? -1 : f + base));
   if (Math.max(...frets) > 22) return null;
   const voicing = {
     frets,
     fingers: [...shape.fingers],
-    name: `${shape.name} (fret ${rootFret})`,
+    name: `${shape.name} (fret ${base + rootRel})`,
     shape: shape.name,
   };
   if (shape.barre) {
-    voicing.barre = voicingBarres(shape).map((b) => ({ fret: b.fret + rootFret, from: b.from, to: b.to }));
+    voicing.barre = voicingBarres(shape).map((b) => ({ fret: b.fret + base, from: b.from, to: b.to }));
     if (voicing.barre.length === 1) voicing.barre = voicing.barre[0];
   }
   return voicing;
@@ -321,8 +330,15 @@ export function chordVoicings(rootPc, qualityId, openMidi, { maxResults = 4 } = 
     shapes.sort((a, b) => voicingBaseFret(a) - voicingBaseFret(b) || voicingMaxFret(a) - voicingMaxFret(b));
     out.push(...shapes);
   }
-  const seen = new Set(out.map((v) => v.frets.join(',')));
-  const valid = out.filter((v) => validateVoicing(v, rootPc, qualityId, openMidi).length === 0);
+  // One card per fret pattern: alternative fingerings of the same frets are dropped.
+  const seen = new Set();
+  const unique = out.filter((v) => {
+    const key = v.frets.join(',');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const valid = unique.filter((v) => validateVoicing(v, rootPc, qualityId, openMidi).length === 0);
   if (valid.length < maxResults) {
     for (const v of generateVoicings(rootPc, qualityId, openMidi, { maxResults: maxResults * 2 })) {
       const key = v.frets.join(',');

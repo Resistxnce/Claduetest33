@@ -1,9 +1,10 @@
 # Electric Guitar Simulator
 
 A playable, musically accurate six-string electric guitar that runs entirely in
-the browser. Press the frets, pick or strum over the pickups, slide, hammer on,
-switch pickups, dial in the amp, change tunings, and learn chords and scales —
-with real string physics instead of beeps.
+the browser. Tap any string at any of the 24 frets and it sounds that note —
+with real string physics instead of beeps. Slide, hammer on, sweep across the
+strings to strum, switch pickups, dial in the amp, change tunings, and learn
+chords and scales.
 
 No build step and no dependencies: plain ES modules, Web Audio API and Canvas 2D.
 
@@ -17,24 +18,28 @@ Open `index.html` through any static server (modules need http://, not file://).
 
 ## What it does
 
-**The instrument**
-- Stratocaster-style body, 22-fret rosewood neck with correct fret spacing
-  (`1 − 2^(−n/12)` of the 25.5" scale), inlays at 3/5/7/9/12/15/17/19/21, six
-  strings of realistic gauge, six-in-line tuners, three pickups, bridge, and
-  working volume / tone knobs and 5-way pickup switch on the body.
-- Horizontal (nut left, low E at the bottom) on desktop; rotates to a vertical
-  chord-diagram orientation on phones. Fret range adapts to the screen
-  (whole guitar, frets 1–15 or 1–12) and can be forced.
+**The fretboard**
+- A top-down 24-fret rosewood neck in the classic fretboard-trainer style:
+  nickel frets at mathematically correct positions (`1 − 2^(−n/12)` of the
+  scale length), numbered inlays at 3/5/7/9/15/17/19/21 and double dots at 12
+  and 24, a bone nut, and six strings of realistic relative thickness with the
+  thick low E at the bottom (tablature orientation).
+- Every string is tappable at every fret; the zone before the nut plays the
+  open strings. Played notes show as glossy dots with their note name.
+- On desktop all 24 frets fit the screen. On phones the neck is zoomed so the
+  frets stay finger-sized, with a minimap to move along it; in portrait it
+  rotates to the chord-diagram orientation (nut at the top, low E on the left).
 
 **Playing**
-- Mouse, touch and **multi-touch**: hold several strings with several fingers.
-- Tap a fret to fret *and* pick it (optional), slide along a string, hammer on
-  and pull off, lift to mute (or let ring).
-- Strum zone over the pickups: tap a string to pick it, drag across the strings
-  to strum. Drag speed sets the picking intensity, position sets the pick
-  position (bridge = bright, neck = warm).
+- Mouse, touch and **multi-touch**: play and hold several strings at once.
+- Tap a string to play it, drag along a string to slide, add or lift fingers
+  for hammer-ons and pull-offs. Notes ring out when you lift (or mute, if you
+  switch on fret-hand muting).
+- Sweep across the strings to strum — on the fretboard or over the open
+  strings. Sweep speed sets the picking intensity.
 - Keyboard: `1`–`6` pick strings (1 = high E), `Space` strum down,
-  `Shift+Space` strum up, hold `M` for palm mute, `Esc` mutes everything.
+  `Shift+Space` strum up, `←`/`→` move along the neck, hold `M` for palm mute,
+  `Esc` mutes everything.
 - Capo (frets 1–7).
 
 **Sound** (`src/audio/`)
@@ -45,7 +50,7 @@ Open `index.html` through any static server (modules need http://, not file://).
   pitch glides for slides, fret-noise bursts, pick click, release/mute damping.
 - The loop length is compensated analytically for the loop filters' phase
   delay, so every note is synthesized at its exact equal-temperament frequency
-  (verified to < 1 cent across all strings and frets by the e2e suite).
+  (verified to < 1 cent on every string at every fret 0–24 by the e2e suite).
 - Pickup position is modelled physically (two-tap read-out at the pickup
   position along the vibrating length, so fretting changes the comb like on a
   real guitar), plus a resonant pickup EQ per selector position.
@@ -82,7 +87,7 @@ src/main.js                   bootstrap
 src/state.js                  observable app state
 src/theory/                   notes, tunings, fretboard, scales, chords, voicings
 src/audio/                    worklet string model, engine, effects, presets
-src/ui/                       canvas renderer, interaction, knobs, panels
+src/ui/                       fretboard canvas + minimap, interaction, knobs, panels
 tests/*.test.js               unit tests (node --test)
 tests/e2e/                    Playwright UI test + offline audio analysis
 tools/serve.mjs               tiny static server
@@ -95,11 +100,13 @@ tools/serve.mjs               tiny static server
   independent specification-derived suite, and the chord-library validation
   (pitch content, bass note, barre/finger consistency, coverage).
 - `npm run test:e2e` starts the server and drives Chromium (Playwright with its
-  bundled Chromium): powers the amp on, frets and slides with the mouse, strums,
-  holds two strings with simulated multi-touch, changes tuning, uses the chord
-  library and presets, checks phone layouts, and renders every string/fret
-  through the real audio engine offline, measuring the synthesized fundamental
-  against equal temperament, release behaviour, dynamics and slides.
+  bundled Chromium): powers the amp on, taps and slides with the mouse, sweeps
+  strums across open and fretted strings, holds two strings with simulated
+  multi-touch, changes tuning, uses the chord library and presets, checks the
+  phone layouts (zoomed neck, minimap panning, tapping fret 24), and renders
+  every string at every fret 0–24 through the real audio engine offline,
+  measuring the synthesized fundamental against equal temperament, release
+  behaviour, dynamics, slides and per-preset levels.
 
 ## Browser support
 

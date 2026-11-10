@@ -1,6 +1,6 @@
 /**
- * Renders every string/fret of the standard tuning (and a sample of other
- * tunings) through the real audio engine in an OfflineAudioContext and
+ * Renders every string at every fret 0–24 of the standard tuning (and a
+ * sample of other tunings) through the real audio engine in an OfflineAudioContext and
  * verifies the synthesized fundamental matches equal temperament.
  */
 import { startServer, launchBrowser, assert } from './lib.mjs';
@@ -23,8 +23,8 @@ try {
   let worst = 0;
   const tunings = process.env.ALL_TUNINGS ? TUNINGS : [getTuning('standard'), getTuning('drop-d'), getTuning('dadgad')];
   for (const tuning of tunings) {
-    const fb = new Fretboard({ tuning });
-    const frets = tuning.id === 'standard' ? [...Array(23).keys()] : [0, 3, 7, 12, 17, 22];
+    const fb = new Fretboard({ tuning, fretCount: 24 });
+    const frets = tuning.id === 'standard' ? [...Array(25).keys()] : [0, 3, 7, 12, 17, 22, 24];
     for (let s = 0; s < 6; s++) {
       for (const f of frets) {
         const expected = fb.frequencyAt(s, f);

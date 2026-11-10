@@ -13,19 +13,12 @@ function boot() {
   const state = new AppState();
   const engine = new GuitarAudioEngine();
   const canvasEl = document.getElementById('guitar');
-  const canvas = new GuitarCanvas(canvasEl, state);
+  const canvas = new GuitarCanvas(canvasEl, state, { navCanvas: document.getElementById('neck-nav') });
   const player = new Player({ canvas, state, engine });
   player.attach();
 
   const controls = new ControlPanel(document.getElementById('controls'), { engine, state, player });
   const learning = new LearningPanel(document.getElementById('learning'), { state, player, engine });
-
-  // Keep the guitar's own knobs/selector in sync with the engine.
-  const syncCanvasControls = () => canvas.setControls({ volume: engine.params.volume, tone: engine.params.tone, pickup: engine.pickupPosition });
-  engine.addEventListener('param', syncCanvasControls);
-  engine.addEventListener('preset', syncCanvasControls);
-  engine.addEventListener('pickup', syncCanvasControls);
-  syncCanvasControls();
 
   // Start overlay (browsers require a gesture before audio can play).
   const overlay = document.getElementById('start-overlay');
