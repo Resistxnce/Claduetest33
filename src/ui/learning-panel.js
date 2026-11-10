@@ -4,7 +4,7 @@
  */
 import { CHORD_QUALITIES, chordName, detectChord, voicingBarres, voicingBaseFret } from '../theory/chords.js';
 import { SCALES, scaleNoteNames } from '../theory/scales.js';
-import { pitchClassName, pitchClass } from '../theory/notes.js';
+import { pitchClassName, pitchClass, describeNote } from '../theory/notes.js';
 import { STRING_COUNT } from '../theory/fretboard.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -31,9 +31,9 @@ function svgEl(tag, attrs = {}) {
 /**
  * Render a chord diagram (nut at the top, low E on the left) as an SVG element.
  */
-export function chordDiagram(voicing, { width = 96, height = 116, title = '' } = {}) {
-  const svg = svgEl('svg', { viewBox: '0 0 96 116', width, height, class: 'chord-diagram', role: 'img', 'aria-label': title });
-  const left = 14, right = 86, top = 26, bottom = 106;
+export function chordDiagram(voicing, { width = 104, height = 116, title = '' } = {}) {
+  const svg = svgEl('svg', { viewBox: '0 0 104 116', width, height, class: 'chord-diagram', role: 'img', 'aria-label': title });
+  const left = 26, right = 96, top = 26, bottom = 106; // room on the left for the "12fr" label
   const strings = STRING_COUNT, frets = 5;
   const sx = (s) => left + (right - left) * (s / (strings - 1));
   const fh = (bottom - top) / frets;
@@ -41,7 +41,7 @@ export function chordDiagram(voicing, { width = 96, height = 116, title = '' } =
   // nut or base fret label
   if (base === 1) svg.append(svgEl('rect', { x: left - 1, y: top - 4, width: right - left + 2, height: 5, rx: 1, class: 'cd-nut' }));
   else {
-    const t = svgEl('text', { x: left - 6, y: top + fh * 0.5 + 4, class: 'cd-base', 'text-anchor': 'end' });
+    const t = svgEl('text', { x: left - 9, y: top + fh * 0.5 + 3.5, class: 'cd-base', 'text-anchor': 'end' });
     t.textContent = `${base}fr`;
     svg.append(t);
   }
@@ -99,7 +99,7 @@ export class LearningPanel {
     state.addEventListener('finger', () => this.renderNowPlaying());
     state.addEventListener('chord', () => { this.renderNowPlaying(); this.renderChordVoicings(); });
     state.addEventListener('tuning', () => { this.renderChordVoicings(); this.renderNowPlaying(); });
-    state.addEventListener('capo', () => this.renderNowPlaying());
+    state.addEventListener('capo', () => { this.renderChordVoicings(); this.renderNowPlaying(); });
     state.addEventListener('option', (e) => { if (e.detail.key === 'flats') { this.renderAll(); } });
     state.addEventListener('scale', () => this.renderScaleInfo());
     state.addEventListener('highlight', () => this.syncNoteButtons());
@@ -160,8 +160,9 @@ export class LearningPanel {
       CHORD_QUALITIES.map((q) => el('option', { value: q.id, text: `${q.name} (${q.symbol || 'maj'})` })));
     qualitySel.value = this.chordQuality;
     this.chordQualitySel = qualitySel;
-    this.holdBtn = el('button', { class: 'btn', type: 'button', text: 'Hold chord', 'aria-pressed': 'false', title: 'Virtual fingers hold the chord so you can strum it', onclick: () => this.state.setHoldChord(!this.state.holdChord) });
-    const strumBtn = el('button', { class: 'btn primary', type: 'button', text: '⬇ Strum chord', onclick: () => { if (!this.state.holdChord) this.state.setHoldChord(true); this.player.strum('down'); } });
+    this.holdBtn = el('button', { class: 'btn', type: 'button', text: 'Hold chord', 'aria-pressed': 'false', title: 'Virtual fingers hold the chord so you can strum it', onclick: () => { if (this.state.chordVoicing || this.state.holdChord) this.state.setHoldChord(!this.state.holdChord); } });
+    const strumBtn = el('button', { class: 'btn primary', type: 'button', text: '⬇ Strum chord', onclick: () => { if (!this.state.chordVoicing) return; if (!this.state.holdChord) this.state.setHoldChord(true); this.player.strum('down'); } });
+    this.strumBtn = strumBtn;
     const clearBtn = el('button', { class: 'btn ghost', type: 'button', text: 'Clear', onclick: () => { this.state.setHoldChord(false); this.state.setChord(null); } });
     this.chordTitle = el('div', { class: 'chord-title' });
     this.voicingList = el('div', { class: 'voicing-list' });
@@ -182,8 +183,11 @@ export class LearningPanel {
 
   renderChordVoicings() {
     const chord = this.state.chord;
+    const playable = !!(chord && chord.voicings.length);
     this.holdBtn.classList.toggle('active', this.state.holdChord);
     this.holdBtn.setAttribute('aria-pressed', String(this.state.holdChord));
+    this.holdBtn.disabled = !playable;
+    this.strumBtn.disabled = !playable;
     this.voicingList.innerHTML = '';
     if (!chord) {
       this.chordTitle.textContent = 'Select a root note and a chord type.';
@@ -191,16 +195,24 @@ export class LearningPanel {
     }
     const name = chordName(chord.rootPc, chord.quality, { flats: this.flats });
     const notes = [...new Set(CHORD_QUALITIES.find((q) => q.id === chord.quality).intervals.map((i) => pitchClassName(chord.rootPc + i, { flats: this.flats })))];
-    this.chordTitle.innerHTML = `<b>${name}</b> <span class="muted">· ${notes.join(' – ')}${this.state.tuning.id !== 'standard' ? ` · voicings generated for ${this.state.tuning.name} tuning` : ''}</span>`;
+    const capo = this.state.capo;
+    const extras = [];
+    if (capo) extras.push(`${chordName(chord.rootPc - capo, chord.quality, { flats: this.flats })} shapes above the capo on fret ${capo}`);
+    if (this.state.tuning.id !== 'standard') extras.push(`voicings generated for ${this.state.tuning.name} tuning`);
+    this.chordTitle.innerHTML = `<b>${name}</b> <span class="muted">· ${notes.join(' – ')}${extras.map((x) => ` · ${x}`).join('')}</span>`;
+    if (!playable) {
+      this.voicingList.append(el('p', { class: 'hint-text', text: `No playable ${name} voicing was found in this tuning${capo ? ' with this capo' : ''}. Try another chord type, tuning or capo position.` }));
+      return;
+    }
     chord.voicings.forEach((v, i) => {
       const card = el('button', {
         class: `voicing-card${i === chord.index ? ' active' : ''}`, type: 'button', 'data-voicing': i,
         title: v.name || '', onclick: () => this.state.setChordVoicing(i),
       });
       card.append(chordDiagram(v, { title: `${name} ${v.name || ''}` }));
-      const sounding = v.frets.map((f, s) => (f < 0 ? 'x' : String(f))).join(' ');
+      const sounding = v.frets.map((f) => (f < 0 ? 'x' : String(f))).join(' ');
       card.append(el('div', { class: 'voicing-name', text: v.name || `Voicing ${i + 1}` }));
-      card.append(el('div', { class: 'voicing-frets', text: sounding }));
+      card.append(el('div', { class: 'voicing-frets', text: capo ? `${sounding} (capo ${capo})` : sounding }));
       this.voicingList.append(card);
     });
   }
@@ -274,55 +286,68 @@ export class LearningPanel {
   /* ---------------- now playing ---------------- */
 
   tick() {
-    // Fade read-out of notes that stopped a while ago.
-    const now = performance.now();
-    if (this.lastPlayedAt && now - this.lastPlayedAt > 4000 && !this.nowPlaying.classList.contains('idle')) this.renderNowPlaying();
+    // Refresh when a ringing note fades out of the audible window.
+    const audible = this.audibleCount();
+    if (audible !== this.lastAudible) this.renderNowPlaying();
     requestAnimationFrame(this.tick);
+  }
+
+  /** Notes that are sounding right now, newest change last. */
+  soundingNotes() {
+    const st = this.state;
+    const out = [];
+    for (let s = 0; s < STRING_COUNT; s++) {
+      const ring = st.ringing[s];
+      if (ring && this.engine.isAudible(s)) out.push(ring);
+    }
+    return out.sort((a, b) => a.time - b.time);
+  }
+
+  audibleCount() {
+    let n = 0;
+    for (let s = 0; s < STRING_COUNT; s++) if (this.state.ringing[s] && this.engine.isAudible(s)) n++;
+    return n;
   }
 
   renderNowPlaying() {
     const st = this.state;
-    const now = performance.now();
-    const recent = st.recent.filter((n) => now - n.time < 3500);
-    this.lastPlayedAt = st.recent.length ? st.recent[st.recent.length - 1].time : 0;
-    const ringing = [];
-    for (let s = 0; s < STRING_COUNT; s++) {
-      const es = this.engine.stringState[s];
-      if (es.ringing && this.engine.now - es.lastPluck < 3.5) {
-        // The note that was actually played keeps ringing after the finger lifts.
-        const note = st.ringing[s] || st.noteOn(s);
-        if (note) ringing.push(note);
-      }
-    }
-    const latest = recent[recent.length - 1];
-    const idle = !latest;
-    this.nowPlaying.classList.toggle('idle', idle);
-    if (idle) {
+    const flats = this.flats;
+    const sounding = this.soundingNotes();
+    this.lastAudible = sounding.length;
+    // Names are derived from the pitch at render time so they follow the sharps/flats option.
+    const named = (n) => ({ ...n, ...describeNote(n.midi, { flats }) });
+    this.nowPlaying.classList.toggle('idle', sounding.length === 0);
+    if (!sounding.length) {
       const held = [];
-      for (let s = 0; s < STRING_COUNT; s++) if (st.fingerFret(s) !== null) held.push(st.noteOn(s));
+      for (let s = 0; s < STRING_COUNT; s++) if (st.fingerFret(s) !== null && st.noteOn(s)) held.push(st.noteOn(s));
+      const last = st.recent.length ? named(st.recent[st.recent.length - 1]) : null;
       if (held.length) {
-        this.nowPlaying.innerHTML = held.map((n) => `<span class="np-chip">${n.name}</span>`).join('') + '<span class="muted"> fretted — pick or strum to hear it</span>';
+        this.nowPlaying.innerHTML = held.map((n) => `<span class="np-chip">${n.name}</span>`).join('') + '<span class="muted"> fretted — tap or strum to hear it</span>';
+      } else if (last) {
+        this.nowPlaying.innerHTML = `<span class="muted">Last played: <b>${last.name}</b> · ${last.frequency.toFixed(2)} Hz · string ${6 - last.string}, fret ${last.fret}</span>`;
       } else {
         this.nowPlaying.innerHTML = '<span class="muted">Tap any string at any fret to play it — sweep across the strings to strum.</span>';
       }
       return;
     }
-    const chordNotes = ringing.length ? ringing : recent.slice(-6);
-    const pcs = new Set(chordNotes.map((n) => pitchClass(n.midi)));
-    const bass = chordNotes.length ? chordNotes.reduce((a, b) => (a.midi < b.midi ? a : b)) : null;
-    const chord = pcs.size >= 2 ? detectChord(pcs, { bassPc: bass ? pitchClass(bass.midi) : null, flats: this.flats }) : null;
-    const flats = this.flats;
+    const latest = named(sounding[sounding.length - 1]);
+    const byPitch = [...sounding].sort((a, b) => a.midi - b.midi).map(named);
+    const pcs = new Set(byPitch.map((n) => pitchClass(n.midi)));
+    const chord = pcs.size >= 2 ? detectChord(pcs, { bassPc: pitchClass(byPitch[0].midi), flats }) : null;
+    const other = flats ? latest.sharpName : latest.flatName;
+    const bent = latest.bend > 0.02 ? `<span>bent +${latest.bend.toFixed(1)} st</span>` : '';
     const main = `
       <div class="np-main">
         <div class="np-note">${latest.name}</div>
         <div class="np-details">
-          <span>${flats ? latest.sharpName : latest.flatName}</span>
+          ${other !== latest.name ? `<span>${other}</span>` : ''}
           <span>MIDI ${latest.midi}</span>
           <span>${latest.frequency.toFixed(2)} Hz</span>
           <span>string ${6 - latest.string} · fret ${latest.fret}</span>
+          ${bent}
         </div>
       </div>`;
-    const chips = chordNotes.map((n) => `<span class="np-chip${n.string === latest.string && n.midi === latest.midi ? ' latest' : ''}">${n.name}</span>`).join('');
+    const chips = byPitch.map((n) => `<span class="np-chip${n.string === latest.string ? ' latest' : ''}">${n.name}</span>`).join('');
     const chordHtml = chord ? `<div class="np-chord">Chord: <b>${chord.name}</b></div>` : (pcs.size >= 2 ? '<div class="np-chord muted">No chord match</div>' : '');
     this.nowPlaying.innerHTML = main + `<div class="np-ringing">${chips}</div>` + chordHtml;
   }

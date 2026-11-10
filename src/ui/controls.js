@@ -78,11 +78,11 @@ export class ControlPanel {
     ]));
 
     // Pickup selector
-    const pickupRow = el('div', { class: 'segmented', role: 'radiogroup', 'aria-label': 'Pickup selector' });
+    const pickupRow = el('div', { class: 'segmented', role: 'group', 'aria-label': 'Pickup selector' });
     for (const p of [...PICKUP_SELECTOR].reverse()) {
       pickupRow.append(el('button', {
-        class: 'seg-btn', type: 'button', role: 'radio', 'data-pickup': p.position, title: p.name, text: p.short,
-        'aria-checked': String(p.position === engine.pickupPosition),
+        class: 'seg-btn', type: 'button', 'data-pickup': p.position, title: p.name, text: p.short, 'aria-label': `${p.name} pickup`,
+        'aria-pressed': String(p.position === engine.pickupPosition),
         onclick: () => { this.player.ensureAudio(); engine.setPickupSelector(p.position); },
       }));
     }
@@ -191,7 +191,7 @@ export class ControlPanel {
     for (const b of this.pickupRow.querySelectorAll('.seg-btn')) {
       const on = Number(b.dataset.pickup) === this.engine.pickupPosition;
       b.classList.toggle('active', on);
-      b.setAttribute('aria-checked', String(on));
+      b.setAttribute('aria-pressed', String(on));
     }
   }
 

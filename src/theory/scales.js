@@ -13,10 +13,10 @@ export const SCALES = Object.freeze([
   { id: 'blues', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10] },
   { id: 'dorian', name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
   { id: 'phrygian', name: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
-  { id: 'lydian', name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { id: 'lydian', name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11], degrees: ['1', '2', '3', '#4', '5', '6', '7'] },
   { id: 'mixolydian', name: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10] },
   { id: 'locrian', name: 'Locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
-  { id: 'whole-tone', name: 'Whole tone', intervals: [0, 2, 4, 6, 8, 10] },
+  { id: 'whole-tone', name: 'Whole tone', intervals: [0, 2, 4, 6, 8, 10], degrees: ['1', '2', '3', '#4', '#5', 'b7'] },
   { id: 'chromatic', name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
 ].map(Object.freeze));
 
@@ -42,7 +42,10 @@ export function scaleNoteNames(scale, rootPc, { flats = false } = {}) {
 /** Scale degree label for a pitch class relative to the root, or null if not in scale. */
 export function degreeLabel(scale, rootPc, pc) {
   const interval = pitchClass(pc - rootPc);
-  return scale.intervals.includes(interval) ? DEGREE_LABELS[interval] : null;
+  const index = scale.intervals.indexOf(interval);
+  if (index < 0) return null;
+  // Scales may spell their own degrees (Lydian's raised 4th is "#4", not "b5").
+  return scale.degrees ? scale.degrees[index] : DEGREE_LABELS[interval];
 }
 
 /** All fretboard positions in the scale, each tagged with its degree label. */

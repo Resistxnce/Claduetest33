@@ -23,23 +23,37 @@ function boot() {
   // Start overlay (browsers require a gesture before audio can play).
   const overlay = document.getElementById('start-overlay');
   const powerLed = document.getElementById('power-led');
+  const powerOn = () => {
+    powerLed.classList.add('on');
+    if (!overlay.isConnected) return;
+    overlay.classList.add('hidden');
+    overlay.setAttribute('inert', '');
+    setTimeout(() => overlay.remove(), 600);
+  };
   const start = async () => {
     try {
       await engine.init();
       await engine.resume();
     } catch (err) {
       console.error('Audio failed to start', err);
-      document.getElementById('start-error').textContent = `Audio could not start: ${err.message}`;
+      document.getElementById('start-error').textContent = `Audio could not start: ${err.message}. Tap to try again.`;
       return;
     }
-    overlay.classList.add('hidden');
-    powerLed.classList.add('on');
-    setTimeout(() => overlay.remove(), 600);
+    powerOn();
   };
   overlay.addEventListener('click', start);
-  overlay.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') start(); });
-  player.onAudioStart = () => { overlay.classList.add('hidden'); powerLed.classList.add('on'); };
-  engine.addEventListener('ready', () => { powerLed.classList.add('on'); overlay.classList.add('hidden'); });
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); start(); } });
+  player.onAudioStart = powerOn;
+  engine.addEventListener('ready', powerOn);
+
+  // Keep the keyboard for playing: a panel button or menu that was operated with
+  // the pointer gives focus back, so Space strums instead of re-pressing it.
+  // (Keyboard users keep normal focus behaviour: detail is 0 for key activation.)
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest && e.target.closest('button');
+    if (button && e.detail > 0 && !button.closest('dialog')) button.blur();
+  });
+  document.addEventListener('change', (e) => { if (e.target.tagName === 'SELECT') e.target.blur(); });
 
   // Level meter
   const meter = document.getElementById('level-meter');

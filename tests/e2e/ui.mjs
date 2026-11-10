@@ -62,6 +62,8 @@ try {
   let sounding = await page.evaluate(() => window.__guitar.state.noteOn(0).name);
   console.log('Slid to fret 5 ->', sounding);
   assert(sounding === 'A2', `slide should sound A2, got ${sounding}`);
+  const headline = (await page.textContent('#learning .np-note')).trim();
+  assert(headline === 'A2', `the now-playing headline must follow a slide, got ${headline}`);
   await page.screenshot({ path: `${outDir}/03-fretting.png` });
   await page.mouse.up();
   fingers = await page.evaluate(() => window.__guitar.state.fingers.size);
@@ -167,6 +169,59 @@ try {
   const unbent = await page.evaluate(() => window.__guitar.engine.stringState[2].frequency);
   assert(Math.abs(unbent - 220) < 0.01, `released bend should return to A3 (220 Hz), got ${unbent}`);
   await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'strum'));
+  // A finger entering the fretboard by dragging (bend mode on) must not get a spurious bend
+  await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'bend'));
+  await clearRecent();
+  const enter = await page.evaluate(() => { const c = window.__guitar.canvas, L = c.layout; const x = (L.fretX(6) + L.fretX(7)) / 2; return { from: c.toScreen(x, L.H - 3), to: c.toScreen(x, L.stringY(0)) }; });
+  await page.mouse.move(canvasBox.x + enter.from.x, canvasBox.y + enter.from.y);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + enter.to.x, canvasBox.y + enter.to.y, { steps: 10 });
+  await page.waitForTimeout(40);
+  const entered = await page.evaluate(() => { const f = [...window.__guitar.state.fingers.values()][0]; return { finger: f && { string: f.string, fret: f.fret, bend: f.bend || 0 }, played: window.__guitar.state.recent.map((n) => n.name), freqs: window.__guitar.engine.stringState.map((s) => s.frequency) }; });
+  await page.mouse.up();
+  console.log('Drag into the fretboard in bend mode:', JSON.stringify(entered.finger), entered.played.join(' '));
+  assert(entered.finger && entered.finger.bend < 0.05, `a finger that arrives by dragging must start unbent, got ${JSON.stringify(entered.finger)}`);
+  const expectedFreq = await page.evaluate(([s, f]) => window.__guitar.state.fretboard.frequencyAt(s, f), [entered.finger.string, entered.finger.fret]);
+  assert(Math.abs(entered.freqs[entered.finger.string] - expectedFreq) < 0.01, 'the entered note must sound at its fretted pitch');
+  await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'strum'));
+
+  // Resting a finger right on a fret wire must not trill between two frets
+  await clearRecent();
+  const wire = await page.evaluate(() => { const c = window.__guitar.canvas, L = c.layout; return { down: c.positionCenterScreen(3, 5), wire: c.toScreen(L.fretX(5), L.stringY(3)) }; });
+  await page.mouse.move(canvasBox.x + wire.down.x, canvasBox.y + wire.down.y);
+  await page.mouse.down();
+  for (let i = 0; i < 8; i++) await page.mouse.move(canvasBox.x + wire.wire.x + (i % 2 ? 2 : -2), canvasBox.y + wire.wire.y);
+  const wobbleFret = await page.evaluate(() => [...window.__guitar.state.fingers.values()][0].fret);
+  await page.mouse.up();
+  assert(wobbleFret === 5, `a 2 px wobble across a fret wire must not change fret, got ${wobbleFret}`);
+  // … but a deliberate move past the wire does slide
+  await page.mouse.move(canvasBox.x + wire.down.x, canvasBox.y + wire.down.y);
+  await page.mouse.down();
+  const next = await screenPos(3, 6);
+  await page.mouse.move(next.x, next.y, { steps: 5 });
+  const slidFret = await page.evaluate(() => [...window.__guitar.state.fingers.values()][0].fret);
+  await page.mouse.up();
+  assert(slidFret === 6, `moving to the next fret slides, got ${slidFret}`);
+
+  // An open-string strum that drifts a little over the nut keeps strumming open strings
+  await clearRecent();
+  const drift = await page.evaluate(() => { const c = window.__guitar.canvas, L = c.layout; return { a: c.toScreen(L.openW * 0.6, L.fbTop - 2), b: c.toScreen(L.nutX + 24, L.fbBottom + 2) }; });
+  await page.mouse.move(canvasBox.x + drift.a.x, canvasBox.y + drift.a.y);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + drift.b.x, canvasBox.y + drift.b.y, { steps: 16 });
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+  names = await recentNames();
+  console.log('Open strum drifting over the nut:', names.join(' '));
+  assert(names.join(' ') === 'E4 B3 G3 D3 A2 E2', `a drifting open strum must stay open, got ${names.join(' ')}`);
+
+  // The right mouse button does not play
+  await clearRecent();
+  const rc = await screenPos(2, 3);
+  await page.mouse.click(rc.x, rc.y, { button: 'right' });
+  await page.waitForTimeout(40);
+  assert((await recentNames()).length === 0, 'right-click must not play a note');
+
   // Sweep the open strings again so all six ring for the next check
   await clearRecent();
   await page.mouse.move(s5a.x, s5a.y);
@@ -236,6 +291,24 @@ try {
   console.log('Held G chord strummed notes:', chordNotes.join(' '));
   assert(chordNotes.every((n) => ['G', 'B', 'D'].includes(n)), 'all strummed notes belong to G major');
   await page.screenshot({ path: `${outDir}/05-chord.png` });
+  // After clicking panel buttons, Space still strums (focus returns to playing) and Hold stays on
+  await clearRecent();
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(250);
+  const afterSpace = await page.evaluate(() => ({ hold: window.__guitar.state.holdChord, notes: window.__guitar.state.recent.map((n) => n.pitchClassName) }));
+  assert(afterSpace.hold === true, 'Space must not toggle the Hold chord button that was clicked last');
+  assert(afterSpace.notes.length === 6 && afterSpace.notes.every((n) => ['G', 'B', 'D'].includes(n)), `Space should strum the held G chord, got ${afterSpace.notes.join(' ')}`);
+  // Capo: the same chord name still sounds the same chord, fingered above the capo
+  await page.selectOption('#capo-select', '2');
+  await clearRecent();
+  await page.click('#learning .btn.primary');
+  await page.waitForTimeout(250);
+  const capoChord = await page.evaluate(() => ({ notes: window.__guitar.state.recent.map((n) => n.pitchClassName), frets: window.__guitar.state.recent.map((n) => n.fret), title: document.querySelector('#learning .chord-title').textContent }));
+  console.log('G with capo 2:', capoChord.notes.join(' '), '| frets', capoChord.frets.join(' '), '|', capoChord.title);
+  assert(capoChord.notes.length >= 4 && capoChord.notes.every((n) => ['G', 'B', 'D'].includes(n)), `G with a capo must still sound G B D, got ${capoChord.notes.join(' ')}`);
+  assert(capoChord.frets.every((f) => f >= 2), 'no chord note may be behind the capo');
+  await page.screenshot({ path: `${outDir}/05b-capo-chord.png` });
+  await page.selectOption('#capo-select', '0');
   await page.click('#learning .btn.ghost'); // clear
 
   // Scale overlay + note highlight render without errors
@@ -313,6 +386,21 @@ try {
   const land = await page.evaluate(() => ({ orientation: window.__guitar.canvas.orientation, frets: window.__guitar.canvas.fretCount, spacing: window.__guitar.canvas.layout.spacing }));
   console.log('Landscape phone layout:', JSON.stringify(land));
   await page.screenshot({ path: `${outDir}/09-landscape-phone.png` });
+
+  // Starting from the keyboard: the first key both powers the amp on and is played once it is ready
+  const page2 = await context.newPage();
+  page2.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+  await page2.setViewportSize({ width: 1400, height: 860 });
+  await page2.goto(`${server.url}/`);
+  await page2.waitForFunction(() => window.__guitar && window.__guitar.canvas.layout);
+  await page2.keyboard.press('Digit3');
+  await page2.waitForFunction(() => window.__guitar.engine.ready && window.__guitar.state.recent.length > 0, null, { timeout: 5000 });
+  await page2.waitForTimeout(900);
+  const kb = await page2.evaluate(() => ({ note: window.__guitar.state.recent[0].name, overlay: !!document.getElementById('start-overlay'), ringing: window.__guitar.engine.stringState[3].ringing }));
+  console.log('Keyboard start:', JSON.stringify(kb));
+  assert(kb.note === 'G3' && kb.ringing, 'the first key press is played after the amp powers on');
+  assert(kb.overlay === false, 'the start overlay is removed when audio starts from the keyboard');
+  await page2.close();
 
   assert(errors.length === 0, `console errors: ${errors.join(' | ')}`);
   console.log('\nUI TESTS PASSED');

@@ -44,7 +44,7 @@ const MAX_STATIC_PIXELS = 7e6;
  */
 export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
   const N = fretCount;
-  const openW = clamp(W * 0.05, 46, 78);          // tappable open-string zone
+  const openW = clamp(W * 0.06, 60, 84);          // tappable open-string zone
   const nutW = clamp(W * 0.008, 6, 12);
   const nutX = openW + nutW;                       // fret 0 (bridge-side edge of the nut)
   const rightPad = Math.max(10, W * 0.012);        // a little wood past the last fret
@@ -150,6 +150,8 @@ export class GuitarCanvas {
     this.lastPluck = Array.from({ length: STRING_COUNT }, () => ({ t: 0, fret: 0, name: '' }));
     this.rafId = 0;
     this.frame = this.frame.bind(this);
+    /** Called when the neck moves under the pointers (pan or re-layout). */
+    this.onViewChange = null;
     this.nav = navCanvas ? new NeckNavigator(navCanvas, this) : null;
     this.resize();
     for (const ev of ['tuning', 'capo', 'option', 'chord', 'scale', 'highlight', 'finger', 'played', 'ringing']) {
@@ -221,6 +223,7 @@ export class GuitarCanvas {
     this.staticLayer.height = Math.max(1, Math.round((vertical ? L.W : L.H) * this.staticScale));
     this.staticDirty = true;
     if (this.nav) this.nav.resize();
+    if (this.onViewChange) this.onViewChange();
     this.requestRender();
   }
 
@@ -231,6 +234,7 @@ export class GuitarCanvas {
     if (next === this.scroll) return;
     this.scroll = next;
     if (this.nav) this.nav.draw();
+    if (this.onViewChange) this.onViewChange();
     this.requestRender();
   }
 
@@ -253,18 +257,24 @@ export class GuitarCanvas {
   revealChord() {
     const v = this.state.chordVoicing;
     if (!v) return;
-    const fretted = v.frets.filter((f) => f > 0);
-    const hasOpen = v.frets.some((f) => f <= 0);
-    if (!fretted.length) { this.ensureFretsVisible(0, 1); return; }
+    // Chord shapes are fingered relative to the capo.
+    const capo = this.state.capo;
+    const fretted = v.frets.filter((f) => f > 0).map((f) => f + capo);
+    const hasOpen = v.frets.some((f) => f === 0);
+    if (!fretted.length) { this.ensureFretsVisible(capo, capo + 1); return; }
     const max = Math.max(...fretted);
     const min = Math.min(...fretted);
-    // Include the open zone when the shape lives near the nut.
-    this.ensureFretsVisible(hasOpen && max <= 5 ? 0 : min, max);
+    // Include the nut (or capo) when the shape uses open strings near it.
+    this.ensureFretsVisible(hasOpen && max - capo <= 5 ? capo : min, max);
   }
 
   onWheel(e) {
-    if (!this.pannable || this.orientation === 'vertical') return;
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+    if (!this.pannable) return;
+    // Horizontal neck: sideways scrolling or shift+wheel. Vertical neck: shift+wheel
+    // (plain vertical scrolling is left to the page).
+    const delta = this.orientation === 'vertical'
+      ? (e.shiftKey ? (e.deltaY || e.deltaX) : 0)
+      : (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0));
     if (!delta) return;
     e.preventDefault();
     this.panBy(delta);
@@ -800,7 +810,8 @@ export class GuitarCanvas {
     const voicing = st.chordVoicing;
     if (!voicing) return;
     const hold = st.holdChord;
-    const barres = voicingBarres(voicing);
+    const capo = st.capo; // shapes are fingered relative to the capo
+    const barres = voicingBarres(voicing).map((b) => ({ ...b, fret: b.fret + capo }));
     for (const b of barres) {
       if (b.fret > L.N) continue;
       const r = this.dotRadius(b.fret, 0.36);
@@ -816,13 +827,15 @@ export class GuitarCanvas {
       ctx.restore();
     }
     for (let s = 0; s < STRING_COUNT; s++) {
-      const f = voicing.frets[s];
+      const rel = voicing.frets[s];
+      const f = st.chordFret(rel);
       const finger = voicing.fingers[s];
-      const c = L.positionCenter(s, Math.max(0, f));
-      const r = this.dotRadius(Math.max(0, f), 0.36);
-      if (f < 0) {
+      // Muted and open strings are marked before the nut (the capo stands in for the nut).
+      const c = L.positionCenter(s, rel > 0 ? f : 0);
+      const r = this.dotRadius(rel > 0 ? f : 0, 0.36);
+      if (rel < 0) {
         this.text(ctx, c.x, c.y, '×', { font: `800 ${r * 1.7}px system-ui, sans-serif`, color: 'rgba(248,113,113,0.95)' });
-      } else if (f === 0) {
+      } else if (rel === 0) {
         ctx.strokeStyle = hold ? 'rgba(45,212,191,0.95)' : 'rgba(45,212,191,0.7)';
         ctx.lineWidth = 2.2;
         ctx.beginPath(); ctx.arc(c.x, c.y, r * 0.62, 0, Math.PI * 2); ctx.stroke();

@@ -57,7 +57,10 @@ export class AppState extends EventTarget {
 
   setCapo(fret) {
     this.capo = Math.max(0, Math.min(12, fret | 0));
+    // Chord shapes are relative to the capo, so the selected chord needs new shapes.
+    if (this.chord) this.chord = this.buildChord(this.chord.rootPc, this.chord.quality, 0);
     this.emit('capo', { capo: this.capo });
+    if (this.chord) this.emit('chord', { chord: this.chord });
   }
 
   /* ---------------- options ---------------- */
@@ -70,13 +73,20 @@ export class AppState extends EventTarget {
 
   /* ---------------- overlays ---------------- */
 
+  /**
+   * Voicings for a chord. With a capo the capo acts as the nut: shapes are
+   * fingered relative to it (voicing fret 0 = the capo, fret n = capo + n), so
+   * the chord named `rootPc` is played with the shape of the chord `capo`
+   * semitones lower — exactly as on a real guitar.
+   */
+  buildChord(rootPc, quality, index = 0) {
+    const voicings = chordVoicings(rootPc - this.capo, quality, this.fretboard.openMidi, { maxResults: 4 })
+      .filter((v) => Math.max(0, ...v.frets) + this.capo <= this.fretboard.fretCount);
+    return { rootPc, quality, voicings, capo: this.capo, index: Math.min(index, Math.max(0, voicings.length - 1)) };
+  }
+
   setChord(rootPc, quality, index = 0) {
-    if (rootPc === null || rootPc === undefined) {
-      this.chord = null;
-    } else {
-      const voicings = chordVoicings(rootPc, quality, this.fretboard.openMidi, { maxResults: 4 });
-      this.chord = { rootPc, quality, voicings, index: Math.min(index, Math.max(0, voicings.length - 1)) };
-    }
+    this.chord = rootPc === null || rootPc === undefined ? null : this.buildChord(rootPc, quality, index);
     this.emit('chord', { chord: this.chord });
   }
 
@@ -128,9 +138,14 @@ export class AppState extends EventTarget {
     if (voicing) {
       const f = voicing.frets[string];
       if (f < 0) return -1;
-      return Math.max(f, this.capo);
+      return this.capo + f; // chord shapes are fingered relative to the capo
     }
     return this.capo;
+  }
+
+  /** Absolute fret of a chord-voicing fret (-1 muted stays -1). */
+  chordFret(f) {
+    return f < 0 ? -1 : this.capo + f;
   }
 
   /** Bend (in semitones) applied by the finger that sets the string's pitch; 0 when not bent. */
@@ -195,6 +210,7 @@ export class AppState extends EventTarget {
 
   /* ---------------- played notes ---------------- */
 
+  /** A pluck: recorded in the history and as the note now ringing on its string. */
   notePlayed(note, velocity) {
     const entry = { ...note, velocity, time: performance.now() };
     this.recent.push(entry);
@@ -203,8 +219,13 @@ export class AppState extends EventTarget {
     this.emit('played', { note: entry });
   }
 
+  /**
+   * The note ringing on a string changed without a pluck (slide, hammer-on,
+   * pull-off, retune under a held finger) or stopped (null).
+   */
   setRinging(string, note) {
-    this.ringing[string] = note;
-    this.emit('ringing', { string, note });
+    const previous = this.ringing[string];
+    this.ringing[string] = note ? { ...note, velocity: previous ? previous.velocity : 0.5, time: performance.now() } : null;
+    this.emit('ringing', { string, note: this.ringing[string] });
   }
 }

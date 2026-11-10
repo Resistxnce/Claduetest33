@@ -118,8 +118,9 @@ export function detectChord(pitchClasses, { bassPc = null, flats = false } = {})
         }
       }
       if (missingRequired > 0) continue;
-      // Score: prefer exact matches, more notes explained, root in the bass.
-      let score = 100 - missingOptional * 10 + q.intervals.length;
+      // Two tiers: any exact match beats any partial one. Within a tier prefer
+      // the root in the bass, then richer chords with fewer missing tones.
+      let score = (missingOptional === 0 ? 1000 : 0) - missingOptional * 10 + q.intervals.length;
       if (bassPc !== null) score += pitchClass(bassPc) === root ? 15 : 0;
       if (!best || score > best.score) {
         best = { score, rootPc: root, quality: q.id, name: chordName(root, q.id, { flats }), inversion: bassPc !== null && pitchClass(bassPc) !== root };
@@ -237,7 +238,8 @@ export function generateVoicings(rootPc, qualityId, openMidi, { maxResults = 4, 
       for (let s = firstSounding; s <= lastSounding; s++) if (frets[s] < 0) return;
       const pcs = new Set(sounding.map(pitchClass));
       for (const r of required) if (!pcs.has(r)) return;
-      const bass = sounding[0];
+      // The bass note is the lowest pitch, which is not always the lowest string.
+      const bass = Math.min(...sounding);
       const rootInBass = pitchClass(bass) === pitchClass(rootPc);
       if (!rootInBass && !allowInversions) return;
       const fretted = frets.filter((f) => f > 0);
@@ -290,6 +292,8 @@ export function assignFingers(frets) {
     // the barre fret or higher (open strings inside a barre are impossible).
     let ok = true;
     for (let s = from; s <= to; s++) if (frets[s] >= 0 && frets[s] < minF) ok = false;
+    // The barring finger lies across every higher string too: none of them may be open.
+    for (let s = to + 1; s < frets.length; s++) if (frets[s] === 0) ok = false;
     if (ok) {
       barre = { fret: minF, from, to };
       for (let s = from; s <= to; s++) if (frets[s] === minF) fingers[s] = 1;
@@ -346,6 +350,12 @@ export function chordVoicings(rootPc, qualityId, openMidi, { maxResults = 4 } = 
       seen.add(key);
       valid.push({ ...v, curated: false });
       if (valid.length >= maxResults) break;
+    }
+  }
+  // Last resort (mostly open tunings): accept an inversion rather than offer nothing.
+  if (!valid.length) {
+    for (const v of generateVoicings(rootPc, qualityId, openMidi, { maxResults, allowInversions: true })) {
+      valid.push({ ...v, curated: false, inversion: true, name: `${v.name} (inversion)` });
     }
   }
   return valid.slice(0, Math.max(maxResults, valid.filter((v) => v.curated).length));

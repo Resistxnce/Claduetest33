@@ -496,6 +496,15 @@ export class GuitarAudioEngine extends EventTarget {
     this.dispatchEvent(new CustomEvent('pluck', { detail: { string: stringIdx, velocity, frequency: st.frequency, when: when ?? this.now } }));
   }
 
+  /**
+   * Is a played note still clearly audible on this string? Thick strings ring
+   * much longer than thin ones, so the window follows each string's decay time.
+   */
+  isAudible(stringIdx) {
+    const st = this.stringState[stringIdx];
+    return st.ringing && this.now - st.lastPluck < STRING_T60[stringIdx] * 0.85;
+  }
+
   /** Fret-hand release / mute: the string rings down quickly. */
   release(stringIdx, { amount = 1, when } = {}) {
     const st = this.stringState[stringIdx];

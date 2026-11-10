@@ -49,7 +49,9 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 
 * Each string has a set of *fingers* (pointer id → fret). The **sounding fret** is
   the highest fretted finger, or the capo, or 0 (open). Chord mode adds virtual
-  fingers; a chord's muted strings (`x`) mute that string.
+  fingers; a chord's muted strings (`x`) mute that string. Chord shapes are
+  fingered relative to the capo (the capo acts as the nut), so a chord keeps
+  its name and pitch content at any capo position.
 * Tapping a string at a fret presses it and plucks it; tapping before the nut
   plucks the open string. `pluck(string, velocity)` excites the string at its
   sounding pitch. Re-plucking a ringing string adds energy to the existing
@@ -57,7 +59,12 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 * Changing the sounding fret while the string rings glides the pitch (slide /
   hammer-on / pull-off). Lifting the last finger lets the note ring out at its
   own pitch (default) or mutes it ("Lifting a finger mutes the string").
-  `state.ringing[string]` records the note actually ringing for the read-out.
+  `state.ringing[string]` always records the note actually sounding (plucks,
+  slides, hammer-ons, pull-offs, bends, retunes); the read-out and the ring
+  markers are driven from it, and `engine.isAudible(string)` bounds how long a
+  note counts as ringing by that string's decay time.
+* Pointer hit-testing has hysteresis on all three boundaries (string to string,
+  fret to fret, open zone to fretboard) so a resting finger never flickers.
 * Sweeping a pointer across strings plucks each string it reaches (a strum);
   velocity comes from pointer speed. Keyboard/buttons strum all six strings
   ~14 ms apart.
