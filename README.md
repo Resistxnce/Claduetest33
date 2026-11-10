@@ -8,6 +8,10 @@ chords and scales.
 
 No build step and no dependencies: plain ES modules, Web Audio API and Canvas 2D.
 
+![The simulator on a desktop: 24-fret fretboard with an A minor chord held](docs/screenshot-desktop.png)
+
+<img src="docs/screenshot-phone.png" alt="Phone layout: zoomed vertical neck with a minimap" width="280">
+
 ```sh
 npm start            # serves the app at http://localhost:8080/
 npm test             # music-theory + chord-library unit tests (node:test)

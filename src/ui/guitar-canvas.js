@@ -338,9 +338,9 @@ export class GuitarCanvas {
     v.tau = 0.7 + 0.55 * (1 - string / 5); // thick strings swing longer
     v.freq = 5.5 + (5 - string) * 1.3;
     v.phase = Math.random() * Math.PI * 2;
+    // Ring indicator: only for real notes (a muted "chuck" has no pitch to show).
     const lp = this.lastPluck[string];
-    lp.t = v.t0;
-    if (fret !== null) { lp.fret = fret; lp.name = name; }
+    if (fret !== null) { lp.t = v.t0; lp.fret = fret; lp.name = name; } else lp.t = 0;
     this.requestRender();
   }
 
