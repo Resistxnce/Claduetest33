@@ -155,6 +155,12 @@ try {
   assert(sw, 'service worker should activate on localhost');
   const lan = await (await page.request.get(`${server.url}/__lan.json`)).json();
   assert(Array.isArray(lan.urls), 'the dev server reports its LAN addresses');
+  // The server is reachable by every device on the network: dot-files stay private
+  for (const secret of ['/.git/HEAD', '/.git/config', '/.gitignore', '/.cert/key.pem', '/src/../.git/HEAD', '/.github/workflows/ci.yml']) {
+    const status = (await page.request.get(`${server.url}${secret}`)).status();
+    assert(status === 404, `${secret} must not be served (got ${status})`);
+  }
+  assert((await page.request.get(`${server.url}/src/main.js`)).ok() && (await page.request.get(`${server.url}/`)).ok(), 'normal files are still served');
 
   // On the computer the help dialog shows the device address with a QR code that encodes exactly that address
   await page.setViewportSize({ width: 1280, height: 800 });

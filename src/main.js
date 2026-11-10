@@ -64,15 +64,23 @@ function boot() {
   // Level meter
   const meter = document.getElementById('level-meter');
   let smooth = 0;
-  const meterLoop = () => {
+  let meterRaf = 0;
+  let lastSound = 0;
+  const meterLoop = (now) => {
+    meterRaf = 0;
     const level = engine.getLevel();
     smooth = Math.max(level, smooth * 0.9);
-    const pct = Math.min(100, Math.pow(smooth * 2.2, 0.6) * 100);
+    if (smooth > 0.0008) lastSound = now;
+    const awake = now - lastSound < 1500;
+    const pct = awake ? Math.min(100, Math.pow(smooth * 2.2, 0.6) * 100) : 0;
     meter.style.setProperty('--level', `${pct.toFixed(1)}%`);
     meter.classList.toggle('hot', pct > 85);
-    requestAnimationFrame(meterLoop);
+    // After a moment of silence the loop stops; the next pluck wakes it.
+    if (awake) meterRaf = requestAnimationFrame(meterLoop);
   };
-  requestAnimationFrame(meterLoop);
+  const wakeMeter = () => { lastSound = performance.now(); if (!meterRaf) meterRaf = requestAnimationFrame(meterLoop); };
+  engine.addEventListener('pluck', wakeMeter);
+  engine.addEventListener('ready', wakeMeter);
 
   // Resize handling
   const stage = document.getElementById('stage');
@@ -155,7 +163,8 @@ function boot() {
   help.addEventListener('click', (e) => { if (e.target === help) help.close(); });
 
   // When served by tools/serve.mjs on a computer: show the address (and a QR code) to open on a phone or tablet.
-  fetch('__lan.json').then((r) => (r.ok ? r.json() : null)).then(async (info) => {
+  const devServer = document.querySelector('meta[name="guitar-dev-server"]');
+  if (devServer) fetch('__lan.json').then((r) => (r.ok ? r.json() : null)).then(async (info) => {
     const box = document.getElementById('device-link');
     if (!box || !info || !Array.isArray(info.urls)) return;
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);

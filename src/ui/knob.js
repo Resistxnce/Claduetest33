@@ -80,6 +80,7 @@ export class Knob {
     this.dial.addEventListener('pointercancel', end);
     this.dial.addEventListener('dblclick', () => this.set(this.defaultValue ?? 0.5, true));
     this.dial.addEventListener('wheel', (e) => {
+      if (document.activeElement !== this.dial) return; // not focused: let the page scroll past
       e.preventDefault();
       this.set(this.value - Math.sign(e.deltaY) * 0.03, true);
     }, { passive: false });

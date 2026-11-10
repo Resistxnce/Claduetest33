@@ -167,6 +167,8 @@ main {
 .preset-btn.active { background: rgba(245, 158, 11, 0.16); border-color: var(--accent); color: #fde68a; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3) inset; }
 
 .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #1b1f27; }
+.seg-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.hint-text[hidden] { display: none; }
 .seg-btn { appearance: none; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .seg-btn:last-child { border-right: 0; }
 .seg-btn.active { background: rgba(245, 158, 11, 0.18); color: #fde68a; }

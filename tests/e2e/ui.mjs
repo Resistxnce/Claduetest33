@@ -170,10 +170,13 @@ try {
   assert(Math.abs(bent.fingers[0].bend - 2) < 0.05, `1.15 spacings of pull should bend two semitones, got ${bent.fingers[0].bend}`);
   assert(Math.abs(bent.freq - 220 * Math.pow(2, 2 / 12)) < 0.8, `bent pitch should be B3 (246.94 Hz), got ${bent.freq}`);
   assert(bent.played.join(' ') === 'A3', `a bend must not retrigger or pick other strings, got ${bent.played.join(' ')}`);
+  const bentReadout = await page.evaluate(() => ({ record: window.__guitar.state.ringing[2].bend, text: document.querySelector('#learning .now-playing').textContent.replace(/\s+/g, ' ') }));
+  assert(Math.abs(bentReadout.record - 2) < 0.05 && /246\.9\d Hz/.test(bentReadout.text) && /bent \+2\.0 st/.test(bentReadout.text), `the read-out shows the bent pitch: ${bentReadout.text}`);
   await page.mouse.up();
   await page.waitForTimeout(40);
-  const unbent = await page.evaluate(() => window.__guitar.engine.stringState[2].frequency);
-  assert(Math.abs(unbent - 220) < 0.01, `released bend should return to A3 (220 Hz), got ${unbent}`);
+  const unbent = await page.evaluate(() => ({ freq: window.__guitar.engine.stringState[2].frequency, text: document.querySelector('#learning .now-playing').textContent.replace(/\s+/g, ' ') }));
+  assert(Math.abs(unbent.freq - 220) < 0.01, `released bend should return to A3 (220 Hz), got ${unbent.freq}`);
+  assert(/220\.00 Hz/.test(unbent.text) && !/bent/.test(unbent.text), `the read-out returns to the unbent note: ${unbent.text}`);
   await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'strum'));
   // A finger entering the fretboard by dragging (bend mode on) must not get a spurious bend
   await page.evaluate(() => window.__guitar.state.setOption('dragAcross', 'bend'));
@@ -316,6 +319,56 @@ try {
   console.log('Preset:', JSON.stringify(preset));
   assert(preset.id === 'distortion' && preset.pickup === 1, 'distortion preset applied');
   await page.click('[data-preset="clean"]');
+
+  // "Prefer flats" reaches every label: tuning read-out and menu, ring dots, and the scale-label menu keeps its value
+  await page.evaluate(() => { const g = window.__guitar; g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.state.setTuning('half-step-down'); g.state.setOption('scaleLabels', 'names'); g.state.setOption('flats', true); });
+  await page.waitForTimeout(60);
+  const flat = await page.evaluate(() => ({
+    info: document.getElementById('tuning-info').textContent.replace(/\s+/g, ' '),
+    menu: document.getElementById('tuning-select').selectedOptions[0].textContent,
+    scaleLabels: document.querySelector('select[aria-label="Scale labels"]').value,
+  }));
+  console.log('Flats:', JSON.stringify(flat));
+  assert(/Eb2/.test(flat.info) && !/#/.test(flat.info), `tuning read-out uses flats: ${flat.info}`);
+  assert(/Eb Ab Db Gb Bb Eb/.test(flat.menu), `tuning menu uses flats: ${flat.menu}`);
+  assert(flat.scaleLabels === 'names', 'the scale-label menu keeps its value when the panels are rebuilt');
+  await page.evaluate(() => { const g = window.__guitar; g.state.setOption('flats', false); g.state.setOption('scaleLabels', 'degrees'); g.state.setTuning('standard'); });
+
+  // The pickup selector is switched off (not just ignored) for the acoustic preset
+  await page.click('[data-preset="acoustic"]');
+  const acoustic = await page.evaluate(() => ({ disabled: [...document.querySelectorAll('[data-pickup]')].every((b) => b.disabled), pressed: document.querySelectorAll('[data-pickup][aria-pressed="true"]').length, hint: !document.querySelector('[data-pickup]').closest('section').querySelector('.hint-text').hidden }));
+  assert(acoustic.disabled && acoustic.pressed === 0 && acoustic.hint, `pickup selector is disabled with an explanation in the acoustic preset: ${JSON.stringify(acoustic)}`);
+  await page.click('[data-preset="clean"]');
+  const electric = await page.evaluate(() => ({ disabled: [...document.querySelectorAll('[data-pickup]')].some((b) => b.disabled), pressed: document.querySelectorAll('[data-pickup][aria-pressed="true"]').length, preset: document.querySelector('[data-preset="clean"]').getAttribute('aria-pressed') }));
+  assert(!electric.disabled && electric.pressed === 1 && electric.preset === 'true', 'pickup selector works again on an electric preset');
+
+  // Clearing the chord also clears the highlighted root
+  await page.click('#learning [data-tab="chords"]');
+  await page.click('#learning [data-panel="chords"] .root-btn[data-pc="7"]');
+  const picked = await page.evaluate(() => [...document.querySelectorAll('#learning [data-panel="chords"] .root-btn[aria-pressed="true"]')].map((b) => b.textContent));
+  assert(picked.join() === 'G', `the picked root is marked: ${picked.join()}`);
+  await page.click('#learning [data-panel="chords"] button:text-is("Clear")');
+  const cleared = await page.evaluate(() => ({ chord: window.__guitar.state.chord, active: document.querySelectorAll('#learning [data-panel="chords"] .root-btn.active').length }));
+  assert(cleared.chord === null && cleared.active === 0, `no root stays highlighted after Clear: ${JSON.stringify(cleared)}`);
+
+  // The up/down arrow keys belong to the page (scrolling), not to strumming
+  await clearRecent();
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(80);
+  assert((await recentNames()).length === 0, 'ArrowDown does not strum');
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  // When nothing sounds the page goes idle: no animation-frame loops keep running
+  await page.evaluate(() => window.__guitar.player.releaseEverything());
+  await page.waitForTimeout(6000);
+  const idleFrames = await page.evaluate(() => new Promise((resolve) => {
+    const original = window.requestAnimationFrame;
+    let calls = 0;
+    window.requestAnimationFrame = (cb) => { calls++; return original.call(window, cb); };
+    setTimeout(() => { window.requestAnimationFrame = original; resolve(calls); }, 1000);
+  }));
+  console.log('requestAnimationFrame calls per second when idle:', idleFrames);
+  assert(idleFrames <= 2, `the page should be idle when nothing sounds, got ${idleFrames} animation frames per second`);
 
   // A mute sent right after a strum silences it (the strum's later strings must not sound afterwards)
   await page.evaluate(() => { const g = window.__guitar; g.state.setHoldChord(false); g.state.setChord(null); g.state.setCapo(0); g.player.releaseEverything(); });

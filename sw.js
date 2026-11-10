@@ -35,6 +35,8 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
       }
       return response;
-    }).catch(() => caches.match(request, { ignoreSearch: true }).then((hit) => hit || caches.match('index.html'))),
+    }).catch(() => caches.match(request, { ignoreSearch: true })
+      // Offline: only a page navigation falls back to the app shell; a missing script or data file is an error.
+      .then((hit) => hit || (request.mode === 'navigate' ? caches.match('index.html') : Response.error()))),
   );
 });

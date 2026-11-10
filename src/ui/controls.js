@@ -87,11 +87,12 @@ export class ControlPanel {
       }));
     }
     this.pickupRow = pickupRow;
-    root.append(el('section', { class: 'control-group' }, [el('h3', { text: 'Pickup selector (neck → bridge)' }), pickupRow]));
+    this.pickupHint = el('p', { class: 'hint-text', text: 'The acoustic guitar has no pickups: the selector is off for this preset.', hidden: '' });
+    root.append(el('section', { class: 'control-group' }, [el('h3', { text: 'Pickup selector (neck → bridge)' }), pickupRow, this.pickupHint]));
 
     // Tuning & capo
     const tuningSel = el('select', { class: 'select', id: 'tuning-select', 'aria-label': 'Tuning', onchange: (e) => state.setTuning(e.target.value) },
-      TUNINGS.map((t) => el('option', { value: t.id, text: `${t.name} — ${tuningLabel(t)}` })));
+      TUNINGS.map((t) => el('option', { value: t.id, text: `${t.name} — ${tuningLabel(t, { flats: state.options.flats })}` })));
     tuningSel.value = state.tuning.id;
     const capoSel = el('select', { class: 'select', id: 'capo-select', 'aria-label': 'Capo', onchange: (e) => state.setCapo(Number(e.target.value)) },
       [...Array(8).keys()].map((n) => el('option', { value: n, text: n === 0 ? 'No capo' : `Capo fret ${n}` })));
@@ -164,6 +165,10 @@ export class ControlPanel {
       if (e.detail.key === 'palmMute') engine.setPalmMute(e.detail.value);
       const input = this.optionInputs.get(e.detail.key);
       if (input) { if (input.type === 'checkbox') input.checked = !!e.detail.value; else input.value = String(e.detail.value); }
+      if (e.detail.key === 'flats') {
+        this.syncTuningInfo();
+        for (const o of tuningSel.options) { const t = TUNINGS.find((x) => x.id === o.value); if (t) o.textContent = `${t.name} — ${tuningLabel(t, { flats: e.detail.value })}`; }
+      }
     });
     state.addEventListener('tuning', () => { tuningSel.value = state.tuning.id; this.syncTuningInfo(); });
     state.addEventListener('capo', () => { capoSel.value = String(state.capo); this.syncTuningInfo(); });
@@ -181,18 +186,26 @@ export class ControlPanel {
       this.syncPickup();
     });
     engine.addEventListener('pickup', () => this.syncPickup());
+    engine.addEventListener('body', () => this.syncPickup());
   }
 
   syncPreset() {
-    for (const b of this.root.querySelectorAll('.preset-btn')) b.classList.toggle('active', b.dataset.preset === this.engine.presetId);
-  }
-
-  syncPickup() {
-    for (const b of this.pickupRow.querySelectorAll('.seg-btn')) {
-      const on = Number(b.dataset.pickup) === this.engine.pickupPosition;
+    for (const b of this.root.querySelectorAll('.preset-btn')) {
+      const on = b.dataset.preset === this.engine.presetId;
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     }
+  }
+
+  syncPickup() {
+    const acoustic = this.engine.body === 'acoustic';
+    for (const b of this.pickupRow.querySelectorAll('.seg-btn')) {
+      const on = Number(b.dataset.pickup) === this.engine.pickupPosition;
+      b.classList.toggle('active', on && !acoustic);
+      b.setAttribute('aria-pressed', String(on && !acoustic));
+      b.disabled = acoustic;
+    }
+    this.pickupHint.hidden = !acoustic;
   }
 
   syncTuningInfo() {

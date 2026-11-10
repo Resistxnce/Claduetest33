@@ -94,17 +94,26 @@ export class LearningPanel {
     this.scaleRoot = 9;
     this.scaleId = 'minor-pentatonic';
     this.build();
-    state.addEventListener('played', () => this.renderNowPlaying());
-    state.addEventListener('ringing', () => this.renderNowPlaying());
-    state.addEventListener('finger', () => this.renderNowPlaying());
-    state.addEventListener('chord', () => { this.renderNowPlaying(); this.renderChordVoicings(); });
-    state.addEventListener('tuning', () => { this.renderChordVoicings(); this.renderNowPlaying(); });
-    state.addEventListener('capo', () => { this.renderChordVoicings(); this.renderNowPlaying(); });
-    state.addEventListener('option', (e) => { if (e.detail.key === 'flats') { this.renderAll(); } });
+    // One strum or one bend step raises several events: the read-out is redrawn once for all of them.
+    const nowPlayingChanged = () => {
+      if (this.renderQueued) return;
+      this.renderQueued = true;
+      queueMicrotask(() => { this.renderQueued = false; this.renderNowPlaying(); });
+    };
+    state.addEventListener('played', nowPlayingChanged);
+    state.addEventListener('ringing', nowPlayingChanged);
+    state.addEventListener('finger', nowPlayingChanged);
+    state.addEventListener('chord', () => { nowPlayingChanged(); this.syncChordRoot(); this.renderChordVoicings(); });
+    state.addEventListener('tuning', () => { this.renderChordVoicings(); nowPlayingChanged(); });
+    state.addEventListener('capo', () => { this.renderChordVoicings(); nowPlayingChanged(); });
+    state.addEventListener('option', (e) => {
+      if (e.detail.key === 'flats') this.renderAll();
+      if (e.detail.key === 'scaleLabels' && this.scaleLabelSel) this.scaleLabelSel.value = e.detail.value;
+    });
     state.addEventListener('scale', () => this.renderScaleInfo());
     state.addEventListener('highlight', () => this.syncNoteButtons());
     this.tick = this.tick.bind(this);
-    requestAnimationFrame(this.tick);
+    this.tickTimer = 0;
   }
 
   get flats() { return this.state.options.flats; }
@@ -146,7 +155,7 @@ export class LearningPanel {
   rootPicker(selected, onPick, { className = 'root-picker' } = {}) {
     const row = el('div', { class: className, role: 'group' });
     for (let pc = 0; pc < 12; pc++) {
-      row.append(el('button', { class: `root-btn${pc === selected ? ' active' : ''}`, type: 'button', 'data-pc': pc, text: pitchClassName(pc, { flats: this.flats }), onclick: () => onPick(pc) }));
+      row.append(el('button', { class: `root-btn${pc === selected ? ' active' : ''}`, type: 'button', 'data-pc': pc, 'aria-pressed': String(pc === selected), text: pitchClassName(pc, { flats: this.flats }), onclick: () => onPick(pc) }));
     }
     return row;
   }
@@ -155,7 +164,8 @@ export class LearningPanel {
 
   buildChords(panel) {
     panel.innerHTML = '';
-    this.chordRootRow = this.rootPicker(this.chordRoot, (pc) => { this.chordRoot = pc; this.selectChord(); });
+    // The highlighted root is the chord that is actually shown (none until one is picked, none after Clear).
+    this.chordRootRow = this.rootPicker(this.state.chord ? this.state.chord.rootPc : -1, (pc) => { this.chordRoot = pc; this.selectChord(); });
     const qualitySel = el('select', { class: 'select', 'aria-label': 'Chord type', onchange: (e) => { this.chordQuality = e.target.value; this.selectChord(); } },
       CHORD_QUALITIES.map((q) => el('option', { value: q.id, text: `${q.name} (${q.symbol || 'maj'})` })));
     qualitySel.value = this.chordQuality;
@@ -178,7 +188,21 @@ export class LearningPanel {
 
   selectChord() {
     this.state.setChord(this.chordRoot, this.chordQuality, 0);
-    for (const b of this.chordRootRow.querySelectorAll('.root-btn')) b.classList.toggle('active', Number(b.dataset.pc) === this.chordRoot);
+  }
+
+  /** Mark the root buttons from the chord in the state. */
+  syncChordRoot() {
+    const chord = this.state.chord;
+    if (chord) { this.chordRoot = chord.rootPc; this.chordQuality = chord.quality; if (this.chordQualitySel) this.chordQualitySel.value = chord.quality; }
+    this.markRoot(this.chordRootRow, chord ? chord.rootPc : -1);
+  }
+
+  markRoot(row, pc) {
+    for (const b of row.querySelectorAll('.root-btn')) {
+      const on = Number(b.dataset.pc) === pc;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    }
   }
 
   renderChordVoicings() {
@@ -230,13 +254,15 @@ export class LearningPanel {
     const hideBtn = el('button', { class: 'btn ghost', type: 'button', text: 'Hide', onclick: () => this.state.setScale(null) });
     const labelSel = el('select', { class: 'select small', 'aria-label': 'Scale labels', onchange: (e) => this.state.setOption('scaleLabels', e.target.value) },
       [el('option', { value: 'degrees', text: 'Show degrees' }), el('option', { value: 'names', text: 'Show note names' })]);
+    labelSel.value = this.state.options.scaleLabels;
+    this.scaleLabelSel = labelSel;
     this.scaleInfo = el('div', { class: 'scale-info' });
     panel.append(this.scaleRootRow, el('div', { class: 'inline-row wrap' }, [scaleSel, labelSel, showBtn, hideBtn]), this.scaleInfo);
     this.renderScaleInfo();
   }
 
   applyScale(show) {
-    for (const b of this.scaleRootRow.querySelectorAll('.root-btn')) b.classList.toggle('active', Number(b.dataset.pc) === this.scaleRoot);
+    this.markRoot(this.scaleRootRow, this.scaleRoot);
     if (show) this.state.setScale(this.scaleRoot, this.scaleId);
   }
 
@@ -272,7 +298,7 @@ export class LearningPanel {
   }
 
   syncNoteButtons() {
-    for (const b of this.noteRow.querySelectorAll('.root-btn')) b.classList.toggle('active', Number(b.dataset.pc) === this.state.highlightPc);
+    this.markRoot(this.noteRow, this.state.highlightPc === null ? -1 : this.state.highlightPc);
   }
 
   renderAll() {
@@ -285,11 +311,16 @@ export class LearningPanel {
 
   /* ---------------- now playing ---------------- */
 
+  /** While notes ring, check a few times a second whether one has faded out of the audible window. */
   tick() {
-    // Refresh when a ringing note fades out of the audible window.
-    const audible = this.audibleCount();
-    if (audible !== this.lastAudible) this.renderNowPlaying();
-    requestAnimationFrame(this.tick);
+    this.tickTimer = 0;
+    if (this.audibleCount() !== this.lastAudible) this.renderNowPlaying();
+    else this.scheduleTick();
+  }
+
+  scheduleTick() {
+    // Nothing audible: nothing can fade, the next change arrives as a state event.
+    if (!this.tickTimer && this.audibleCount() > 0) this.tickTimer = setTimeout(this.tick, 200);
   }
 
   /** Notes that are sounding right now, newest change last. */
@@ -314,6 +345,7 @@ export class LearningPanel {
     const flats = this.flats;
     const sounding = this.soundingNotes();
     this.lastAudible = sounding.length;
+    this.scheduleTick();
     // Names are derived from the pitch at render time so they follow the sharps/flats option.
     const named = (n) => ({ ...n, ...describeNote(n.midi, { flats }) });
     this.nowPlaying.classList.toggle('idle', sounding.length === 0);
@@ -342,7 +374,7 @@ export class LearningPanel {
         <div class="np-details">
           ${other !== latest.name ? `<span>${other}</span>` : ''}
           <span>MIDI ${latest.midi}</span>
-          <span>${latest.frequency.toFixed(2)} Hz</span>
+          <span>${(latest.bend > 0.02 ? latest.playFrequency : latest.frequency).toFixed(2)} Hz</span>
           <span>string ${6 - latest.string} · fret ${latest.fret}</span>
           ${bent}
         </div>

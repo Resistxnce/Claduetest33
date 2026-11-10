@@ -52,6 +52,9 @@ function handler(req, res) {
     return;
   }
   if (pathname.endsWith('/')) pathname += 'index.html';
+  // Everyone on the network can reach this server: never hand out dot-files
+  // (.git, the https key in .cert, editor and tool settings).
+  if (pathname.split(/[\\/]/).some((segment) => segment.startsWith('.'))) { res.writeHead(404); res.end('Not found'); return; }
   const file = normalize(join(root, pathname));
   if (file !== root && !file.startsWith(root + '/') && !file.startsWith(root + '\\')) {
     res.writeHead(403); res.end('Forbidden'); return;
@@ -59,6 +62,13 @@ function handler(req, res) {
   let st;
   try { st = statSync(file); } catch { res.writeHead(404); res.end('Not found'); return; }
   if (st.isDirectory()) { res.writeHead(301, { Location: pathname + '/' }); res.end(); return; }
+  if (pathname === '/index.html') {
+    // Tell the page it is served by this server, so it may ask for the device address (/__lan.json).
+    const html = Buffer.from(readFileSync(file, 'utf8').replace('</head>', '  <meta name="guitar-dev-server" content="1">\n</head>'));
+    res.writeHead(200, { 'Content-Type': MIME['.html'], 'Content-Length': html.length, 'Cache-Control': 'no-cache' });
+    res.end(req.method === 'HEAD' ? undefined : html);
+    return;
+  }
   res.writeHead(200, {
     'Content-Type': MIME[extname(file)] || 'application/octet-stream',
     'Content-Length': st.size,

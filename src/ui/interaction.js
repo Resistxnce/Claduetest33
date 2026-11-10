@@ -314,6 +314,8 @@ export class Player {
     if (Math.abs((current.bend || 0) - semitones) < 0.004 && (current.offset || 0) === offset) return;
     this.state.setFingerBend(pointerId, semitones, offset);
     this.applyPitch(finger.string, { glide: 0.012 });
+    // The read-out follows the bend: the ringing record carries the bent pitch.
+    if (this.isRinging(finger.string)) this.state.setRinging(finger.string, this.state.noteOn(finger.string));
   }
 
   liftFinger(pointerId) {
@@ -329,6 +331,7 @@ export class Player {
     const ring = this.state.ringing[string];
     if (wasBent && ring && this.isRinging(string) && this.state.fingerFret(string) === null) {
       this.engine.setStringPitch(string, ring.frequency, { glide: 0.05, lengthFraction: ring.lengthFraction });
+      this.state.setRinging(string, { ...ring, bend: 0, playFrequency: ring.frequency });
     }
   }
 
@@ -541,11 +544,10 @@ export class Player {
         this.canvas.panBy((e.key === 'ArrowRight' ? 1 : -1) * this.canvas.viewLen * 0.35);
         e.preventDefault();
       }
-    } else if (e.code === 'Space' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    } else if (e.code === 'Space') {
       e.preventDefault();
       if (e.repeat) return;
-      const up = e.shiftKey || e.key === 'ArrowUp';
-      this.strum(up ? 'up' : 'down');
+      this.strum(e.shiftKey ? 'up' : 'down');
     } else if (e.key === 'Escape') {
       this.releaseEverything();
     } else if (e.code === 'KeyM') {
