@@ -36,7 +36,9 @@ Open `index.html` through any static server (modules need http://, not file://).
   for hammer-ons and pull-offs. Notes ring out when you lift (or mute, if you
   switch on fret-hand muting).
 - Sweep across the strings to strum — on the fretboard or over the open
-  strings. Sweep speed sets the picking intensity.
+  strings. Sweep speed sets the picking intensity; "Pick strength" and
+  "Pick position" (bridge = bright, neck = warm) shape every pluck, and touch
+  pressure is used where the device reports it.
 - Keyboard: `1`–`6` pick strings (1 = high E), `Space` strum down,
   `Shift+Space` strum up, `←`/`→` move along the neck, hold `M` for palm mute,
   `Esc` mutes everything.

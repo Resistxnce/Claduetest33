@@ -109,12 +109,14 @@ export class Player {
    * Pick a string at its current sounding pitch.
    * @param {number} string
    * @param {object} [o]
-   * @param {number} [o.velocity=0.8]
-   * @param {number} [o.pickPosition=0.14]
+   * @param {number} [o.velocity] defaults to the "pick strength" option
+   * @param {number} [o.pickPosition] defaults to the "pick position" option
    * @param {number} [o.when] audio time
    * @param {number} [o.visualDelayMs]
    */
-  pluck(string, { velocity = 0.8, pickPosition = 0.14, when, visualDelayMs = 0 } = {}) {
+  pluck(string, { velocity = this.state.options.pickStrength, pickPosition, when, visualDelayMs = 0 } = {}) {
+    // Every pluck lands in a slightly different spot, like a real picking hand.
+    if (pickPosition === undefined) pickPosition = this.state.options.pickPosition + (Math.random() - 0.5) * 0.02;
     const note = this.state.noteOn(string);
     const showVisual = () => this.canvas.pluckVisual(string, note ? velocity : velocity * 0.4, note ? note.fret : null, note ? note.name : '');
     if (!note) {
@@ -129,14 +131,14 @@ export class Player {
   }
 
   /** Strum all strings. direction 'down' = low to high. */
-  strum(direction = 'down', velocity = 0.85, spacingMs = 14) {
+  strum(direction = 'down', velocity = Math.min(1, this.state.options.pickStrength + 0.05), spacingMs = 14) {
     this.ensureAudio();
     const order = [...Array(STRING_COUNT).keys()];
     if (direction === 'up') order.reverse();
     const start = this.engine.now + 0.005;
     order.forEach((s, i) => {
       const jitter = (Math.random() - 0.5) * 0.004;
-      this.pluck(s, { velocity: clamp(velocity * (0.9 + Math.random() * 0.2), 0.1, 1), pickPosition: 0.16, when: start + i * spacingMs / 1000 + jitter, visualDelayMs: i * spacingMs });
+      this.pluck(s, { velocity: clamp(velocity * (0.9 + Math.random() * 0.2), 0.1, 1), when: start + i * spacingMs / 1000 + jitter, visualDelayMs: i * spacingMs });
     });
   }
 
@@ -155,7 +157,21 @@ export class Player {
   /* Fretting                                                           */
   /* ------------------------------------------------------------------ */
 
-  pressFinger(pointerId, string, fret) {
+  /** Picking intensity of a tap: touch/pen pressure when the device reports it, else the pick-strength option. */
+  tapVelocity(e) {
+    const base = this.state.options.pickStrength;
+    if (e && e.pointerType !== 'mouse' && e.pressure > 0 && e.pressure !== 0.5 && e.pressure < 1) {
+      return clamp(base * (0.55 + e.pressure * 0.9), 0.2, 1);
+    }
+    return base;
+  }
+
+  /** Picking intensity of a sweep: faster movement picks harder. */
+  sweepVelocity(speed) {
+    return clamp(this.state.options.pickStrength * (0.6 + speed * 0.28), 0.2, 1);
+  }
+
+  pressFinger(pointerId, string, fret, velocity = this.state.options.pickStrength) {
     const before = this.state.soundingFret(string);
     const ringing = this.isRinging(string);
     this.state.pressFinger(pointerId, string, fret);
@@ -173,7 +189,7 @@ export class Player {
       }
     }
     if (this.state.options.tapToPlay) {
-      this.pluck(string, { velocity: 0.78, pickPosition: 0.14 + Math.random() * 0.02 });
+      this.pluck(string, { velocity });
     }
   }
 
@@ -185,7 +201,7 @@ export class Player {
       // a fast sweep, so walk through every string in between: each one is left
       // behind in turn and the next one is picked (six in a row is a strum).
       const dir = string > finger.string ? 1 : -1;
-      const velocity = clamp(0.45 + speed * 0.2, 0.45, 1);
+      const velocity = this.sweepVelocity(speed);
       const base = this.engine.now;
       let i = 0;
       for (let s = finger.string + dir; dir > 0 ? s <= string : s >= string; s += dir) {
@@ -195,7 +211,7 @@ export class Player {
         this.state.moveFinger(pointerId, s, fret);
         this.afterFingerLeft(prev.string, prevBefore, ringingPrev);
         this.applyPitch(s, { glide: 0 });
-        if (this.state.options.tapToPlay) this.pluck(s, { velocity, pickPosition: 0.15, when: base + i * 0.004 });
+        if (this.state.options.tapToPlay) this.pluck(s, { velocity, when: base + i * 0.004 });
         i++;
       }
       return;
@@ -279,11 +295,11 @@ export class Player {
     try { this.canvas.canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     switch (hit.zone) {
       case 'fretboard':
-        this.pressFinger(e.pointerId, hit.string, hit.fret);
+        this.pressFinger(e.pointerId, hit.string, hit.fret, this.tapVelocity(e));
         break;
       case 'open':
         rec.string = hit.string;
-        this.pluck(hit.string, { velocity: 0.8, pickPosition: 0.16 });
+        this.pluck(hit.string, { velocity: this.tapVelocity(e) });
         break;
       default:
         break;
@@ -307,7 +323,7 @@ export class Player {
       // A drag that started off the strings and reaches them starts playing.
       rec.zone = hit.zone;
       if (hit.zone === 'fretboard') this.pressFinger(e.pointerId, hit.string, hit.fret);
-      else { rec.string = hit.string; this.pluck(hit.string, { velocity: clamp(0.45 + speed * 0.2, 0.45, 1), pickPosition: 0.16 }); }
+      else { rec.string = hit.string; this.pluck(hit.string, { velocity: this.sweepVelocity(speed) }); }
     } else if (rec.zone === 'fretboard') {
       if (hit.zone === 'fretboard') this.moveFinger(e.pointerId, hit.string, hit.fret, speed);
       else if (hit.zone === 'open') {
@@ -315,7 +331,7 @@ export class Player {
         this.liftFinger(e.pointerId);
         rec.zone = 'open';
         rec.string = hit.string;
-        this.pluck(hit.string, { velocity: clamp(0.45 + speed * 0.2, 0.45, 1), pickPosition: 0.16 });
+        this.pluck(hit.string, { velocity: this.sweepVelocity(speed) });
       }
     } else if (rec.zone === 'open') {
       if (hit.zone === 'open') {
@@ -350,11 +366,11 @@ export class Player {
   sweepOpen(rec, string, speed) {
     if (rec.string === undefined || rec.string === string) return;
     const dir = string > rec.string ? 1 : -1;
-    const velocity = clamp(0.4 + speed * 0.22, 0.4, 1);
+    const velocity = this.sweepVelocity(speed);
     const base = this.engine.now;
     let i = 0;
     for (let s = rec.string + dir; dir > 0 ? s <= string : s >= string; s += dir) {
-      this.pluck(s, { velocity, pickPosition: 0.16, when: base + i * 0.004 });
+      this.pluck(s, { velocity, when: base + i * 0.004 });
       i++;
     }
     rec.string = string;
@@ -375,7 +391,10 @@ export class Player {
 
   isTyping(e) {
     const t = e.target;
-    return t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (!t || !t.tagName) return false;
+    if (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable) return true;
+    // Checkboxes and sliders do not take text: the string keys keep working while they have focus.
+    return t.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button'].includes(t.type);
   }
 
   /** Focused buttons/knobs own Space, Enter and the arrow keys. */
@@ -391,7 +410,7 @@ export class Player {
     if (/^[1-6]$/.test(e.key)) {
       this.ensureAudio();
       const string = 6 - Number(e.key); // key 1 = high E
-      this.pluck(string, { velocity: e.shiftKey ? 1 : 0.8, pickPosition: 0.15 });
+      this.pluck(string, { velocity: e.shiftKey ? 1 : this.state.options.pickStrength });
       e.preventDefault();
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       // Move along the neck when it is larger than the screen.
@@ -402,7 +421,7 @@ export class Player {
     } else if (e.code === 'Space' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       if (e.repeat) { e.preventDefault(); return; }
       const up = e.shiftKey || e.key === 'ArrowUp';
-      this.strum(up ? 'up' : 'down', 0.85);
+      this.strum(up ? 'up' : 'down');
       e.preventDefault();
     } else if (e.key === 'Escape') {
       this.releaseEverything();

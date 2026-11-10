@@ -16,6 +16,8 @@ export const DEFAULT_OPTIONS = Object.freeze({
   tapToPlay: true,     // pressing a fret also picks the string
   releaseMutes: false, // lifting the last finger mutes the string (off: tapped notes ring out)
   palmMute: false,
+  pickPosition: 0.14,  // where the pick hits: fraction of the scale length from the bridge (0.05 bright … 0.30 warm)
+  pickStrength: 0.8,   // base picking intensity for taps (0.2 soft … 1 hard)
   view: 'auto',        // 'auto' | 'fit' | 'zoom' — how the 24-fret neck fills the screen
   orientation: 'auto', // 'auto' | 'horizontal' | 'vertical'
   scaleLabels: 'degrees', // 'degrees' | 'names'

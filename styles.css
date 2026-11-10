@@ -146,6 +146,11 @@ main { display: flex; flex-direction: column; gap: 16px; padding: 16px 22px 40px
 .option { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
 .option input { width: 16px; height: 16px; accent-color: var(--accent); }
 .option-select { justify-content: space-between; gap: 10px; }
+.options.column { flex-direction: column; gap: 6px; margin-top: 4px; }
+.option-range { cursor: default; gap: 8px; }
+.option-range > span:first-child { color: var(--text-dim); font-size: 12px; min-width: 92px; }
+.option-range input[type="range"] { flex: 1 1 120px; max-width: 220px; height: 4px; accent-color: var(--accent); }
+.option-range .range-end { font-size: 11px; color: var(--text-faint); }
 .option-select span { color: var(--text-dim); font-size: 12px; }
 
 .tuning-info { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--text-dim); }

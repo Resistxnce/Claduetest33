@@ -114,6 +114,13 @@ export class ControlPanel {
         this.optionInputs.set(key, sel);
         return el('label', { class: 'option option-select' }, [el('span', { text: label }), sel]);
       }
+      if (type === 'range') {
+        const [min, max, step, lo, hi] = values;
+        const input = el('input', { type: 'range', min, max, step, 'aria-label': label, oninput: (e) => state.setOption(key, Number(e.target.value)) });
+        input.value = state.options[key];
+        this.optionInputs.set(key, input);
+        return el('label', { class: 'option option-range' }, [el('span', { text: label }), el('span', { class: 'range-end', text: lo }), input, el('span', { class: 'range-end', text: hi })]);
+      }
       const input = el('input', { type: 'checkbox', onchange: (e) => state.setOption(key, e.target.checked) });
       input.checked = !!state.options[key];
       this.optionInputs.set(key, input);
@@ -133,6 +140,10 @@ export class ControlPanel {
         opt('releaseMutes', 'Lifting a finger mutes the string'),
         opt('palmMute', 'Palm mute'),
       ]),
+      el('div', { class: 'options column' }, [
+        opt('pickStrength', 'Pick strength', { type: 'range', values: [0.2, 1, 0.01, 'soft', 'hard'] }),
+        opt('pickPosition', 'Pick position', { type: 'range', values: [0.05, 0.3, 0.005, 'bridge', 'neck'] }),
+      ]),
     ]));
     root.append(el('section', { class: 'control-group' }, [
       el('h3', { text: 'Display' }),
@@ -151,7 +162,7 @@ export class ControlPanel {
     state.addEventListener('option', (e) => {
       if (e.detail.key === 'palmMute') engine.setPalmMute(e.detail.value);
       const input = this.optionInputs.get(e.detail.key);
-      if (input) { if (input.type === 'checkbox') input.checked = !!e.detail.value; else input.value = e.detail.value; }
+      if (input) { if (input.type === 'checkbox') input.checked = !!e.detail.value; else input.value = String(e.detail.value); }
     });
     state.addEventListener('tuning', () => { tuningSel.value = state.tuning.id; this.syncTuningInfo(); });
     state.addEventListener('capo', () => { capoSel.value = String(state.capo); this.syncTuningInfo(); });

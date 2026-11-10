@@ -225,6 +225,18 @@ try {
   await page.screenshot({ path: `${outDir}/06-scale.png` });
   await page.evaluate(() => window.__guitar.state.setScale(null));
 
+  // Pick sliders are wired to the playing options
+  await page.locator('input[aria-label="Pick position"]').evaluate((el) => { el.value = '0.25'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.locator('input[aria-label="Pick strength"]').evaluate((el) => { el.value = '0.4'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  const pickOpts = await page.evaluate(() => ({ pos: window.__guitar.state.options.pickPosition, strength: window.__guitar.state.options.pickStrength }));
+  assert(pickOpts.pos === 0.25 && pickOpts.strength === 0.4, `pick sliders should update options, got ${JSON.stringify(pickOpts)}`);
+  await clearRecent();
+  await page.keyboard.press('3');
+  await page.waitForTimeout(60);
+  note = await lastNote();
+  assert(note && note.name === 'G3' && Math.abs(note.velocity - 0.4) < 1e-9, `key 3 picks the G string at the chosen strength, got ${note && note.name} ${note && note.velocity}`);
+  await page.evaluate(() => { window.__guitar.state.setOption('pickPosition', 0.14); window.__guitar.state.setOption('pickStrength', 0.8); });
+
   // Presets & knobs
   await page.click('[data-preset="distortion"]');
   const preset = await page.evaluate(() => ({ id: window.__guitar.engine.presetId, pickup: window.__guitar.engine.pickupPosition, gain: window.__guitar.engine.params.gain }));
