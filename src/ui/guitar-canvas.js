@@ -52,7 +52,7 @@ const MAX_NECK_CROSS = 470;
 export function computeLayout({ length: W, cross: H, fretCount = FRET_COUNT }) {
   const N = fretCount;
   const openW = clamp(W * 0.06, 60, 84);          // tappable open-string zone
-  const nutW = clamp(W * 0.008, 6, 12);
+  const nutW = clamp(W * 0.016, 10, 26);            // a wide marble nut, as on the reference fretboard
   const nutX = openW + nutW;                       // fret 0 (bridge-side edge of the nut)
   const rightPad = Math.max(10, W * 0.012);        // a little wood past the last fret
   const L = (W - rightPad - nutX) / fretDistanceFraction(N); // scale length in px
@@ -103,12 +103,16 @@ function seeded(seed) {
 }
 
 /** Glossy sphere (note dot) in the style of a classic fretboard trainer. */
-function glossyDot(ctx, x, y, r, [light, mid, dark]) {
+function glossyDot(ctx, x, y, r, [light, mid, dark], vertical = false) {
+  // In the vertical layout guitar space is rotated: mirror the offsets so the gloss stays top-left on screen.
+  const hx = vertical ? -r * 0.4 : -r * 0.2, hy = vertical ? r * 0.2 : -r * 0.4;
+  const rx = vertical ? r * 0.35 : r * 0.55, ry = vertical ? r * 0.55 : r * 0.35;
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.55)';
   ctx.shadowBlur = r * 0.6;
   ctx.shadowOffsetY = r * 0.18;
-  const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r);
+  const bx = vertical ? -r * 0.35 : -r * 0.3, by = vertical ? r * 0.3 : -r * 0.35;
+  const g = ctx.createRadialGradient(x + bx, y + by, r * 0.1, x, y, r);
   g.addColorStop(0, light);
   g.addColorStop(0.55, mid);
   g.addColorStop(1, dark);
@@ -116,11 +120,11 @@ function glossyDot(ctx, x, y, r, [light, mid, dark]) {
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
   // specular highlight
-  const hg = ctx.createRadialGradient(x - r * 0.25, y - r * 0.45, 0, x - r * 0.25, y - r * 0.45, r * 0.6);
+  const hg = ctx.createRadialGradient(x + hx, y + hy, 0, x + hx, y + hy, r * 0.6);
   hg.addColorStop(0, 'rgba(255,255,255,0.75)');
   hg.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = hg;
-  ctx.beginPath(); ctx.ellipse(x - r * 0.2, y - r * 0.4, r * 0.55, r * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + hx, y + hy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,0.35)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
@@ -368,7 +372,7 @@ export class GuitarCanvas {
   pluckVisual(string, velocity = 0.8, fret = null, name = '') {
     const v = this.vib[string];
     const sp = this.layout.spacing;
-    v.amp = clamp(sp * (0.1 + 0.34 * velocity), 1.5, sp * 0.44);
+    v.amp = clamp(sp * (0.05 + 0.13 * velocity), 1.2, sp * 0.17); // half-width of the blur around the string
     v.t0 = performance.now();
     v.tau = 0.7 + 0.55 * (1 - string / 5); // thick strings swing longer
     v.freq = 5.5 + (5 - string) * 1.3;
@@ -461,21 +465,40 @@ export class GuitarCanvas {
     if (!notes.length) return;
     notes.sort((a, b) => a.midi - b.midi);
     const flats = st.options.flats;
-    const names = notes.map((n) => midiToName(n.midi, { flats })).join('  ');
+    const list = notes.map((n) => midiToName(n.midi, { flats }));
+    const names = list.join('  ');
     const pcs = new Set(notes.map((n) => pitchClass(n.midi)));
     const chord = pcs.size >= 2 ? detectChord(pcs, { bassPc: pitchClass(notes[0].midi), flats }) : null;
     const headline = chord ? chord.name : (notes.length === 1 ? names : '');
     const gy = L.bandTop * 0.5;
-    const big = `800 ${Math.min(34, Math.max(20, L.bandTop * 0.3))}px system-ui, sans-serif`;
-    const small = '600 14px system-ui, sans-serif';
+    const bigPx = Math.min(34, Math.max(20, L.bandTop * 0.3));
+    const face = 'system-ui, sans-serif';
+    const dim = 'rgba(231,233,238,0.75)';
+    const width = (str, font) => { ctx.font = font; return ctx.measureText(str).width; };
     if (this.orientation === 'vertical') {
-      const x = this.scroll + 34;
-      if (headline) this.text(ctx, x, gy, headline, { font: big, color: '#fde68a' });
-      if (headline !== names) this.text(ctx, x + (headline ? 34 : 0), gy, names, { font: small, color: 'rgba(231,233,238,0.75)' });
+      // The band beside an upright neck is narrow: shrink the chord name to fit and wrap the notes.
+      const maxW = L.bandTop - 14;
+      let y = this.scroll + 34;
+      if (headline) {
+        const px = Math.max(13, Math.min(bigPx, (bigPx * maxW) / width(headline, `800 ${bigPx}px ${face}`)));
+        this.text(ctx, y, gy, headline, { font: `800 ${px}px ${face}`, color: '#fde68a' });
+        y += px * 0.75 + 16;
+      }
+      if (headline !== names) {
+        const small = `600 14px ${face}`;
+        const rows = [];
+        for (const name of list) {
+          const last = rows[rows.length - 1];
+          if (last !== undefined && width(`${last}  ${name}`, small) <= maxW) rows[rows.length - 1] = `${last}  ${name}`;
+          else rows.push(name);
+        }
+        for (const row of rows) { this.text(ctx, y, gy, row, { font: small, color: dim }); y += 20; }
+      }
     } else {
       const x = this.scroll + 20;
-      if (headline) this.text(ctx, x, gy - (headline !== names ? 10 : 0), headline, { font: big, color: '#fde68a', align: 'left' });
-      if (headline !== names) this.text(ctx, x, gy + (headline ? 20 : 0), names, { font: small, color: 'rgba(231,233,238,0.75)', align: 'left' });
+      const small = `600 14px ${face}`;
+      if (headline) this.text(ctx, x, gy - (headline !== names ? 10 : 0), headline, { font: `800 ${bigPx}px ${face}`, color: '#fde68a', align: 'left' });
+      if (headline !== names) this.text(ctx, x, gy + (headline ? 20 : 0), names, { font: small, color: dim, align: 'left' });
     }
   }
 
@@ -604,7 +627,7 @@ export class GuitarCanvas {
       ctx.restore();
       ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 0.8;
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      if (label && r >= 6.5) this.text(ctx, x, y + r * 0.04, label, { font: `500 ${Math.max(8, r * 1.15)}px Georgia, "Times New Roman", serif`, color: '#2c2622' });
+      if (label && r >= 5) this.text(ctx, x, y + r * 0.04, label, { font: `500 ${Math.max(7.5, r * 1.15)}px Georgia, "Times New Roman", serif`, color: '#2c2622' });
     };
     const radius = (f) => Math.max(4, Math.min(L.spacing * 0.3, L.cellWidth(f) * 0.3));
     const cy = (L.fbTop + L.fbBottom) / 2;
@@ -647,20 +670,27 @@ export class GuitarCanvas {
     ctx.shadowBlur = 6;
     ctx.shadowOffsetX = 2;
     const g = ctx.createLinearGradient(x0, 0, x0 + w, 0);
-    g.addColorStop(0, '#cfc8b8');
-    g.addColorStop(0.4, '#f3eee2');
-    g.addColorStop(1, '#bdb5a3');
+    g.addColorStop(0, '#a9aaa8');
+    g.addColorStop(0.35, '#e6e7e4');
+    g.addColorStop(0.7, '#c9cac7');
+    g.addColorStop(1, '#9a9b99');
     ctx.fillStyle = g;
     ctx.fillRect(x0, L.fbTop - 2, w, L.fbH + 4);
     ctx.restore();
     const rnd = seeded(99);
     ctx.save();
     ctx.beginPath(); ctx.rect(x0, L.fbTop - 2, w, L.fbH + 4); ctx.clip();
-    for (let i = 0; i < 14; i++) {
-      ctx.strokeStyle = `rgba(120,115,105,${0.15 + rnd() * 0.25})`;
-      ctx.lineWidth = 0.6 + rnd();
+    for (let i = 0; i < 18; i++) {
+      ctx.strokeStyle = `rgba(70,72,76,${0.12 + rnd() * 0.3})`;
+      ctx.lineWidth = 0.5 + rnd() * 1.2;
       const y = L.fbTop + rnd() * L.fbH;
-      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y + (rnd() - 0.5) * 30); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.bezierCurveTo(x0 + w * 0.3, y + (rnd() - 0.5) * 16, x0 + w * 0.7, y + (rnd() - 0.5) * 16, x0 + w, y + (rnd() - 0.5) * 34); ctx.stroke();
+    }
+    // string slots
+    for (let i = 0; i < STRING_COUNT; i++) {
+      const sw = Math.max(1.4, L.spacing * (0.058 + 0.088 * ((STRING_GAUGES_INCHES[i] - 0.010) / 0.036))) + 1.5;
+      ctx.fillStyle = 'rgba(40,40,44,0.45)';
+      ctx.fillRect(x0, L.stringY(i) - sw / 2, w, sw);
     }
     ctx.restore();
     ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
@@ -731,7 +761,7 @@ export class GuitarCanvas {
         if (p.fret > L.N) continue;
         const c = L.positionCenter(p.string, p.fret);
         const r = this.dotRadius(p.fret, 0.33);
-        glossyDot(ctx, c.x, c.y, r, DOT_GREEN);
+        glossyDot(ctx, c.x, c.y, r, DOT_GREEN, this.orientation === 'vertical');
         this.text(ctx, c.x, c.y, pitchClassName(st.highlightPc, { flats }), { font: `800 ${Math.max(8, r * 0.95)}px system-ui, sans-serif`, color: '#ffffff' });
         drawn.add(key(p.string, p.fret));
       }
@@ -743,10 +773,12 @@ export class GuitarCanvas {
           if (drawn.has(key(s, f))) continue;
           const c = L.positionCenter(s, f);
           const name = st.fretboard.noteNameAt(s, f, { flats }).replace(/-?\d+$/, '');
-          const size = clamp(Math.min(L.spacing * 0.3, L.cellWidth(f) * 0.42), 7, 13);
+          // Narrow frets only have room for the natural notes at a readable size.
+          if (f > 0 && L.cellWidth(f) < 23 && name.length > 1) continue;
+          const size = clamp(Math.min(L.spacing * 0.3, L.cellWidth(f) * 0.42), 9.5, 13);
           const w = size * (name.length > 1 ? 1.9 : 1.5), h = size * 1.4;
           ctx.fillStyle = 'rgba(10,8,8,0.62)';
-          roundRect(ctx, c.x - w / 2, c.y - h / 2, w, h, h * 0.35);
+          this.pill(ctx, c.x, c.y, w, h);
           ctx.fill();
           this.text(ctx, c.x, c.y, name, { font: `700 ${size}px system-ui, sans-serif`, color: 'rgba(245,240,228,0.95)' });
         }
@@ -767,7 +799,11 @@ export class GuitarCanvas {
       const amp = this.currentAmp(i, now);
       const v = this.vib[i];
       const y = L.stringY(i);
-      const xVib0 = sounding > 0 ? L.fretX(Math.min(sounding, L.N)) + 1 : L.nutX;
+      // Vibrating length: from the finger (or capo); after a lift, from the fret that still rings.
+      const ring = this.lastPluck[i];
+      const ringFret = st.fingerFret(i) === null && ring.t && now - ring.t < 3200 ? ring.fret : 0;
+      const vibFret = Math.max(sounding, ringFret);
+      const xVib0 = vibFret > 0 ? L.fretX(Math.min(vibFret, L.N)) + 1 : L.nutX;
       // A bent string is pulled sideways at the fret: straight from the nut to the
       // bend point, then straight on to the bridge.
       const bendOff = sounding > 0 ? this.bendOffset(i) : 0;
@@ -782,38 +818,40 @@ export class GuitarCanvas {
       ctx.beginPath(); ctx.moveTo(-6, y + sh); ctx.lineTo(L.nutX, y + sh); ctx.lineTo(xVib0, lineY(xVib0) + sh); ctx.lineTo(xEnd, lineY(xEnd) + sh); ctx.stroke();
       // Pale brass string with a highlight, like the reference fretboard
       const grad = ctx.createLinearGradient(0, y - width / 2, 0, y + width / 2);
-      grad.addColorStop(0, '#d9d38f');
-      grad.addColorStop(0.35, '#fffbd6');
-      grad.addColorStop(0.6, '#f1eca6');
-      grad.addColorStop(1, '#a39a52');
+      grad.addColorStop(0, '#cfcf86');
+      grad.addColorStop(0.3, '#fbf8c4');
+      grad.addColorStop(0.5, '#e6e68a');
+      grad.addColorStop(1, '#9c9647');
       ctx.strokeStyle = muted ? 'rgba(150,150,140,0.55)' : grad;
       ctx.lineWidth = width;
       // Static part: open zone → nut → fretted point
       ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(L.nutX, y); ctx.lineTo(xVib0, lineY(xVib0)); ctx.stroke();
-      // Vibrating part: fretted point → bridge (the bridge lies beyond the visible neck)
+      // Vibrating part: fretted point → bridge (the bridge lies beyond the visible neck).
+      // The string itself stays crisp on its rest line; its motion shows as a symmetric
+      // translucent blur whose two edges shimmer, widest toward the middle of the string.
       const span = L.bridgeX - xVib0;
-      const drawVib = (phaseOffset, alpha) => {
+      if (amp > 0.35 && !muted) {
+        const tt = (now - v.t0) / 1000;
+        const wobble = 0.82 + 0.18 * Math.sin(2 * Math.PI * v.freq * tt + v.phase);
+        const env = (x) => amp * wobble * Math.pow(Math.sin(Math.PI * clamp((x - xVib0) / span, 0, 1)), 0.6);
+        const steps = 28;
         ctx.save();
-        ctx.globalAlpha = alpha;
         ctx.beginPath();
-        const moving = amp > 0.2;
-        const steps = moving ? 36 : 1;
-        for (let k = 0; k <= steps; k++) {
-          const x = xVib0 + ((xEnd - xVib0) * k) / steps;
-          let d = 0;
-          if (moving) {
-            const u = (x - xVib0) / span;
-            const tt = (now - v.t0) / 1000;
-            d = amp * Math.sin(Math.PI * u) * Math.sin(2 * Math.PI * v.freq * tt + v.phase + phaseOffset)
-              + amp * 0.25 * Math.sin(2 * Math.PI * u) * Math.sin(2 * Math.PI * v.freq * 2.1 * tt + v.phase * 1.7);
-          }
-          if (k === 0) ctx.moveTo(x, lineY(x) + d); else ctx.lineTo(x, lineY(x) + d);
+        for (let k = 0; k <= steps; k++) { const x = xVib0 + ((xEnd - xVib0) * k) / steps; const yy = lineY(x) - env(x) - width / 2; if (k === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); }
+        for (let k = steps; k >= 0; k--) { const x = xVib0 + ((xEnd - xVib0) * k) / steps; ctx.lineTo(x, lineY(x) + env(x) + width / 2); }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(240,238,160,0.2)';
+        ctx.fill();
+        ctx.globalAlpha = 0.32;
+        ctx.lineWidth = Math.max(1, width * 0.5);
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          for (let k = 0; k <= steps; k++) { const x = xVib0 + ((xEnd - xVib0) * k) / steps; const yy = lineY(x) + side * env(x); if (k === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy); }
+          ctx.stroke();
         }
-        ctx.stroke();
         ctx.restore();
-      };
-      if (amp > 0.6) { drawVib(Math.PI * 0.5, 0.28); drawVib(-Math.PI * 0.5, 0.28); }
-      drawVib(0, 1);
+      }
+      ctx.beginPath(); ctx.moveTo(xVib0, lineY(xVib0)); ctx.lineTo(xEnd, lineY(xEnd)); ctx.stroke();
       // Wound-string texture
       if (wound && width > 2.4 && !muted) {
         ctx.save();
@@ -821,8 +859,7 @@ export class GuitarCanvas {
         ctx.strokeStyle = '#6f6730';
         ctx.lineWidth = width * 0.7;
         ctx.setLineDash([1, 1.6]);
-        ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(L.nutX, y); ctx.lineTo(xVib0, lineY(xVib0));
-        if (amp <= 0.2) ctx.lineTo(xEnd, lineY(xEnd));
+        ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(L.nutX, y); ctx.lineTo(xVib0, lineY(xVib0)); ctx.lineTo(xEnd, lineY(xEnd));
         ctx.stroke();
         ctx.restore();
       }
@@ -850,6 +887,18 @@ export class GuitarCanvas {
     return off;
   }
 
+  /** Path of a label background `w` wide and `h` tall on screen, centred on a guitar-space point. */
+  pill(ctx, gx, gy, w, h) {
+    if (this.orientation === 'vertical') roundRect(ctx, gx - h / 2, gy - w / 2, h, w, h * 0.35);
+    else roundRect(ctx, gx - w / 2, gy - h / 2, w, h, h * 0.35);
+  }
+
+  /** Font and text for a note name inside a dot of radius r: the octave is dropped when the dot is small. */
+  dotLabel(name, r) {
+    if (r * 0.72 >= 9.5) return { label: name, font: `800 ${r * 0.72}px system-ui, sans-serif` };
+    return { label: name.replace(/-?\d+$/, ''), font: `800 ${Math.max(9, Math.min(12, r * 0.95))}px system-ui, sans-serif` };
+  }
+
   /** Open-string note letters at the outer edge of the open zone. */
   drawOpenLabels(ctx) {
     const st = this.state;
@@ -860,7 +909,7 @@ export class GuitarCanvas {
       const name = st.fretboard.noteNameAt(s, 0, { flats: st.options.flats }).replace(/-?\d+$/, '');
       const w = size * (name.length > 1 ? 2.0 : 1.6), h = size * 1.45;
       ctx.fillStyle = 'rgba(14,12,11,0.85)';
-      roundRect(ctx, L.openLabelX - w / 2, L.stringY(s) - h / 2, w, h, h * 0.35);
+      this.pill(ctx, L.openLabelX, L.stringY(s), w, h);
       ctx.fill();
       this.text(ctx, L.openLabelX, L.stringY(s), name, { font: `700 ${size}px system-ui, sans-serif`, color: 'rgba(240,235,222,0.9)' });
     }
@@ -892,9 +941,19 @@ export class GuitarCanvas {
       const rel = voicing.frets[s];
       const f = st.chordFret(rel);
       const finger = voicing.fingers[s];
-      // Muted and open strings are marked before the nut (the capo stands in for the nut).
+      // Muted and open strings are marked before the nut — or just behind the capo, which
+      // stands in for the nut — and stay in view when the neck is panned to a shape higher up.
       const c = L.positionCenter(s, rel > 0 ? f : 0);
-      const r = this.dotRadius(rel > 0 ? f : 0, 0.36);
+      let r = this.dotRadius(rel > 0 ? f : 0, 0.36);
+      if (rel <= 0) {
+        if (capo > 0 && capo <= L.N) { c.x = L.fretX(capo - 1) + L.cellWidth(capo) * 0.2; r = Math.min(r, this.dotRadius(capo, 0.36)); }
+        const edge = this.scroll + r + 6;
+        if (c.x < edge) {
+          c.x = edge;
+          ctx.fillStyle = 'rgba(12,13,17,0.78)';
+          ctx.beginPath(); ctx.arc(c.x, c.y, r * 0.95, 0, Math.PI * 2); ctx.fill();
+        }
+      }
       if (rel < 0) {
         this.text(ctx, c.x, c.y, '×', { font: `800 ${r * 1.7}px system-ui, sans-serif`, color: 'rgba(248,113,113,0.95)' });
       } else if (rel === 0) {
@@ -906,7 +965,7 @@ export class GuitarCanvas {
         if (!inBarre) {
           ctx.save();
           ctx.globalAlpha = hold ? 1 : 0.65;
-          glossyDot(ctx, c.x, c.y, r, DOT_TEAL);
+          glossyDot(ctx, c.x, c.y, r, DOT_TEAL, this.orientation === 'vertical');
           ctx.restore();
         }
         if (finger) this.text(ctx, c.x, c.y, String(finger), { font: `800 ${r * 1.05}px system-ui, sans-serif`, color: '#ffffff' });
@@ -919,6 +978,9 @@ export class GuitarCanvas {
     const st = this.state;
     const L = this.layout;
     const showName = st.options.noteNames !== 'off';
+    // A held chord keeps its teal finger dots (with finger numbers) while it rings.
+    const voicing = st.holdChord ? st.chordVoicing : null;
+    const heldFret = (s) => (voicing ? st.chordFret(voicing.frets[s]) : null);
     for (let s = 0; s < STRING_COUNT; s++) {
       const lp = this.lastPluck[s];
       if (!lp.t) continue;
@@ -929,11 +991,25 @@ export class GuitarCanvas {
       const alpha = clamp(1 - (age - 1800) / 1400, 0, 1);
       const c = L.positionCenter(s, lp.fret);
       const r = this.dotRadius(lp.fret, 0.36);
+      if (heldFret(s) === lp.fret && lp.fret > st.capo) {
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.95;
+        ctx.strokeStyle = '#8fd0ff';
+        ctx.lineWidth = Math.max(2, r * 0.2);
+        ctx.shadowColor = '#4aa8ff'; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(c.x, c.y, r + 2.5 + 4 * Math.exp(-age / 220), 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        continue;
+      }
       ctx.save();
       ctx.globalAlpha = alpha;
-      glossyDot(ctx, c.x, c.y, r, lp.fret === 0 ? DOT_GREY : DOT_BLUE);
+      glossyDot(ctx, c.x, c.y, r, lp.fret === 0 ? DOT_GREY : DOT_BLUE, this.orientation === 'vertical');
       ctx.restore();
-      if (showName && lp.name) this.text(ctx, c.x, c.y, lp.name, { font: `800 ${Math.max(8, r * 0.72)}px system-ui, sans-serif`, color: lp.fret === 0 ? '#1b1d22' : '#ffffff', alpha });
+      if (showName && lp.name) {
+        // Named at draw time, so the label follows the sharps/flats option and a retune.
+        const { label, font } = this.dotLabel(midiToName(st.fretboard.midiAt(s, lp.fret), { flats: st.options.flats }), r);
+        this.text(ctx, c.x, c.y, label, { font, color: lp.fret === 0 ? '#1b1d22' : '#ffffff', alpha });
+      }
     }
   }
 
@@ -946,10 +1022,11 @@ export class GuitarCanvas {
       const c = L.positionCenter(f.string, f.fret);
       const y = c.y + (f.offset || 0); // a bending finger drags its dot (and the string) sideways
       const r = this.dotRadius(f.fret, 0.44);
-      glossyDot(ctx, c.x, y, r, DOT_BLUE);
+      glossyDot(ctx, c.x, y, r, DOT_BLUE, this.orientation === 'vertical');
       if (showName) {
         const note = st.fretboard.noteAt(f.string, Math.max(f.fret, st.capo), { flats: st.options.flats });
-        this.text(ctx, c.x, y, note.name, { font: `800 ${Math.max(8, r * 0.72)}px system-ui, sans-serif`, color: '#ffffff' });
+        const { label, font } = this.dotLabel(note.name, r);
+        this.text(ctx, c.x, y, label, { font, color: '#ffffff' });
       }
     }
   }

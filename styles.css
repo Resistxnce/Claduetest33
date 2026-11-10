@@ -270,7 +270,7 @@ main {
 }
 .start-overlay.hidden { opacity: 0; pointer-events: none; }
 .start-card {
-  background: var(--bg-panel); border: 1px solid var(--border); border-radius: 18px; padding: 32px 36px; max-width: 420px; text-align: center;
+  background: var(--bg-panel); border: 1px solid var(--border); border-radius: 18px; padding: 32px 36px; width: min(420px, calc(100% - 32px)); text-align: center;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 12px; align-items: center;
 }
 .start-card h2 { font-size: 22px; }
@@ -283,10 +283,13 @@ main {
 
 .help { border: 1px solid var(--border); border-radius: 16px; background: var(--bg-panel); color: var(--text); padding: 0; max-width: 560px; width: calc(100% - 32px); }
 .help::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
-.help form { padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; }
+.help form { padding: 24px 28px 0; display: flex; flex-direction: column; gap: 14px; }
+.help h2 { outline: none; }
 .help ul { margin: 0; padding-left: 18px; line-height: 1.7; font-size: 14px; color: var(--text-dim); }
 .help li b { color: var(--text); }
-.help button { align-self: flex-end; }
+/* The close button stays in view however long the instructions are. */
+.help-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding: 12px 0 18px; background: linear-gradient(180deg, transparent, var(--bg-panel) 30%); }
+@media (hover: none) { .help .keyboard-only { display: none; } }
 .help-device { display: flex; gap: 16px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 255, 255, 0.03); }
 .help-device[hidden] { display: none; }
 #device-btn[hidden] { display: none; }
@@ -320,6 +323,11 @@ main {
   .tool-btn span { display: none; }
 }
 @media (max-width: 430px) {
+  .start-card { padding: 24px 20px; }
+  .brand { min-width: 0; }
+  .brand > div { min-width: 0; }
+  .brand h1 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tagline { display: none; }
   .topbar { gap: 8px; }
   .topbar-right { gap: 8px; }
   .meter { width: 44px; }
