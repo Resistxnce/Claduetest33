@@ -10,10 +10,10 @@
  * MOVABLE_SHAPES: barre/closed shapes relative to the root fret.
  *   { quality, rootString, frets (relative to root fret, -1 muted), fingers,
  *     barre?: {fret: relative, from, to} | [..], name }
- *   The root string's relative fret is 0; the shape is placed so that string
- *   sounds the chord root. Relative frets below 0 are not allowed.
- *
- * This file is validated by tests/chords.test.js against the chord formulas.
+ *   Frets are relative to the shape's lowest fretted fret (which is 0).
+ *   frets[rootString] is where the root sits inside the shape: 0 for classic
+ *   barre forms, > 0 when other strings are fretted below the root (e.g. the
+ *   C9 grip x3233x is frets [-1, 1, 0, 1, 1, -1] with rootString 1).
  */
 
 /*
