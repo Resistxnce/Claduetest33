@@ -23,11 +23,12 @@ Open `index.html` through any static server (modules need http://, not file://).
 
 ## Play it on your iPad or phone
 
-1. On your computer run `npm start`. It prints a line like
-   `http://192.168.1.23:8080/` under "On a phone or iPad connected to the same
-   Wi-Fi, open:".
-2. Open that address in Safari (iPad/iPhone) or Chrome (Android) on the device,
-   tap once to power the amp on, and play. Turn a phone sideways for the
+1. On your computer run `npm start`. It prints the address for other devices
+   (a line like `http://192.168.1.23:8080/`) together with a QR code.
+2. Point the device's camera at the QR code — or type the address into Safari
+   (iPad/iPhone) or Chrome (Android) — tap once to power the amp on, and play.
+   The same code is in the app on your computer: **Play on phone / iPad** in
+   the top bar. Turn a phone sideways for the
    biggest neck; tap **Full screen** on a tablet. The neck is zoomed on small
    screens — drag the minimap to move along all 24 frets.
 3. Optional: use the browser's *Share → Add to Home Screen* to get an app icon
@@ -49,6 +50,9 @@ Good to know:
   check the volume buttons.
 - Your computer's firewall must allow incoming connections to the port
   (8080, or 8443 for https), and both devices must be on the same network.
+- If the computer has several network adapters (VPN, Docker, virtual
+  machines) every address is listed; the QR code is for the most likely Wi-Fi
+  or Ethernet one. `npm start -- --no-qr` hides the code.
 - `?audio=script` in the address forces the fallback audio path on any device
   (useful for comparing).
 
@@ -140,15 +144,16 @@ tests/*.test.js               unit tests (node --test)
 tests/e2e/                    Playwright UI test + offline audio analysis
 manifest.webmanifest, sw.js   installable web app + offline cache
 icons/                        app icons
-tools/serve.mjs               tiny static server (LAN address, optional https)
+tools/serve.mjs, lan.mjs      tiny static server (LAN address + QR code, optional https)
 ```
 
 ## Testing
 
 - `npm test` runs the theory tests (every string × every fret × every tuning,
   spec examples, enharmonics, geometry, scales, chord detection), an
-  independent specification-derived suite, and the chord-library validation
-  (pitch content, bass note, barre/finger consistency, coverage).
+  independent specification-derived suite, the chord-library validation
+  (pitch content, bass note, barre/finger consistency, coverage), the string
+  model in Node, and the QR encoder against a reference implementation.
 - `npm run test:e2e` starts the server and drives Chromium (Playwright with its
   bundled Chromium): powers the amp on, taps and slides with the mouse, sweeps
   strums across open and fretted strings, holds two strings with simulated

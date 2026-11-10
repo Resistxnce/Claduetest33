@@ -27,6 +27,7 @@
     <div class="topbar-right">
       <div class="meter" id="level-meter" aria-label="Output level"><span></span></div>
       <div class="power"><span class="led" id="power-led"></span><span class="power-label">AMP</span></div>
+      <button class="btn ghost" id="device-btn" type="button" aria-haspopup="dialog" hidden>Play on phone / iPad</button>
       <button class="btn ghost" id="help-btn" type="button" aria-haspopup="dialog">How to play</button>
     </div>
   </header>
@@ -81,8 +82,16 @@
         <li><b>Controls:</b> presets, amp knobs, pickup selector, tuning and capo live in the panel below the neck.</li>
         <li><b>Keyboard:</b> <kbd>1</kbd>–<kbd>6</kbd> pick strings (1 = high E), <kbd>Space</kbd> strum down, <kbd>Shift</kbd>+<kbd>Space</kbd> strum up, <kbd>←</kbd>/<kbd>→</kbd> move along the neck, hold <kbd>M</kbd> to palm mute, <kbd>Esc</kbd> mutes everything.</li>
         <li><b>Learn:</b> pick a chord to see the fingering, "Hold chord" to have it pressed for you, show scales and note positions.</li>
-        <li><b>Phone or iPad:</b> turn the device sideways and tap <i>Full screen</i> for a bigger neck; use <i>Add to Home Screen</i> to run it like an app. <span id="lan-hint"></span></li>
+        <li><b>Phone or iPad:</b> turn the device sideways and tap <i>Full screen</i> for a bigger neck; use <i>Add to Home Screen</i> to run it like an app.</li>
       </ul>
+      <div class="help-device" id="device-link" hidden>
+        <canvas id="device-qr" width="132" height="132" role="img" aria-label="QR code for the address below"></canvas>
+        <div>
+          <h3>Play on your phone or iPad</h3>
+          <p>Scan the code with the device's camera, or type <b id="device-url"></b> into its browser. Both devices must be on the same Wi-Fi.</p>
+          <p class="help-small" id="device-note"></p>
+        </div>
+      </div>
       <button class="btn primary" value="close">Got it</button>
     </form>
   </dialog>

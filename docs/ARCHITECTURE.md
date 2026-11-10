@@ -33,9 +33,10 @@ No build step: `npm start` serves the folder, `index.html` loads `src/main.js`.
 | `src/ui/knob.js` | Rotary knob component (pointer drag, wheel, keyboard, ARIA slider) |
 | `src/ui/controls.js` | Control panel wiring (presets, knobs, pickup selector, tuning, options) |
 | `src/ui/learning-panel.js` | Chord/scale/note libraries and the "now playing" read-out |
+| `src/ui/qr.js` | Dependency-free QR encoder (byte mode, level L, versions 1–5) for the device address: terminal and canvas renderers |
 | `src/main.js` | Boots everything; stage toolbar, full-screen play mode, service-worker registration |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Installable web app: home-screen icon, standalone display, network-first offline cache |
-| `tools/serve.mjs` | Static server: binds all interfaces, prints the LAN address, `/__lan.json`, optional `--https` with a self-signed certificate |
+| `tools/serve.mjs`, `tools/lan.mjs` | Static server: binds all interfaces, prints the LAN address with a QR code (most likely Wi-Fi/Ethernet address first), `/__lan.json`, optional `--https` with a self-signed certificate |
 
 ## Fretboard view
 

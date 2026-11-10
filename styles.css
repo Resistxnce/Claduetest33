@@ -287,6 +287,17 @@ main {
 .help ul { margin: 0; padding-left: 18px; line-height: 1.7; font-size: 14px; color: var(--text-dim); }
 .help li b { color: var(--text); }
 .help button { align-self: flex-end; }
+.help-device { display: flex; gap: 16px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 255, 255, 0.03); }
+.help-device[hidden] { display: none; }
+#device-btn[hidden] { display: none; }
+.topbar-right .btn { white-space: nowrap; }
+@media (max-width: 960px) { #device-btn { display: none; } }
+.help-device canvas { flex: none; width: 132px; height: 132px; border-radius: 6px; image-rendering: pixelated; background: #fff; }
+.help-device h3 { margin: 0 0 6px; font-size: 15px; }
+.help-device p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-dim); overflow-wrap: anywhere; }
+.help-device p b { color: var(--text); }
+.help-device .help-small { margin-top: 6px; font-size: 12px; }
+@media (max-width: 480px) { .help-device { flex-direction: column; align-items: flex-start; } }
 
 /* ------------------------------------------------------------------ */
 /* Responsive                                                         */

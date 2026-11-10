@@ -3,21 +3,24 @@
 //
 //   node tools/serve.mjs              http on port 8080 (PORT or first argument overrides)
 //   node tools/serve.mjs --https      https with a self-signed certificate on port 8443
+//   node tools/serve.mjs --no-qr      do not print the QR code for the device address
 //
 // Over plain http a phone gets the main-thread audio backend (browsers only allow
 // AudioWorklet and "Add to Home Screen" offline support on https or localhost);
 // --https unlocks both after accepting the certificate warning once on the device.
 import http from 'node:http';
 import https from 'node:https';
-import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { qrToTerminal } from '../src/ui/qr.js';
+import { lanAddresses } from './lan.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 const useHttps = args.includes('--https');
+const showQr = !args.includes('--no-qr') && (args.includes('--qr') || process.stdout.isTTY);
 const portArg = args.find((a) => /^\d+$/.test(a));
 const port = Number(process.env.PORT || portArg || (useHttps ? 8443 : 8080));
 
@@ -35,17 +38,6 @@ const MIME = {
   '.webmanifest': 'application/manifest+json',
   '.wav': 'audio/wav',
 };
-
-/** IPv4 addresses of this machine on the local network. */
-function lanAddresses() {
-  const out = [];
-  for (const list of Object.values(os.networkInterfaces())) {
-    for (const net of list || []) {
-      if (net.family === 'IPv4' && !net.internal) out.push(net.address);
-    }
-  }
-  return out;
-}
 
 const scheme = useHttps ? 'https' : 'http';
 const lanUrls = () => lanAddresses().map((ip) => `${scheme}://${ip}:${port}/`);
@@ -116,6 +108,8 @@ server.listen(port, '0.0.0.0', () => {
   if (urls.length) {
     console.log('\nOn a phone or iPad connected to the same Wi-Fi, open:');
     for (const u of urls) console.log(`  ${u}`);
+    // A scannable code for the most likely address (only when a person is looking at the terminal).
+    if (showQr) console.log(`\n${qrToTerminal(urls[0])}\n  Scan with the device's camera to open ${urls[0]}`);
     if (useHttps) console.log('\nThe certificate is self-signed: accept the browser warning once on the device.');
     else console.log('\nTip: "npm run start:https" serves over https (lower-latency audio and offline install on the device).');
   } else {

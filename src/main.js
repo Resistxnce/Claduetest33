@@ -135,15 +135,33 @@ function boot() {
 
   // Help dialog
   const help = document.getElementById('help');
-  document.getElementById('help-btn').addEventListener('click', () => help.showModal());
+  // Open at the top (the dialog would otherwise scroll to its focused "Got it" button), or at a given section.
+  const openHelp = (section) => {
+    if (!help.open) help.showModal();
+    if (section) section.scrollIntoView({ block: 'center' }); else help.scrollTop = 0;
+  };
+  document.getElementById('help-btn').addEventListener('click', () => openHelp());
   help.addEventListener('click', (e) => { if (e.target === help) help.close(); });
 
-  // When served by tools/serve.mjs: show the address to open on a phone or tablet.
-  fetch('__lan.json').then((r) => (r.ok ? r.json() : null)).then((info) => {
-    const hint = document.getElementById('lan-hint');
-    if (!hint || !info || !info.urls || !info.urls.length) return;
+  // When served by tools/serve.mjs on a computer: show the address (and a QR code) to open on a phone or tablet.
+  fetch('__lan.json').then((r) => (r.ok ? r.json() : null)).then(async (info) => {
+    const box = document.getElementById('device-link');
+    if (!box || !info || !Array.isArray(info.urls)) return;
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-    if (local) hint.innerHTML = `On the same Wi-Fi, open <b>${info.urls[0]}</b> on the device.`;
+    // Already on the phone/tablet itself: nothing to show.
+    if (!local && window.matchMedia('(pointer: coarse)').matches) return;
+    const url = local ? info.urls.find((u) => /^https?:\/\/[\w.\-:[\]]+\/$/.test(String(u))) : `${location.origin}/`;
+    if (!url) return;
+    document.getElementById('device-url').textContent = url;
+    document.getElementById('device-note').textContent = info.https
+      ? 'The certificate is self-signed: accept the browser warning once on the device.'
+      : 'Tip: start the server with "npm run start:https" for lower-latency audio and offline install on the device.';
+    const { qrToCanvas } = await import('./ui/qr.js');
+    qrToCanvas(document.getElementById('device-qr'), url, { scale: 4, quiet: 3 });
+    box.hidden = false;
+    const deviceBtn = document.getElementById('device-btn');
+    deviceBtn.hidden = false;
+    deviceBtn.addEventListener('click', () => openHelp(box));
   }).catch(() => {});
 
   // Offline support / installability (only possible on https or localhost).

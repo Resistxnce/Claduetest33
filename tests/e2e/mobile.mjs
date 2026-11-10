@@ -6,6 +6,7 @@
  * actually comes out.
  */
 import { startServer, launchBrowser, assert } from './lib.mjs';
+import { qrMatrix } from '../../src/ui/qr.js';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -153,6 +154,40 @@ try {
   assert(sw, 'service worker should activate on localhost');
   const lan = await (await page.request.get(`${server.url}/__lan.json`)).json();
   assert(Array.isArray(lan.urls), 'the dev server reports its LAN addresses');
+
+  // On the computer the help dialog shows the device address with a QR code that encodes exactly that address
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForFunction((expected) => document.getElementById('device-link').hidden !== expected, lan.urls.length > 0);
+  if (lan.urls.length) {
+    await page.click('#start-overlay');
+    await page.click('#help-btn');
+    assert(await page.evaluate(() => document.getElementById('help').scrollTop) === 0, 'help opens at the top');
+    await page.keyboard.press('Escape');
+    await page.click('#device-btn');
+    const shown = await page.evaluate(() => {
+      const canvas = document.getElementById('device-qr');
+      const g = canvas.getContext('2d');
+      const scale = 4, quiet = 3;
+      const size = canvas.width / scale - quiet * 2;
+      const rows = [];
+      for (let r = 0; r < size; r++) {
+        let row = '';
+        for (let c = 0; c < size; c++) row += g.getImageData((c + quiet) * scale + 1, (r + quiet) * scale + 1, 1, 1).data[0] < 128 ? '1' : '0';
+        rows.push(row);
+      }
+      const corner = g.getImageData(1, 1, 1, 1).data[0];
+      const box = canvas.getBoundingClientRect();
+      const dialog = document.getElementById('help').getBoundingClientRect();
+      return { url: document.getElementById('device-url').textContent, rows, corner, visible: box.width > 100 && box.top >= dialog.top && box.bottom <= dialog.bottom + 1, note: document.getElementById('device-note').textContent };
+    });
+    assert(shown.url === lan.urls[0], `help shows the device address (${shown.url})`);
+    assert(shown.visible && shown.corner === 255, 'the QR code is visible inside the help dialog with a white quiet zone');
+    assert(shown.note.length > 10, 'the help explains http vs https');
+    const expected = qrMatrix(lan.urls[0]).modules.map((row) => row.map((m) => (m ? '1' : '0')).join(''));
+    assert(JSON.stringify(shown.rows) === JSON.stringify(expected), 'the drawn QR code encodes the device address');
+    await page.screenshot({ path: `${outDir}/help-device-qr.png` });
+    console.log(`help dialog QR for ${shown.url}: ok`);
+  }
   console.log('manifest, icons, service worker and LAN endpoint: ok');
 
   console.log('\nMOBILE TESTS PASSED');
