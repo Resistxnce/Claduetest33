@@ -63,6 +63,8 @@ function boot() {
     setTimeout(() => overlay.remove(), 600);
   };
   const start = async () => {
+    const startError = document.getElementById('start-error');
+    if (!engine.ready) startError.textContent = 'Starting…';
     try {
       await engine.init();
       await engine.resume();

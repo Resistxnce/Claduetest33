@@ -226,7 +226,15 @@ export class GuitarCanvas {
   }
 
   resize() {
-    this.orientation = this.resolveOrientation();
+    const orientation = this.resolveOrientation();
+    {
+      // Nothing changed (Safari's toolbar sliding in or out fires resize events all the time):
+      // keep the fingers that are down and the cached fretboard.
+      const now = this.cssSize();
+      const key = [orientation, now.w.toFixed(1), now.h.toFixed(1), Math.min(3, window.devicePixelRatio || 1), this.state.options.view].join('|');
+      if (this.layout && key === this.sizeKey) return;
+    }
+    this.orientation = orientation;
     const vertical = this.orientation === 'vertical';
     let { w, h } = this.cssSize();
     const viewLen = vertical ? h : w;
@@ -258,6 +266,11 @@ export class GuitarCanvas {
     this.staticLayer.height = Math.max(1, Math.ceil((vertical ? L.W : L.H) * this.staticScale));
     this.staticDirty = true;
     if (this.nav) this.nav.resize();
+    {
+      // Remember the size that was actually laid out (showing the minimap may have changed it).
+      const done = this.cssSize();
+      this.sizeKey = [this.orientation, done.w.toFixed(1), done.h.toFixed(1), this.dpr, this.state.options.view].join('|');
+    }
     if (this.onViewChange) this.onViewChange();
     this.requestRender();
   }

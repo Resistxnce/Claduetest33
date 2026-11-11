@@ -234,8 +234,11 @@ export class Player {
   /** Picking intensity of a tap: touch/pen pressure when the device reports it, else the pick-strength option. */
   tapVelocity(e) {
     const base = this.state.options.pickStrength;
-    if (e && e.pointerType !== 'mouse' && e.pressure > 0 && e.pressure !== 0.5 && e.pressure < 1) {
-      return clamp(base * (0.55 + e.pressure * 0.9), 0.2, 1);
+    // Only a pen/finger that really reports force, and only clearly above the near-zero reading
+    // that force-sensing screens give at the instant of touch-down, changes the strength — and
+    // never by much: a tap must not come out quiet because the sensor had not caught up yet.
+    if (e && e.pointerType !== 'mouse' && e.pressure > 0.15 && e.pressure !== 0.5 && e.pressure < 1) {
+      return clamp(base * (0.85 + e.pressure * 0.4), 0.2, 1);
     }
     return base;
   }

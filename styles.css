@@ -334,7 +334,7 @@ dialog:not([open]) { display: none; }
   .root-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .knob { width: 64px; }
   .stage { height: clamp(294px, calc(44vw + 44px), 364px); }
-  .stage.vertical { height: min(74vh, 760px); height: min(74dvh, 760px); }
+  .stage.vertical { height: min(74vh, 760px); height: min(74svh, 760px); }
   .tool-btn span { display: none; }
 }
 @media (max-width: 430px) {
@@ -353,8 +353,8 @@ dialog:not([open]) { display: none; }
 
 /* Touch screens: fingers need more room than a mouse pointer. */
 @media (pointer: coarse) {
-  .stage { height: clamp(320px, 50vh, 500px); height: clamp(320px, 50dvh, 500px); }
-  .stage.vertical { height: min(78vh, 820px); height: min(78dvh, 820px); }
+  .stage { height: clamp(320px, 50vh, 500px); height: clamp(320px, 50svh, 500px); }
+  .stage.vertical { height: min(72vh, 820px); height: min(72svh, 820px); } /* leaves a strip of the panel below to scroll with */
   .select, .select.small { font-size: 16px; } /* iOS zooms the page when a focused control has smaller text */
   .tool-btn { height: 36px; }
   .btn, .preset-btn, .seg-btn, .root-btn, .tab { min-height: 40px; }
