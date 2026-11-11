@@ -19,17 +19,17 @@ exchange fee.
 
 - **One hour, live** (`live_paper_test.py`): 2026-11-11, 17:48 to 18:48 UTC,
   using live bid/ask quotes checked every minute.
-- **One day and one week** (`replay_paper_test.py`): both start at
-  2026-11-11 18:30 UTC. The day test ends 2026-11-12 18:30 UTC and the week
-  test ends 2026-11-18 18:30 UTC. `forward_test_plan.json` records the start
-  time, costs and 90% price ranges, written before the start. When a period
-  ends, `score` downloads Coinbase's 1-minute prices for it and runs the same
-  rules through them minute by minute, so each decision only sees prices up
-  to that minute. The bid/ask spread is estimated rather than recorded.
+- **One day** (`replay_paper_test.py`): 2026-11-11 18:30 UTC to
+  2026-11-12 18:30 UTC. `forward_test_plan.json` records the start time,
+  costs and 90% price ranges, written before the start. When the day ends,
+  `score` downloads Coinbase's 1-minute prices for it and runs the same rules
+  through them minute by minute, so each decision only sees prices up to that
+  minute. The bid/ask spread is estimated rather than recorded. The plan also
+  lists a one-week test; that test was cancelled after it started and will not
+  be scored.
 
-To score a finished test (needs only Python 3):
+To score the day test once it has ended (needs only Python 3):
 
 ```sh
 python3 -I trading_tests/replay_paper_test.py score trading_tests/forward_test_plan.json day /tmp/day_results
-python3 -I trading_tests/replay_paper_test.py score trading_tests/forward_test_plan.json week /tmp/week_results
 ```
