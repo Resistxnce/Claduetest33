@@ -1,0 +1,22 @@
+{
+  "description": "Paper trade: $300 of Nvidia bought on 2026-11-11, sold at 12:00 pm EST on 2026-11-12. SPY (S&P 500 fund) tracked for comparison.",
+  "amount_usd": 300.0,
+  "entry": {
+    "time_utc": "2026-11-11T18:54:54Z",
+    "time_est": "2026-11-11 1:54:54 pm EST",
+    "nvda_price": 177.14,
+    "nvda_shares": 1.693576,
+    "spy_price": 762.24,
+    "spy_shares": 0.393577,
+    "spy_time_utc": "2026-11-11T18:54:47Z",
+    "nvda_previous_close": 200.13,
+    "spy_previous_close": 766.81
+  },
+  "planned_exit": {
+    "time_utc": "2026-11-12T17:00:00Z",
+    "time_est": "2026-11-12 12:00 pm EST",
+    "price_rule": "open of the 1-minute bar starting 12:00 pm EST (17:00 UTC)"
+  },
+  "costs": "No commission (typical at US brokers for stocks). The bid/ask gap on Nvidia is about a cent, so it is ignored.",
+  "price_source": "Yahoo Finance chart API, 1-minute bars"
+}

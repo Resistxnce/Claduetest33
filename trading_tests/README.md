@@ -28,6 +28,12 @@ exchange fee.
   lists a one-week test; that test was cancelled after it started and will not
   be scored.
 
+- **$300 of Nvidia, one day** (`nvda_300_test.json`, `nvda_300_test.py`): a
+  pretend $300 buy at $177.14 on 2026-11-11 at 1:54 pm EST, sold at 12:00 pm
+  EST on 2026-11-12, with the same $300 in SPY (an S&P 500 fund) for
+  comparison. No commission. Score it with
+  `python3 -I trading_tests/nvda_300_test.py trading_tests/nvda_300_test.json`.
+
 To score the day test once it has ended (needs only Python 3):
 
 ```sh
