@@ -1,0 +1,57 @@
+{
+  "registered_at": "2026-11-11T18:25:47Z",
+  "start": "2026-11-11T18:30:00Z",
+  "tests": {
+    "day": {
+      "minutes": 1440
+    },
+    "week": {
+      "minutes": 10080
+    }
+  },
+  "stake_per_coin": 1000.0,
+  "fee_per_trade": 0.004,
+  "half_spread_estimate": 5e-05,
+  "coin_flip_seed": 42,
+  "price_at_registration": {
+    "BTC-USD": 74429.01,
+    "ETH-USD": 2087.79,
+    "SOL-USD": 85.14
+  },
+  "forecast": {
+    "BTC-USD": {
+      "daily_sigma_last_60_days": 0.0197,
+      "day_range_factors": [
+        0.96811,
+        1.03294
+      ],
+      "week_range_factors": [
+        0.91782,
+        1.08954
+      ]
+    },
+    "ETH-USD": {
+      "daily_sigma_last_60_days": 0.02517,
+      "day_range_factors": [
+        0.95944,
+        1.04227
+      ],
+      "week_range_factors": [
+        0.89624,
+        1.11577
+      ]
+    },
+    "SOL-USD": {
+      "daily_sigma_last_60_days": 0.02946,
+      "day_range_factors": [
+        0.9527,
+        1.04965
+      ],
+      "week_range_factors": [
+        0.87967,
+        1.13679
+      ]
+    }
+  },
+  "rules": "Trend follower: hold the coin while its 10-minute average price is above its\n                  30-minute average; otherwise hold cash. Checked every minute.\n  Dip buyer:      buy when the price falls 1.5 standard deviations below its\n                  30-minute average; sell when it climbs back to that average,\n                  if it drops 1% below the purchase price, or at the end.\n  Buy and hold:   buy at the start, sell at the end.\n  Coin flip:      every 5 minutes a seeded coin flip decides whether to hold.\nEach rule starts with $1,000 per coin. Costs: buy at the ask, sell at the bid,\nand pay a fee per trade (0.4% in the plan). Everything is sold at the end."
+}
