@@ -1,0 +1,847 @@
+/**
+ * GuitarAudioEngine — owns the AudioContext, the six-string worklet (the
+ * waveguide model in string-processor.js, including the bridge coupling
+ * between strings) and the amp / effects chain.
+ *
+ *   strings (one AudioWorkletNode, mono) ─► pickup EQ ─► body EQ ─► preGain ─► shaper ─► postGain
+ *   ─► DC filter ─► tone LPF ─► cabinet ─► chorus ─► delay ─► reverb ─► master ─► soft limiter ─► analyser ─► out
+ *
+ * The graph is a straight chain (no feedback cycles outside the delay effect's
+ * own DelayNode loop), so it renders identically in every browser.
+ *
+ * Two backends run the same string model (StringBank):
+ *   - 'worklet': an AudioWorkletNode on the audio thread (lowest latency). Needs
+ *     a secure context — https or localhost.
+ *   - 'script': a ScriptProcessorNode on the main thread. Used automatically
+ *     when AudioWorklet is unavailable, which is the case on a phone or tablet
+ *     that opens the app over plain http from a computer on the local network.
+ * All timing uses AudioContext time; `when` arguments default to "now".
+ * The engine is theory-agnostic: callers pass frequencies and vibrating
+ * length fractions (which the processor needs for pickup/pick positions).
+ */
+import { makeDistortionCurve, makeSoftLimiterCurve, makeReverbImpulse, expMap, clamp, setParamSmooth } from './effects.js';
+import { PRESETS, getPreset } from './presets.js';
+import { StringBank } from './string-processor.js';
+
+export const STRING_COUNT = 6;
+
+/** Per-string character, thick (index 0) to thin (index 5). */
+const STRING_T60 = [8.0, 7.5, 7.0, 5.5, 5.0, 4.5];               // seconds to −60 dB when ringing
+const STRING_BRIGHTNESS = [0.50, 0.47, 0.44, 0.30, 0.26, 0.22];   // loop low-pass coefficient (higher = darker)
+const STRING_DISPERSION = [-0.12, -0.10, -0.08, -0.04, -0.03, -0.02]; // all-pass coefficient (stiffness)
+const STRING_OUT_GAIN = [0.62, 0.62, 0.64, 0.72, 0.78, 0.84];
+/** Fraction of the summed string motion absorbed by the shared bridge each sample (sympathetic resonance). */
+const BRIDGE_COUPLING = 0.0003;
+
+/**
+ * Pickup positions as a fraction of the scale length measured from the bridge.
+ * This is a 24-fret layout: the neck pickup sits a little closer to the bridge
+ * than on a 21/22-fret guitar because the fingerboard reaches further.
+ */
+export const PICKUP_DISTANCES = Object.freeze({ bridge: 0.06, middle: 0.135, neck: 0.21 });
+
+export const PICKUP_SELECTOR = Object.freeze([
+  { position: 1, name: 'Bridge', short: 'B', pickups: ['bridge'], resonance: 4300, q: 2.4 },
+  { position: 2, name: 'Bridge + Middle', short: 'B+M', pickups: ['bridge', 'middle'], resonance: 3900, q: 1.7 },
+  { position: 3, name: 'Middle', short: 'M', pickups: ['middle'], resonance: 3600, q: 2.2 },
+  { position: 4, name: 'Middle + Neck', short: 'M+N', pickups: ['middle', 'neck'], resonance: 3200, q: 1.7 },
+  { position: 5, name: 'Neck', short: 'N', pickups: ['neck'], resonance: 2900, q: 2.0 },
+]);
+
+export const PARAM_DEFS = Object.freeze([
+  { id: 'volume', name: 'Volume', min: 0, max: 1, default: 0.8 },
+  { id: 'tone', name: 'Tone', min: 0, max: 1, default: 0.72 },
+  { id: 'gain', name: 'Gain', min: 0, max: 1, default: 0.12 },
+  { id: 'distortion', name: 'Distortion', min: 0, max: 1, default: 0.04 },
+  { id: 'reverb', name: 'Reverb', min: 0, max: 1, default: 0.28 },
+  { id: 'delay', name: 'Delay', min: 0, max: 1, default: 0 },
+  { id: 'chorus', name: 'Chorus', min: 0, max: 1, default: 0 },
+]);
+
+export const DELAY_TIMES = Object.freeze([
+  { id: 'eighth', name: '1/8 (250 ms)', seconds: 0.25 },
+  { id: 'dotted', name: 'Dotted 1/8 (375 ms)', seconds: 0.375 },
+  { id: 'quarter', name: '1/4 (500 ms)', seconds: 0.5 },
+  { id: 'slap', name: 'Slapback (110 ms)', seconds: 0.11 },
+]);
+
+/** A string moving less than this (peak of its wave at the bridge; a firm pluck is about 0.35) is no longer heard. */
+const AUDIBLE_LEVEL = 0.0025;
+
+/** Block size of the ScriptProcessor fallback (frames). */
+const SCRIPT_BUFFER_SIZE = 512;
+
+/** iPhone / iPad (iPadOS reports itself as a Mac with touch). */
+export function isIOS() {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+let silentAudio = null;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Resolves with the promise, or rejects after `ms` (some iOS versions leave resume() pending for ever). */
+const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), ms))]);
+
+/**
+ * iOS treats Web Audio as "ambient" sound and mutes it with the ring/silent switch. Declare
+ * the page as media playback (Safari 16.4+); where that is missing or refused, a looping
+ * silent <audio> element moves the whole page to the playback category instead.
+ * Must run inside a user gesture, before the context is created.
+ */
+function claimPlayback() {
+  let claimed = false;
+  try {
+    if (typeof navigator !== 'undefined' && navigator.audioSession) {
+      navigator.audioSession.type = 'playback';
+      claimed = navigator.audioSession.type === 'playback'; // WebKit ignores the assignment in some embeddings
+    }
+  } catch { /* not fatal */ }
+  if (!claimed && isIOS()) playSilentAudio();
+}
+
+function playSilentAudio() {
+  try {
+    if (!silentAudio) {
+      silentAudio = document.createElement('audio');
+      silentAudio.setAttribute('playsinline', '');
+      silentAudio.setAttribute('x-webkit-airplay', 'deny');
+      silentAudio.loop = true;
+      silentAudio.src = silentWavUrl();
+    }
+    if (silentAudio.paused) {
+      const p = silentAudio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    }
+  } catch { /* not fatal */ }
+}
+
+/**
+ * Must run synchronously inside a user gesture: starts the context and plays one
+ * silent buffer, which is what older iOS versions need to unlock audio output.
+ */
+function unlockAudio(ctx) {
+  try { if (ctx.state !== 'running') ctx.resume().catch(() => {}); } catch { /* older Safari returns no promise */ }
+  try {
+    const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch { /* not fatal */ }
+}
+
+/** Object URL of half a second of silence as a WAV file (at a normal rate, so it never drags the output rate down). */
+function silentWavUrl() {
+  const rate = 44100, samples = rate / 2;
+  const view = new DataView(new ArrayBuffer(44 + samples * 2));
+  const text = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
+  text(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); text(8, 'WAVE');
+  text(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  text(36, 'data'); view.setUint32(40, samples * 2, true);
+  return URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
+}
+
+function makeWetDry(ctx) {
+  const input = ctx.createGain();
+  const output = ctx.createGain();
+  const dry = ctx.createGain();
+  const wet = ctx.createGain();
+  input.connect(dry).connect(output);
+  wet.connect(output);
+  wet.gain.value = 0;
+  return { input, output, dry, wet };
+}
+
+export class GuitarAudioEngine extends EventTarget {
+  /**
+   * @param {object} [o]
+   * @param {boolean} [o.forceScriptBackend] always use the ScriptProcessor backend (testing / troubleshooting)
+   */
+  constructor({ forceScriptBackend = false } = {}) {
+    super();
+    this.forceScriptBackend = forceScriptBackend;
+    this.ctx = null;
+    this.ready = false;
+    this.initializing = null;
+    this.params = Object.fromEntries(PARAM_DEFS.map((d) => [d.id, d.default]));
+    this.presetId = 'clean';
+    this.body = 'electric';
+    this.pickupPosition = 4;
+    this.delayTimeId = 'dotted';
+    this.palmMute = false;
+    this.stringsNode = null;
+    /** 'worklet' | 'script' once initialised */
+    this.backend = null;
+    this.bank = null; // StringBank instance when running the 'script' backend
+    // Default open-string pitches (standard tuning); the UI overrides these from the active tuning.
+    const defaults = [82.4069, 110, 146.8324, 195.9977, 246.9417, 329.6276];
+    this.stringState = Array.from({ length: STRING_COUNT }, (_, i) => ({ frequency: defaults[i], lengthFraction: 1, ringing: false, lastPluck: 0 }));
+    this.moduleUrl = new URL('./string-processor.js', import.meta.url);
+    this.pending = new Map();
+    /** Latest per-string levels reported by the worklet (the fallback backend reads its bank directly). */
+    this.stringLevels = new Float32Array(STRING_COUNT);
+    this.levelsSeen = false;
+    this.oversampleTimer = 0;
+    /** Plucks waiting for a context that is not running (see send / flushDeferred). */
+    this.deferred = [];
+    /** The context claims to run but its clock stands still (see checkHealth). */
+    this.stalled = false;
+    this.pingId = 0;
+  }
+
+  get now() {
+    return this.ctx ? this.ctx.currentTime : 0;
+  }
+
+  /**
+   * Create the context and graph. Safe to call many times; must be triggered
+   * from a user gesture the first time so the browser allows audio output.
+   * @param {AudioContext} [existingContext] optional (e.g. an OfflineAudioContext for tests)
+   */
+  async init(existingContext = null) {
+    const forceScriptBackend = this.forceScriptBackend;
+    if (this.ready) return this;
+    if (this.initializing) return this.initializing;
+    // Everything up to the first `await` runs inside the user's tap, which is
+    // what iOS needs to let the context start.
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!existingContext && !Ctx) {
+      const err = new Error('Web Audio is switched off in this browser (for example by iPhone Lockdown Mode)');
+      err.permanent = true; // tapping again cannot help
+      return Promise.reject(err);
+    }
+    if (!existingContext) claimPlayback();
+    const ctx = existingContext || new Ctx({ latencyHint: 'interactive' });
+    if (!existingContext) {
+      unlockAudio(ctx);
+      if (typeof ctx.addEventListener === 'function') {
+        ctx.addEventListener('statechange', () => {
+          if (this.ctx !== ctx) return;
+          if (ctx.state === 'running') this.flushDeferred();
+          this.dispatchEvent(new CustomEvent('state', { detail: { state: ctx.state } }));
+        });
+      }
+    }
+    this.initializing = (async () => {
+      try {
+        let backend = 'script';
+        if (!forceScriptBackend && ctx.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
+          try {
+            // A stalled request must not leave the start card hanging: after a few seconds use the fallback.
+            await withTimeout(ctx.audioWorklet.addModule(this.moduleUrl), 4000);
+            backend = 'worklet';
+          } catch (err) {
+            console.warn('AudioWorklet unavailable, using the ScriptProcessor backend', err);
+          }
+        }
+        if (backend === 'script' && typeof ctx.createScriptProcessor !== 'function') {
+          throw new Error('Neither AudioWorklet nor ScriptProcessor is available in this browser');
+        }
+        this.ctx = ctx;
+        this.backend = backend;
+        this.buildGraph();
+      } catch (err) {
+        // Leave the engine in a state where the next user gesture can try again.
+        this.initializing = null;
+        this.ctx = null;
+        this.backend = null;
+        if (!existingContext && typeof ctx.close === 'function') ctx.close().catch(() => {});
+        throw err;
+      }
+      this.ready = true;
+      this.applyAllParams();
+      this.applyBody(this.body); // also applies the pickup selector for the electric body
+      this.dispatchEvent(new CustomEvent('ready'));
+      return this;
+    })();
+    return this.initializing;
+  }
+
+  /** Is sound really coming out? (The context exists and its clock is running.) */
+  get running() {
+    return !!this.ctx && this.ctx.state === 'running' && !this.stalled;
+  }
+
+  /** Resume after the browser suspended or (on iOS) interrupted the context. Call from a user gesture. */
+  async resume() {
+    if (!this.ctx) return;
+    if (silentAudio && silentAudio.paused) playSilentAudio();
+    if (this.ctx.state !== 'running' && typeof this.ctx.resume === 'function') {
+      // Never wait for ever: on some iOS versions this promise stays pending while audio cannot start.
+      try { await withTimeout(this.ctx.resume(), 1500); } catch { /* still not running: the caller shows a hint */ }
+    }
+  }
+
+  /** Stop the audio clock while the page is hidden (saves battery, frees the lock-screen player). */
+  suspend() {
+    if (this.ctx && this.ctx.state === 'running' && typeof this.ctx.suspend === 'function' && typeof this.ctx.startRendering !== 'function') {
+      try { this.ctx.suspend().catch(() => {}); } catch { /* ignore */ }
+    }
+  }
+
+  /**
+   * After coming back from the background iOS can report a 'running' context whose clock
+   * stands still: nothing sounds until it is suspended and resumed. Detect that and kick it;
+   * if it stays frozen, mark the engine `stalled` so the next tap can rebuild it (`restart`).
+   */
+  async checkHealth() {
+    const ctx = this.ctx;
+    if (!ctx || !this.ready || this.checking || ctx.state !== 'running' || typeof ctx.startRendering === 'function') return;
+    this.checking = true;
+    try {
+      const t0 = ctx.currentTime;
+      await sleep(280);
+      if (this.ctx !== ctx || ctx.state !== 'running' || ctx.currentTime > t0) return;
+      try { await withTimeout(ctx.suspend(), 800); await withTimeout(ctx.resume(), 800); } catch { /* fall through to the re-check */ }
+      await sleep(280);
+      if (this.ctx === ctx && ctx.currentTime <= t0) {
+        this.stalled = true;
+        this.dispatchEvent(new CustomEvent('state', { detail: { state: 'stalled' } }));
+      }
+    } finally {
+      this.checking = false;
+    }
+  }
+
+  /** Throw the audio graph away and build a new one, keeping every setting. Call from a user gesture. */
+  async restart() {
+    const old = this.ctx;
+    this.ready = false;
+    this.initializing = null;
+    this.ctx = null;
+    this.stringsNode = null;
+    this.bank = null;
+    this.stalled = false;
+    this.levelsSeen = false;
+    this.deferred.length = 0;
+    try { if (old && typeof old.close === 'function') old.close().catch(() => {}); } catch { /* ignore */ }
+    return this.init();
+  }
+
+  /**
+   * Plucks asked for while the context was not running (an interruption, the first moments after
+   * a tap): the recent ones sound now, older ones are dropped instead of ringing out together.
+   */
+  flushDeferred() {
+    const now = performance.now();
+    const recent = this.deferred.filter((d) => now - d.at < 350);
+    this.deferred.length = 0;
+    for (const d of recent) this.send({ ...d.msg, time: undefined });
+  }
+
+  /**
+   * The string model on the main thread, in blocks of `size` frames. If the page keeps the
+   * main thread busy for longer than a block (a slow tablet, a heavy frame) the browser has
+   * nothing to play and the sound stutters: when callbacks keep arriving late, the node is
+   * replaced by one with blocks twice as long (more latency, no stutter). The model itself
+   * does not care about the block size.
+   */
+  makeScriptNode(size) {
+    const ctx = this.ctx;
+    const node = ctx.createScriptProcessor(size, 1, 1);
+    const blockMs = (size / ctx.sampleRate) * 1000;
+    let last = 0, late = 0, windowStart = 0;
+    node.onaudioprocess = (e) => {
+      const out = e.outputBuffer.getChannelData(0);
+      // Scheduled plucks are timed against ctx.currentTime, so the block must be stamped on the
+      // same clock: use the event's playbackTime only when it is on that clock (some WebKit
+      // versions report 0 or nothing), otherwise the context time itself.
+      const now = ctx.currentTime;
+      const t = e.playbackTime;
+      this.bank.process(out, Number.isFinite(t) && Math.abs(t - now) < 0.25 ? t : now);
+      const wall = performance.now();
+      if (last && wall - last > blockMs * 1.8 && size < 2048 && this.stringsNode === node) {
+        if (wall - windowStart > 4000) { windowStart = wall; late = 0; }
+        if (++late >= 4) setTimeout(() => this.growScriptBuffer(node, size * 2), 0);
+      }
+      last = wall;
+    };
+    this.scriptBufferSize = size;
+    return node;
+  }
+
+  growScriptBuffer(oldNode, size) {
+    if (this.stringsNode !== oldNode || !this.ctx) return;
+    const node = this.makeScriptNode(size);
+    node.connect(this.stringMix);
+    oldNode.onaudioprocess = null;
+    try { oldNode.disconnect(); } catch { /* ignore */ }
+    this.stringsNode = node;
+    console.info(`Audio blocks lengthened to ${size} frames to keep the sound steady`);
+  }
+
+  buildGraph() {
+    const ctx = this.ctx;
+    const selector = PICKUP_SELECTOR.find((p) => p.position === this.pickupPosition);
+    // All six strings and their bridge coupling live in one StringBank.
+    const stringOptions = {
+      strings: STRING_T60.map((t60, i) => ({ t60, brightness: STRING_BRIGHTNESS[i], dispersion: STRING_DISPERSION[i], outGain: STRING_OUT_GAIN[i] })),
+      pickupDistances: selector.pickups.map((p) => PICKUP_DISTANCES[p]),
+      pickupWeights: selector.pickups.map(() => (selector.pickups.length > 1 ? 0.72 : 1)),
+      coupling: BRIDGE_COUPLING,
+    };
+    if (this.backend === 'worklet') {
+      this.stringsNode = new AudioWorkletNode(ctx, 'guitar-strings-processor', {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+        processorOptions: stringOptions,
+      });
+      this.stringsNode.onprocessorerror = (e) => console.error('String processor error', e);
+      this.stringsNode.port.onmessage = (e) => this.onStringMessage(e.data);
+    } else {
+      // Same model on the main thread. 512 frames ≈ 11 ms at 48 kHz: small enough
+      // to feel immediate, large enough to survive a busy frame.
+      this.bank = new StringBank(ctx.sampleRate, stringOptions);
+      this.stringsNode = this.makeScriptNode(SCRIPT_BUFFER_SIZE);
+    }
+    for (let i = 0; i < STRING_COUNT; i++) {
+      this.post(i, { type: 'pitch', frequency: this.stringState[i].frequency, glide: 0, lengthFraction: this.stringState[i].lengthFraction });
+    }
+    this.stringMix = ctx.createGain();
+    this.stringMix.gain.value = 1;
+    this.stringsNode.connect(this.stringMix);
+
+    // Pickup: resonant low-pass (magnetic pickup + cable) and rumble filter.
+    this.pickupFilter = ctx.createBiquadFilter();
+    this.pickupFilter.type = 'lowpass';
+    this.pickupFilter.frequency.value = 3200;
+    this.pickupFilter.Q.value = 1.7;
+    this.pickupHighpass = ctx.createBiquadFilter();
+    this.pickupHighpass.type = 'highpass';
+    this.pickupHighpass.frequency.value = 55;
+    this.pickupHighpass.Q.value = 0.7;
+
+    // Body EQ (used by the acoustic voicing, flat for electric).
+    this.bodyFilters = [
+      Object.assign(ctx.createBiquadFilter(), { type: 'peaking' }),
+      Object.assign(ctx.createBiquadFilter(), { type: 'peaking' }),
+      Object.assign(ctx.createBiquadFilter(), { type: 'peaking' }),
+      Object.assign(ctx.createBiquadFilter(), { type: 'peaking' }),
+    ];
+    const bodyFreqs = [98, 205, 430, 2800];
+    const bodyQs = [4.5, 3.5, 2, 1.1];
+    this.bodyFilters.forEach((f, i) => { f.frequency.value = bodyFreqs[i]; f.Q.value = bodyQs[i]; f.gain.value = 0; });
+
+    // Amp: pre-gain → wave shaper → post-gain
+    this.preGain = ctx.createGain();
+    this.shaper = ctx.createWaveShaper();
+    this.shaper.oversample = 'none'; // switched to 4x only when the amp is driven hard (see applyDrive)
+    this.shaper.curve = makeDistortionCurve(0);
+    this.postGain = ctx.createGain();
+    // Closed for a few milliseconds while the shaper's oversampling is switched (see applyDrive).
+    this.driveGate = ctx.createGain();
+    // Asymmetric clipping leaves a DC component behind; remove it.
+    this.postHighpass = ctx.createBiquadFilter();
+    this.postHighpass.type = 'highpass';
+    this.postHighpass.frequency.value = 28;
+    this.postHighpass.Q.value = 0.7;
+
+    // Tone and cabinet
+    this.toneFilter = ctx.createBiquadFilter();
+    this.toneFilter.type = 'lowpass';
+    this.toneFilter.Q.value = 0.8;
+    this.cabLow = ctx.createBiquadFilter();
+    this.cabLow.type = 'lowpass';
+    this.cabLow.frequency.value = 6500;
+    this.cabLow.Q.value = 0.9;
+    this.cabPresence = ctx.createBiquadFilter();
+    this.cabPresence.type = 'peaking';
+    this.cabPresence.frequency.value = 2400;
+    this.cabPresence.Q.value = 1.2;
+    this.cabPresence.gain.value = 2;
+
+    // Effects
+    this.chorus = this.buildChorus();
+    this.delay = this.buildDelay();
+    this.reverb = this.buildReverb();
+
+    // Master: volume → zero-latency soft safety limiter (linear in normal use)
+    this.master = ctx.createGain();
+    this.safetyIn = ctx.createGain();
+    this.safetyIn.gain.value = 0.5;
+    this.safety = ctx.createWaveShaper();
+    this.safety.curve = makeSoftLimiterCurve();
+    this.safety.oversample = 'none';
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 1024;
+    this.analyser.smoothingTimeConstant = 0.6;
+    this.levelBuffer = new Float32Array(this.analyser.fftSize);
+
+    // Wire the chain
+    let node = this.stringMix;
+    node = node.connect(this.pickupFilter);
+    node = node.connect(this.pickupHighpass);
+    for (const f of this.bodyFilters) node = node.connect(f);
+    node = node.connect(this.preGain);
+    node = node.connect(this.shaper);
+    node = node.connect(this.driveGate);
+    node = node.connect(this.postGain);
+    node = node.connect(this.postHighpass);
+    node = node.connect(this.toneFilter);
+    node = node.connect(this.cabLow);
+    node = node.connect(this.cabPresence);
+    node.connect(this.chorus.input);
+    this.chorus.output.connect(this.delay.input);
+    this.delay.output.connect(this.reverb.input);
+    this.reverb.output.connect(this.master);
+    this.master.connect(this.safetyIn).connect(this.safety).connect(this.analyser).connect(ctx.destination);
+  }
+
+  buildChorus() {
+    const ctx = this.ctx;
+    const fx = makeWetDry(ctx);
+    const merger = ctx.createChannelMerger(2);
+    const voices = [
+      { base: 0.012, depth: 0.0022, rate: 0.6 },
+      { base: 0.019, depth: 0.0028, rate: 0.85 },
+    ];
+    fx.lfos = [];
+    voices.forEach((v, i) => {
+      const delay = ctx.createDelay(0.1);
+      delay.delayTime.value = v.base;
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = v.rate;
+      const depth = ctx.createGain();
+      depth.gain.value = v.depth;
+      lfo.connect(depth).connect(delay.delayTime);
+      lfo.start();
+      fx.input.connect(delay);
+      delay.connect(merger, 0, i);
+      fx.lfos.push(lfo);
+    });
+    merger.connect(fx.wet);
+    return fx;
+  }
+
+  buildDelay() {
+    const ctx = this.ctx;
+    const fx = makeWetDry(ctx);
+    const delay = ctx.createDelay(2);
+    delay.delayTime.value = 0.375;
+    const feedback = ctx.createGain();
+    feedback.gain.value = 0.38;
+    const damp = ctx.createBiquadFilter();
+    damp.type = 'lowpass';
+    damp.frequency.value = 3200;
+    fx.input.connect(delay);
+    delay.connect(damp).connect(feedback).connect(delay);
+    delay.connect(fx.wet);
+    fx.delayNode = delay;
+    fx.feedback = feedback;
+    return fx;
+  }
+
+  buildReverb() {
+    const ctx = this.ctx;
+    const fx = makeWetDry(ctx);
+    const convolver = ctx.createConvolver();
+    convolver.buffer = makeReverbImpulse(ctx, { duration: 2.6, decay: 2.6, seed: 7 });
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.frequency.value = 5500;
+    fx.input.connect(convolver).connect(tone).connect(fx.wet);
+    fx.convolver = convolver;
+    return fx;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Parameters                                                         */
+  /* ------------------------------------------------------------------ */
+
+  getParams() {
+    return { ...this.params };
+  }
+
+  setParam(id, value) {
+    if (!(id in this.params)) throw new Error(`Unknown parameter ${id}`);
+    const v = Number(value);
+    if (!Number.isFinite(v)) return; // ignore garbage instead of poisoning the audio graph
+    this.params[id] = clamp(v, 0, 1);
+    if (this.ready) this.applyParam(id);
+    this.dispatchEvent(new CustomEvent('param', { detail: { id, value: this.params[id] } }));
+  }
+
+  applyAllParams() {
+    for (const id of Object.keys(this.params)) this.applyParam(id);
+    this.applyDelayTime();
+  }
+
+  applyParam(id) {
+    const ctx = this.ctx;
+    const v = this.params[id];
+    switch (id) {
+      case 'volume':
+        // Leaves headroom so ordinary playing stays inside the limiter's linear range.
+        setParamSmooth(this.master.gain, Math.pow(v, 1.6) * 0.62, ctx);
+        break;
+      case 'tone':
+        setParamSmooth(this.toneFilter.frequency, expMap(420, 12000, v), ctx, 0.03);
+        break;
+      case 'gain': {
+        // Pre-gain drives the saturation stage; post-gain roughly matches loudness
+        // (a saturated signal has a much higher RMS than a clean one).
+        const drive = 1 + v * v * 60;
+        setParamSmooth(this.preGain.gain, drive, ctx);
+        setParamSmooth(this.postGain.gain, Math.pow(drive, -0.2), ctx);
+        this.applyDrive();
+        break;
+      }
+      case 'distortion':
+        this.shaper.curve = makeDistortionCurve(v);
+        this.applyDrive();
+        break;
+      case 'reverb':
+        setParamSmooth(this.reverb.wet.gain, v * 0.9, ctx, 0.05);
+        setParamSmooth(this.reverb.dry.gain, 1 - v * 0.35, ctx, 0.05);
+        break;
+      case 'delay':
+        setParamSmooth(this.delay.wet.gain, v * 0.7, ctx, 0.05);
+        break;
+      case 'chorus':
+        setParamSmooth(this.chorus.wet.gain, v * 0.8, ctx, 0.05);
+        setParamSmooth(this.chorus.dry.gain, 1 - v * 0.3, ctx, 0.05);
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Oversample the amp stage only when it is driven hard enough to alias.
+   * Clean settings stay at zero added latency; overdriven ones trade ~4 ms
+   * for clean high notes.
+   */
+  applyDrive() {
+    const heavy = this.params.distortion > 0.12 || this.params.gain > 0.18;
+    const mode = heavy ? '4x' : 'none';
+    this.oversampleWanted = mode;
+    if (this.shaper.oversample === mode || this.oversampleTimer) return;
+    const ctx = this.ctx;
+    // Switching the oversampling of a node that is passing audio drops about 4 ms of signal: a
+    // tick on a ringing note. Offline renders and a silent amp switch at once; otherwise the
+    // stage dips smoothly for a few milliseconds around the switch.
+    if (typeof ctx.startRendering === 'function' || ctx.state !== 'running' || this.getLevel() < 1e-4) { this.shaper.oversample = mode; return; }
+    const gate = this.driveGate.gain;
+    const t = ctx.currentTime;
+    gate.cancelScheduledValues(t);
+    gate.setValueAtTime(gate.value, t);
+    gate.linearRampToValueAtTime(0, t + 0.006);
+    this.oversampleTimer = setTimeout(() => {
+      this.oversampleTimer = 0;
+      this.shaper.oversample = this.oversampleWanted;
+      const t2 = ctx.currentTime;
+      gate.cancelScheduledValues(t2);
+      gate.setValueAtTime(0, t2 + 0.008);
+      gate.linearRampToValueAtTime(1, t2 + 0.022);
+    }, 14);
+  }
+
+  setDelayTime(id) {
+    const t = DELAY_TIMES.find((d) => d.id === id);
+    if (!t) throw new Error(`Unknown delay time ${id}`);
+    this.delayTimeId = id;
+    if (this.ready) this.applyDelayTime();
+  }
+
+  applyDelayTime() {
+    const t = DELAY_TIMES.find((d) => d.id === this.delayTimeId);
+    setParamSmooth(this.delay.delayNode.delayTime, t.seconds, this.ctx, 0.08);
+  }
+
+  /** Pickup selector position 1 (bridge) .. 5 (neck). */
+  setPickupSelector(position, silent = false) {
+    const sel = PICKUP_SELECTOR.find((p) => p.position === Number(position));
+    if (!sel) throw new Error(`Unknown pickup position ${position}`);
+    this.pickupPosition = sel.position;
+    if (this.ready) {
+      const distances = sel.pickups.map((p) => PICKUP_DISTANCES[p]);
+      const weights = distances.map(() => (distances.length > 1 ? 0.72 : 1));
+      if (this.body === 'electric') {
+        this.postAll({ type: 'config', pickupDistances: distances, pickupWeights: weights });
+        setParamSmooth(this.pickupFilter.frequency, sel.resonance, this.ctx, 0.03);
+        setParamSmooth(this.pickupFilter.Q, sel.q, this.ctx, 0.03);
+      }
+    }
+    if (!silent) this.dispatchEvent(new CustomEvent('pickup', { detail: { position: this.pickupPosition } }));
+  }
+
+  /** 'electric' (magnetic pickups) or 'acoustic' (bright strings + resonant body). */
+  applyBody(body) {
+    this.body = body;
+    if (!this.ready) return;
+    const ctx = this.ctx;
+    if (body === 'acoustic') {
+      const gains = [5.5, 3.5, -2, 3];
+      this.bodyFilters.forEach((f, i) => setParamSmooth(f.gain, gains[i], ctx, 0.05));
+      setParamSmooth(this.pickupFilter.frequency, 16000, ctx, 0.03);
+      setParamSmooth(this.pickupFilter.Q, 0.5, ctx, 0.03);
+      setParamSmooth(this.cabLow.frequency, 11000, ctx, 0.03);
+      this.postAll({ type: 'config', pickupDistances: [0.19], pickupWeights: [1.15], brightnessScale: 0.72, clickLevel: 0.14 });
+    } else {
+      this.bodyFilters.forEach((f) => setParamSmooth(f.gain, 0, ctx, 0.05));
+      setParamSmooth(this.cabLow.frequency, 6500, ctx, 0.03);
+      this.postAll({ type: 'config', brightnessScale: 1, clickLevel: 0.08 });
+      this.setPickupSelector(this.pickupPosition, true);
+    }
+    this.dispatchEvent(new CustomEvent('body', { detail: { body } }));
+  }
+
+  setPreset(id) {
+    const preset = getPreset(id);
+    this.presetId = preset.id;
+    for (const [k, v] of Object.entries(preset.params)) this.params[k] = v;
+    this.body = preset.body;
+    this.pickupPosition = preset.pickup;
+    if (this.ready) {
+      this.applyAllParams();
+      this.applyBody(preset.body); // applies the pickup selector too
+    }
+    this.dispatchEvent(new CustomEvent('preset', { detail: { preset, params: this.getParams() } }));
+  }
+
+  setPalmMute(on) {
+    this.palmMute = !!on;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Playing                                                            */
+  /* ------------------------------------------------------------------ */
+
+  post(stringIdx, msg) {
+    this.send({ ...msg, string: stringIdx });
+  }
+
+  /** Send a message addressed to every string (config / panic). */
+  postAll(msg) {
+    this.send(msg);
+  }
+
+  /** Deliver a message to the string model on whichever backend is running. */
+  send(msg) {
+    const ctx = this.ctx;
+    if ((msg.type === 'pluck' || msg.type === 'noise') && ctx.state !== 'running' && typeof ctx.startRendering !== 'function') {
+      // The clock is not running (yet): keep the note for the moment it starts.
+      this.deferred.push({ msg, at: performance.now() });
+      if (this.deferred.length > 24) this.deferred.shift();
+      return;
+    }
+    if (this.backend === 'worklet') this.stringsNode.port.postMessage(msg);
+    else if (this.bank) this.bank.enqueue(msg, ctx.currentTime);
+  }
+
+  /**
+   * Set the pitch of a string. `glide` seconds > 0 slides from the current pitch.
+   * `lengthFraction` is the vibrating length relative to the open string (2^(-fret/12)).
+   */
+  setStringPitch(stringIdx, frequency, { glide = 0, lengthFraction = 1, when } = {}) {
+    const st = this.stringState[stringIdx];
+    st.frequency = frequency;
+    st.lengthFraction = lengthFraction;
+    if (!this.ready) return;
+    this.post(stringIdx, { type: 'pitch', frequency, glide, lengthFraction, time: when });
+  }
+
+  /**
+   * Pluck a string.
+   * @param {number} stringIdx
+   * @param {object} o
+   * @param {number} [o.velocity=0.8] 0..1
+   * @param {number} [o.pickPosition=0.13] fraction of scale length from the bridge where the pick hits
+   * @param {number} [o.damping] 0 (ring) .. 1 (fully muted "chuck"); defaults to palm-mute state
+   * @param {number} [o.frequency] optionally (re)set the pitch in the same message
+   * @param {number} [o.lengthFraction]
+   * @param {number} [o.when] AudioContext time
+   */
+  pluck(stringIdx, { velocity = 0.8, pickPosition = 0.13, damping, frequency, lengthFraction, when } = {}) {
+    const st = this.stringState[stringIdx];
+    if (frequency) { st.frequency = frequency; st.lengthFraction = lengthFraction ?? st.lengthFraction; }
+    st.ringing = damping === undefined || damping < 0.9;
+    st.lastPluck = this.now;
+    if (!this.ready) return;
+    const damp = damping ?? (this.palmMute ? 0.62 : 0);
+    this.post(stringIdx, {
+      type: 'pluck',
+      velocity: clamp(Number.isFinite(velocity) ? velocity : 0.8, 0.02, 1),
+      pickPosition: clamp(Number.isFinite(pickPosition) ? pickPosition : 0.14, 0.03, 0.45),
+      damping: damp,
+      frequency: st.frequency,
+      lengthFraction: st.lengthFraction,
+      time: when,
+    });
+    this.dispatchEvent(new CustomEvent('pluck', { detail: { string: stringIdx, velocity, frequency: st.frequency, when: when ?? this.now } }));
+  }
+
+  /**
+   * Is a played note still clearly audible on this string? Thick strings ring
+   * much longer than thin ones, so the window follows each string's decay time.
+   */
+  isAudible(stringIdx) {
+    const st = this.stringState[stringIdx];
+    if (!st.ringing) return false;
+    const since = this.now - st.lastPluck;
+    if (since > STRING_T60[stringIdx] * 0.85) return false;
+    // The string model reports how strongly each string is still moving, so a palm-muted
+    // or very high note stops counting as soon as it has really died away. The report lags
+    // the pluck a little, and is not available at all until the model has spoken once.
+    if (since < 0.3) return true;
+    const levels = this.backend === 'script' && this.bank ? this.bank.levels : (this.levelsSeen ? this.stringLevels : null);
+    return levels ? levels[stringIdx] > AUDIBLE_LEVEL : true;
+  }
+
+  /**
+   * Fret-hand release / mute: the string rings down quickly. `cancel` also drops
+   * plucks still scheduled for the string (the tail of a strum), for "mute everything".
+   */
+  release(stringIdx, { amount = 1, when, cancel = false } = {}) {
+    const st = this.stringState[stringIdx];
+    st.ringing = false;
+    if (!this.ready) return;
+    this.post(stringIdx, { type: 'damp', amount, time: when, cancel });
+  }
+
+  /** Finger-on-string noise for slides. */
+  slideNoise(stringIdx, level = 0.03, { when } = {}) {
+    if (!this.ready) return;
+    this.post(stringIdx, { type: 'noise', level, duration: 0.035, time: when });
+  }
+
+  onStringMessage(msg) {
+    if (msg && msg.type === 'levels' && msg.levels) {
+      for (let i = 0; i < STRING_COUNT; i++) this.stringLevels[i] = Number(msg.levels[i]) || 0;
+      this.levelsSeen = true;
+      return;
+    }
+    if (msg && msg.type === 'pong') {
+      const resolve = this.pending.get(msg.id);
+      if (resolve) { this.pending.delete(msg.id); resolve(); }
+    }
+  }
+
+  /**
+   * Resolves once the string processor has received every message posted so
+   * far (useful before offline rendering, or to detect a dead worklet).
+   */
+  sync() {
+    if (!this.ready || this.backend !== 'worklet') return Promise.resolve();
+    return new Promise((resolve) => {
+      const id = ++this.pingId;
+      this.pending.set(id, resolve);
+      this.stringsNode.port.postMessage({ type: 'ping', id });
+    });
+  }
+
+  /** Output level 0..1 (RMS) for meters. */
+  getLevel() {
+    if (!this.ready) return 0;
+    this.analyser.getFloatTimeDomainData(this.levelBuffer);
+    let sum = 0;
+    for (let i = 0; i < this.levelBuffer.length; i++) sum += this.levelBuffer[i] * this.levelBuffer[i];
+    return Math.sqrt(sum / this.levelBuffer.length);
+  }
+}
+
+export { PRESETS };

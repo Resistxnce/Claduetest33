@@ -1,33 +1,220 @@
-# Earn ESP models
+# Electric Guitar Simulator
 
-New models for **Earn ESP (Incremental)**, saved here so they can be added to
-the game later:
+A playable, musically accurate six-string electric guitar that runs entirely in
+the browser. Tap any string at any of the 24 frets and it sounds that note —
+with real string physics instead of beeps. Slide, hammer on, sweep across the
+strings to strum, switch pickups, dial in the amp, change tunings, and learn
+chords and scales.
 
-- **Weapons:** 10 new guns based on the gun pictures in the vault's
-  Inspiration note. They're written in the same part-list format as the
-  game's 8 guns (`GunModels.luau`), so every gun skin works on them.
-- **Characters:** new bot types, three cheater bosses with their own trash
-  talk, and friendly lobby NPCs. Their outfits are built like the bots' caps,
-  visors and capes in `Bots.luau`.
-- **Environment:** new map props written like `Kit.luau`, plus four maps that
-  use them.
+No build step and no dependencies: plain ES modules, Web Audio API and Canvas 2D.
 
-Everything is Luau that builds the models from Parts. The files sit at the
-same paths as in the game's Rojo project. [INSTALL.md](INSTALL.md) lists what
-to copy and the few hook lines to add.
+![The simulator on a desktop: 24-fret fretboard with an A minor chord held](docs/screenshot-desktop.png)
 
-## Previews
-
-`previews/` has a picture of every model. The pictures are made by the
-preview tool in `tools/preview`, which runs the builder scripts outside
-Studio:
+<img src="docs/screenshot-phone.png" alt="Phone layout: zoomed vertical neck with a minimap" width="280">
 
 ```sh
-cd tools/preview && npm install && cd ../..
-export EARNESP_SRC=/path/to/EarnEsp/src   # the game's src folder, with the INSTALL.md hooks added
-lune run tools/preview/check.luau          # checks guns, bots, maps and props against the game's code
-tools/preview/preview.sh tools/preview/scenes/guns.luau out/guns   # renders PNGs to out/guns/png
+npm start            # serves the app at http://localhost:8080/ and prints the address for phones/tablets
+npm run start:https  # same over https (self-signed certificate) on port 8443
+npm test             # music-theory, chord-library, app-state and string-synthesis unit tests (node:test)
+npm run test:e2e     # Playwright: desktop + iPad/phone interactions and offline audio pitch verification
 ```
 
-The tool needs [Lune](https://github.com/lune-org/lune), StyLua, Node and
-Playwright's Chromium.
+Open `index.html` through any static server (modules need http://, not file://).
+
+## Play it on your iPhone or iPad — no computer needed
+
+The app is a folder of static files, so any web host can serve it. With the
+repository on GitHub the quickest way is GitHub Pages:
+
+1. On github.com open the repository → **Settings → Pages**.
+2. Under *Build and deployment* choose **Deploy from a branch**, pick the
+   branch that has this code and the folder **/ (root)**, and press **Save**.
+3. After a minute the page shows the address
+   (`https://<your-user>.github.io/<repository>/`). Open it in Safari on the
+   device and tap once to power the amp on.
+4. *Share → Add to Home Screen* installs it like an app: full screen, its own
+   icon, and (because the address is https) it keeps working offline.
+
+A hosted https address also gives the device the low-latency audio path.
+Needs iOS / iPadOS 15.4 or newer (16 or newer recommended).
+
+If the page ever cannot start on a device, the "Power on" card says why
+(blocked script, old browser, audio switched off) instead of ignoring taps;
+if the sound is interrupted by a call or another app, a "tap to turn it back
+on" hint appears and one tap restores it.
+
+## Play it from your own computer over Wi-Fi
+
+1. On your computer run `npm start`. It prints the address for other devices
+   (a line like `http://192.168.1.23:8080/`) together with a QR code.
+2. Point the device's camera at the QR code — or type the address into Safari
+   (iPad/iPhone) or Chrome (Android) — tap once to power the amp on, and play.
+   The same code is in the app on your computer: **Play on phone / iPad** in
+   the top bar. Turn a phone sideways for the
+   biggest neck; tap **Full screen** on a tablet. The neck is zoomed on small
+   screens — drag the minimap to move along all 24 frets.
+3. Optional: use the browser's *Share → Add to Home Screen* to get an app icon
+   that opens without browser bars.
+
+Good to know:
+
+- **The server must run on your own computer**, on the same Wi-Fi as the
+  device. A cloud or container machine has no address a phone can reach (the
+  server says so and prints no link or QR code there) — use a web host as
+  described above instead.
+- **Audio over plain http.** Browsers only allow the low-latency AudioWorklet
+  on https or localhost, so a device that opens the `http://192.168…` address
+  runs the very same string model on a fallback audio path (a few milliseconds
+  more latency). Nothing to configure.
+- **Lowest latency / offline install.** `npm run start:https` serves over
+  https with a certificate generated on your machine. Open the printed
+  `https://…:8443/` address on the device and accept the certificate warning
+  once: the device then uses the AudioWorklet path, and an app added to the
+  Home Screen keeps working with the server switched off.
+- **iPhone silent switch.** The app asks iOS to treat it as media playback, so
+  it sounds even when the ring/silent switch is on silent. If you hear nothing,
+  check the volume buttons.
+- Your computer's firewall must allow incoming connections to the port
+  (8080, or 8443 for https), and both devices must be on the same network.
+- If the computer has several network adapters (VPN, Docker, virtual
+  machines) every address is listed; the QR code is for the most likely Wi-Fi
+  or Ethernet one. `npm start -- --no-qr` hides the code, and
+  `npm start -- --address 192.168.1.50` names the address yourself.
+- `?audio=script` in the address forces the fallback audio path on any device
+  (useful for comparing).
+
+## What it does
+
+**The fretboard**
+- A top-down 24-fret rosewood neck in the classic fretboard-trainer style:
+  nickel frets at mathematically correct positions (`1 − 2^(−n/12)` of the
+  scale length), numbered inlays at 3/5/7/9/15/17/19/21 and double dots at 12
+  and 24, a marble nut, and six strings of realistic relative thickness with the
+  thick low E at the bottom (tablature orientation).
+- Every string is tappable at every fret; the zone before the nut plays the
+  open strings. Played notes show as glossy dots with their note name.
+- **Barre chords.** Press a string and drag across the others inside the same
+  fret: the finger lies down across them like a real barre (a blue bar) and
+  stays while you hold it. Add the other fingers in front of it, strum, and
+  slide the bar along the neck to move the whole chord.
+- **Strum strip.** The amber strip at the bridge end of the neck is always on
+  screen: tap a string there to pick it, sweep it to strum. It never frets
+  anything, so it plays whatever the other hand is holding.
+- **Hold.** With *Hold* on (toolbar), every finger stays down after you lift
+  it (amber ring), so a chord shape — barre included — can be built one touch
+  at a time on a phone; tap a held finger to let it go, *Mute* silences the
+  strings without losing the shape.
+- With a mouse all 24 frets fit the screen. On touch screens (phones and
+  tablets) the neck is zoomed so that even the 24th fret is a finger-sized
+  target, with a minimap to move along it; on a portrait phone it rotates to
+  the chord-diagram orientation (nut at the top, low E on the left). "Neck
+  view" switches between the whole neck and the zoomed one on any device.
+- **Full-screen play mode** (toolbar button; automatic on a phone held
+  sideways): the neck fills the screen with quick strum / mute / preset
+  controls, and on tablets shows the notes and chord being played.
+
+**Playing**
+- Mouse, touch and **multi-touch**: play and hold several strings at once.
+- Tap a string to play it, drag along a string to slide, add or lift fingers
+  for hammer-ons and pull-offs. Notes ring out when you lift (or mute, if you
+  switch on fret-hand muting).
+- Optional bend mode: pull a held note sideways to bend its pitch (two
+  semitones per string spacing) and wiggle for vibrato; the string is drawn
+  pulled along with your finger.
+- Sweep across the strings to strum — on the fretboard or over the open
+  strings. Sweep speed sets the picking intensity; "Pick strength" and
+  "Pick position" (bridge = bright, neck = warm) shape every pluck, and touch
+  pressure is used where the device reports it.
+- Keyboard: `1`–`6` pick strings (1 = high E), `Space` strum down,
+  `Shift+Space` strum up, `←`/`→` move along the neck, hold `M` for palm mute,
+  `Esc` mutes everything.
+- Every fret from the keyboard: `Tab` to the fretboard, move the cursor with
+  the arrow keys (`Home`/`End`: open string / 24th fret), `Enter` plays the
+  note; keep `Enter` held while moving to slide along the string.
+- Capo (frets 1–7).
+
+**Sound** (`src/audio/`)
+- Each string is a digital-waveguide / extended Karplus-Strong voice. All six
+  run in an `AudioWorklet` (or, where that is unavailable, the same code in a
+  `ScriptProcessorNode`): deterministic pluck excitation with velocity-dependent
+  brightness, pick-position comb filter, frequency-dependent loop damping,
+  dispersion (string stiffness), tension-modulation pitch bend on hard plucks,
+  pitch glides for slides, fret-noise bursts, pick click, release/mute damping.
+- The loop length is compensated analytically for the loop filters' phase
+  delay, so every note is synthesized at its exact equal-temperament frequency
+  (verified to < 1 cent on every string at every fret 0–24 by the e2e suite).
+- Pickup position is modelled physically (two-tap read-out at the pickup
+  position along the vibrating length, so fretting changes the comb like on a
+  real guitar), plus a resonant pickup EQ per selector position.
+- Amp chain: gain → asymmetric wave-shaper (4× oversampled when driven hard) →
+  tone → cabinet, then stereo chorus, feedback delay (selectable times),
+  convolution reverb, master volume and a zero-latency soft limiter.
+- Sympathetic resonance: all six strings run in one worklet and share a
+  passive bridge, so strings ring in sympathy without any feedback path that
+  could ever build up.
+- Presets: Clean, Overdrive, Distortion, Acoustic (resonant body model instead
+  of pickups), Chorus Clean, Lead. Every knob stays live.
+
+**Music theory** (`src/theory/`)
+- Nothing is hard-coded per fret: `midi(string, fret) = openMidi + fret`,
+  names/octaves/frequencies derive from MIDI (A4 = 69 = 440 Hz, C4 = 60).
+- Sharps or flats for every label; enharmonic equivalents available everywhere.
+- Tunings: Standard, Drop D, Half-step down, Whole-step down, Open G, Open D,
+  DADGAD, Drop C, Open E, Open A. Changing tuning retunes every string, label,
+  chord voicing and overlay.
+- Chord library: curated open and movable shapes with conventional fingerings
+  for standard tuning, validated against the chord formulas; an algorithmic
+  voicing generator provides correct voicings in every other tuning.
+  "Hold chord" presses the shape for you so you can strum it.
+- Scales: major, natural/harmonic/melodic minor, pentatonics, blues, modes,
+  whole tone, chromatic — shown on the fretboard with degrees or note names.
+- Highlight every position of a note; live read-out of the note played
+  (name, enharmonic, MIDI, Hz, string/fret) with chord detection.
+
+## Project layout
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for modules, conventions and
+the signal flow.
+
+```
+index.html, styles.css        page + dark studio theme
+src/main.js                   bootstrap
+src/state.js                  observable app state
+src/theory/                   notes, tunings, fretboard, scales, chords, voicings
+src/audio/                    worklet string model, engine, effects, presets
+src/ui/                       fretboard canvas + minimap, interaction, knobs, panels
+tests/*.test.js               unit tests (node --test)
+tests/e2e/                    Playwright UI test + offline audio analysis
+manifest.webmanifest, sw.js   installable web app + offline cache
+icons/                        app icons
+tools/serve.mjs, lan.mjs      tiny static server (LAN address + QR code, optional https)
+```
+
+## Testing
+
+- `npm test` runs the theory tests (every string × every fret × every tuning,
+  spec examples, enharmonics, geometry, scales, chord detection), an
+  independent specification-derived suite, the chord-library validation
+  (pitch content, bass note, barre/finger consistency, coverage), the string
+  model in Node, and the QR encoder against a reference implementation.
+- The end-to-end tests need Playwright (`npm install --no-save playwright &&
+  npx playwright install chromium`); the app itself has no dependencies.
+- `npm run test:e2e` starts the server and drives Chromium (Playwright with its
+  bundled Chromium): powers the amp on, taps and slides with the mouse, sweeps
+  strums across open and fretted strings, holds two strings with simulated
+  multi-touch, changes tuning, uses the chord library and presets, checks the
+  phone layouts (zoomed neck, minimap panning, tapping fret 24), and renders
+  every string at every fret 0–24 through the real audio engine offline,
+  measuring the synthesized fundamental against equal temperament, release
+  behaviour, dynamics, slides and per-preset levels.
+
+## Browser support
+
+Chrome, Edge, Firefox and Safari on desktop, iPadOS, iOS and Android. Sound
+starts after the first tap/click, as browsers require. Headphones recommended.
+
+The automated tests run in Chromium, including emulated iPad and phone screens
+with touch input and the fallback audio path. Safari on real iOS/iPadOS
+hardware and Firefox are supported by design (standard Web Audio, pointer
+events, no browser-specific code paths beyond the documented iOS audio unlock)
+but are not part of the automated suite.
