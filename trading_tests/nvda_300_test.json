@@ -9,8 +9,8 @@
     "spy_price": 762.24,
     "spy_shares": 0.393577,
     "spy_time_utc": "2026-11-11T18:54:47Z",
-    "nvda_previous_close": 200.13,
-    "spy_previous_close": 766.81
+    "nvda_close_2026_11_10": 168.89,
+    "spy_close_2026_11_10": 749.92
   },
   "planned_exit": {
     "time_utc": "2026-11-12T17:00:00Z",
