@@ -166,6 +166,11 @@ local function render(dt: number)
 	end
 end
 
+-- The cars being drawn: id -> { s, lanePos, v, profileIndex, ... }. Other modules only read it.
+function TrafficRenderer.cars()
+	return cars
+end
+
 function TrafficRenderer.init(remotes: Folder)
 	folder = Instance.new("Folder")
 	folder.Name = "Traffic"

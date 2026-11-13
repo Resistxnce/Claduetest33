@@ -12,9 +12,149 @@
 </Properties>
 <Item class="Folder" referent="RBX00000003">
 <Properties>
-<string name="Name">TrafficSystem</string>
+<string name="Name">Gameplay</string>
 </Properties>
 <Item class="ModuleScript" referent="RBX00000004">
+<Properties>
+<string name="Name">ClosePass</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	ClosePass: close-pass scoring, a fictional arcade layer on top of the realistic driving. Pure maths
+	with no Roblox objects; tools/close_pass_model.py is a line-for-line Python copy with tests. Keep
+	the two in step.
+
+	A pass counts when the player overtakes a traffic car at speed, faster than it by a margin, with a
+	small gap between the two cars' sides while they are alongside. Closer and faster passes score
+	more. Passes within a few seconds of each other build a combo multiplier; the combo is banked when
+	the chain ends, and lost if the player hits a car first.
+
+	Positions are road coordinates: s along the road (m), offset sideways (m), v along the road (m/s).
+]]
+
+local ClosePass = {}
+ClosePass.__index = ClosePass
+
+ClosePass.DEFAULTS = {
+	minSpeedKmh = 120, -- the player must be at least this fast
+	minRelativeKmh = 30, -- and this much faster than the car being passed
+	maxGap = 2.0, -- m between the cars' sides for a pass to count
+	closeGap = 1.0, -- m, "close pass"
+	insaneGap = 0.5, -- m, "insane pass"
+	basePoints = 100,
+	closenessPoints = 400, -- added at the closest gaps
+	speedRef = 200, -- km/h where the speed factor is 1
+	speedExponent = 1.5,
+	comboWindow = 4.0, -- s to make the next pass and keep the combo going
+	comboStep = 0.5, -- added to the multiplier for each chained pass
+	comboMax = 5.0,
+}
+
+function ClosePass.new(settings, lap: number)
+	local self = setmetatable({}, ClosePass)
+	self.settings = settings or ClosePass.DEFAULTS
+	self.lap = lap
+	self.tracks = {} -- cars alongside the player right now
+	self.total = 0 -- banked points
+	self.combo = 0 -- points in the current, unbanked combo
+	self.multiplier = 1
+	self.timer = 0 -- time left to chain the next pass
+	self.passes = 0
+	self.events = {}
+	return self
+end
+
+function ClosePass:wrap(d: number): number
+	return (d + self.lap / 2) % self.lap - self.lap / 2
+end
+
+-- player and each car: { s, offset, v, length, width }. cars: id -> car.
+function ClosePass:update(dt: number, player, cars)
+	table.clear(self.events)
+	if self.timer > 0 then
+		self.timer -= dt
+		if self.timer <= 0 then
+			self.timer = 0
+			if self.combo > 0 then
+				self.total += self.combo
+				table.insert(self.events, { kind = "banked", points = self.combo, total = self.total })
+			end
+			self.combo = 0
+			self.multiplier = 1
+		end
+	end
+
+	for id, car in cars do
+		local ds = self:wrap(car.s - player.s) -- positive: the car is ahead
+		local alongside = math.abs(ds) < (player.length + car.length) / 2
+		local gap = math.abs(car.offset - player.offset) - (player.width + car.width) / 2
+		local track = self.tracks[id]
+		if alongside then
+			if track == nil then
+				track = { minGap = gap, startedBehind = ds > 0, crashed = false }
+				self.tracks[id] = track
+			else
+				track.minGap = math.min(track.minGap, gap)
+			end
+			if gap < 0 and not track.crashed then
+				track.crashed = true
+				table.insert(self.events, { kind = "crash", lost = self.combo })
+				self.combo = 0
+				self.multiplier = 1
+				self.timer = 0
+			end
+		elseif track ~= nil then
+			self.tracks[id] = nil
+			if track.startedBehind and ds < 0 and not track.crashed then
+				self:score(player, car, track.minGap)
+			end
+		end
+	end
+
+	for id in self.tracks do
+		if cars[id] == nil then
+			self.tracks[id] = nil
+		end
+	end
+end
+
+function ClosePass:score(player, car, gap: number)
+	local st = self.settings
+	local speed = player.v * 3.6
+	local relative = (player.v - car.v) * 3.6
+	if speed < st.minSpeedKmh or relative < st.minRelativeKmh or gap > st.maxGap then
+		return
+	end
+	local closeness = math.clamp((st.maxGap - gap) / (st.maxGap - st.insaneGap), 0, 1)
+	local points = (st.basePoints + st.closenessPoints * closeness ^ 1.5) * (speed / st.speedRef) ^ st.speedExponent
+	if self.timer > 0 then
+		self.multiplier = math.min(st.comboMax, self.multiplier + st.comboStep)
+	else
+		self.multiplier = 1
+	end
+	local gained = math.floor(points * self.multiplier + 0.5)
+	self.combo += gained
+	self.timer = st.comboWindow
+	self.passes += 1
+	local label = if gap <= st.insaneGap then "INSANE PASS" elseif gap <= st.closeGap then "CLOSE PASS" else "NEAR MISS"
+	table.insert(self.events, {
+		kind = "pass",
+		points = gained,
+		label = label,
+		gap = gap,
+		multiplier = self.multiplier,
+		combo = self.combo,
+	})
+end
+
+return ClosePass
+]]></ProtectedString>
+</Properties>
+</Item>
+</Item>
+<Item class="Folder" referent="RBX00000005">
+<Properties>
+<string name="Name">TrafficSystem</string>
+</Properties>
+<Item class="ModuleScript" referent="RBX00000006">
 <Properties>
 <string name="Name">DriverProfiles</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -60,7 +200,7 @@ return DriverProfiles
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000005">
+<Item class="ModuleScript" referent="RBX00000007">
 <Properties>
 <string name="Name">IDM</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -93,7 +233,7 @@ return IDM
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000006">
+<Item class="ModuleScript" referent="RBX00000008">
 <Properties>
 <string name="Name">RoadGeometry</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -190,7 +330,7 @@ return RoadGeometry
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000007">
+<Item class="ModuleScript" referent="RBX00000009">
 <Properties>
 <string name="Name">TrafficSimulation</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -492,15 +632,15 @@ return TrafficSimulation
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000008">
+<Item class="Folder" referent="RBX0000000A">
 <Properties>
 <string name="Name">VehicleSystem</string>
 </Properties>
-<Item class="Folder" referent="RBX00000009">
+<Item class="Folder" referent="RBX0000000B">
 <Properties>
 <string name="Name">Aerodynamics</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000000A">
+<Item class="ModuleScript" referent="RBX0000000C">
 <Properties>
 <string name="Name">Aero</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -524,11 +664,11 @@ return Aero
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000000B">
+<Item class="Folder" referent="RBX0000000D">
 <Properties>
 <string name="Name">CorePhysics</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000000C">
+<Item class="ModuleScript" referent="RBX0000000E">
 <Properties>
 <string name="Name">Brakes</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -565,7 +705,7 @@ return Brakes
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000000D">
+<Item class="ModuleScript" referent="RBX0000000F">
 <Properties>
 <string name="Name">Steering</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -618,7 +758,7 @@ return Steering
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000000E">
+<Item class="ModuleScript" referent="RBX00000010">
 <Properties>
 <string name="Name">VehicleSimulation</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1093,11 +1233,11 @@ return VehicleSimulation
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000000F">
+<Item class="Folder" referent="RBX00000011">
 <Properties>
 <string name="Name">DifferentialSystem</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000010">
+<Item class="ModuleScript" referent="RBX00000012">
 <Properties>
 <string name="Name">Differential</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1149,11 +1289,11 @@ return Differential
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000011">
+<Item class="Folder" referent="RBX00000013">
 <Properties>
 <string name="Name">EngineSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000012">
+<Item class="ModuleScript" referent="RBX00000014">
 <Properties>
 <string name="Name">Engine</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1226,11 +1366,11 @@ return Engine
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000013">
+<Item class="Folder" referent="RBX00000015">
 <Properties>
 <string name="Name">SuspensionSystem</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000014">
+<Item class="ModuleScript" referent="RBX00000016">
 <Properties>
 <string name="Name">Suspension</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1301,11 +1441,11 @@ return Suspension
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000015">
+<Item class="Folder" referent="RBX00000017">
 <Properties>
 <string name="Name">TireSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000016">
+<Item class="ModuleScript" referent="RBX00000018">
 <Properties>
 <string name="Name">Compounds</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1375,7 +1515,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000017">
+<Item class="ModuleScript" referent="RBX00000019">
 <Properties>
 <string name="Name">Tire</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1467,11 +1607,11 @@ return Tire
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000018">
+<Item class="Folder" referent="RBX0000001A">
 <Properties>
 <string name="Name">TransmissionSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000019">
+<Item class="ModuleScript" referent="RBX0000001B">
 <Properties>
 <string name="Name">Transmission</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1615,7 +1755,7 @@ return Transmission
 </Properties>
 </Item>
 </Item>
-<Item class="ModuleScript" referent="RBX0000001A">
+<Item class="ModuleScript" referent="RBX0000001C">
 <Properties>
 <string name="Name">Units</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1668,11 +1808,11 @@ return Units
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="Folder" referent="RBX0000001B">
+<Item class="Folder" referent="RBX0000001D">
 <Properties>
 <string name="Name">VehicleAudio</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000001C">
+<Item class="ModuleScript" referent="RBX0000001E">
 <Properties>
 <string name="Name">AudioAssets</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1690,7 +1830,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000001D">
+<Item class="ModuleScript" referent="RBX0000001F">
 <Properties>
 <string name="Name">EngineMix</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1928,11 +2068,11 @@ return EngineMix
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="Folder" referent="RBX0000001E">
+<Item class="Folder" referent="RBX00000020">
 <Properties>
 <string name="Name">Sheets</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000001F">
+<Item class="ModuleScript" referent="RBX00000021">
 <Properties>
 <string name="Name">Driving_Effects</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1964,7 +2104,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000020">
+<Item class="ModuleScript" referent="RBX00000022">
 <Properties>
 <string name="Name">GT12_Engine</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2001,11 +2141,11 @@ return {
 </Item>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000021">
+<Item class="Folder" referent="RBX00000023">
 <Properties>
 <string name="Name">VehicleConfigurations</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000022">
+<Item class="ModuleScript" referent="RBX00000024">
 <Properties>
 <string name="Name">Prototype812</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2219,11 +2359,11 @@ return {
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000023">
+<Item class="Folder" referent="RBX00000025">
 <Properties>
 <string name="Name">VehicleTelemetry</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000024">
+<Item class="ModuleScript" referent="RBX00000026">
 <Properties>
 <string name="Name">Telemetry</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2289,15 +2429,15 @@ return Telemetry
 </Item>
 </Item>
 </Item>
-<Item class="ServerScriptService" referent="RBX00000025">
+<Item class="ServerScriptService" referent="RBX00000027">
 <Properties>
 <string name="Name">ServerScriptService</string>
 </Properties>
-<Item class="Folder" referent="RBX00000026">
+<Item class="Folder" referent="RBX00000028">
 <Properties>
 <string name="Name">Server</string>
 </Properties>
-<Item class="Script" referent="RBX00000027">
+<Item class="Script" referent="RBX00000029">
 <Properties>
 <string name="Name">Main</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2358,7 +2498,7 @@ TrafficService.init(remotes)
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000028">
+<Item class="ModuleScript" referent="RBX0000002A">
 <Properties>
 <string name="Name">TrackBuilder</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2670,7 +2810,7 @@ return TrackBuilder
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000029">
+<Item class="ModuleScript" referent="RBX0000002B">
 <Properties>
 <string name="Name">TrafficService</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2823,7 +2963,7 @@ return TrafficService
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002A">
+<Item class="ModuleScript" referent="RBX0000002C">
 <Properties>
 <string name="Name">VehicleModelBuilder</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3073,7 +3213,7 @@ return VehicleModelBuilder
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002B">
+<Item class="ModuleScript" referent="RBX0000002D">
 <Properties>
 <string name="Name">VehicleSpawner</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3256,19 +3396,19 @@ return VehicleSpawner
 </Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX0000002C">
+<Item class="StarterPlayer" referent="RBX0000002E">
 <Properties>
 <string name="Name">StarterPlayer</string>
 </Properties>
-<Item class="StarterPlayerScripts" referent="RBX0000002D">
+<Item class="StarterPlayerScripts" referent="RBX0000002F">
 <Properties>
 <string name="Name">StarterPlayerScripts</string>
 </Properties>
-<Item class="Folder" referent="RBX0000002E">
+<Item class="Folder" referent="RBX00000030">
 <Properties>
 <string name="Name">Client</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000002F">
+<Item class="ModuleScript" referent="RBX00000031">
 <Properties>
 <string name="Name">CameraController</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3394,7 +3534,100 @@ return CameraController
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000030">
+<Item class="ModuleScript" referent="RBX00000032">
+<Properties>
+<string name="Name">ClosePassController</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	ClosePassController: feeds the player's car and the traffic around it (in road coordinates) to the
+	close-pass scorer every frame, and shows the result on the ScoreHUD. Scoring runs on this
+	computer for now; the server checks scores once there is anything to win (Phase 7).
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local ClosePass = require(ReplicatedStorage:WaitForChild("Gameplay"):WaitForChild("ClosePass"))
+local TrafficSystem = ReplicatedStorage:WaitForChild("TrafficSystem")
+local RoadGeometry = require(TrafficSystem:WaitForChild("RoadGeometry"))
+local DriverProfiles = require(TrafficSystem:WaitForChild("DriverProfiles"))
+local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
+
+local Client = script.Parent
+local TrafficRenderer = require(Client:WaitForChild("TrafficRenderer"))
+local ScoreHUD = require(Client:WaitForChild("ScoreHUD"))
+
+local M = Units.METERS_PER_STUD
+
+local ClosePassController = {}
+
+local scorer = nil
+local connection: RBXScriptConnection? = nil
+local player = { s = 0, offset = 0, v = 0, length = 4.7, width = 1.9 }
+local cars = {} -- id -> { s, offset, v, length, width }, reused between frames
+
+function ClosePassController.start(controller)
+	ClosePassController.stop()
+	local dims = controller.config.dimensions
+	player.length = dims.length
+	player.width = dims.width
+	if scorer then
+		-- a new car (respawn) ends the current combo without banking it, and forgets cars that
+		-- were alongside the old one
+		table.clear(scorer.tracks)
+		scorer.combo = 0
+		scorer.multiplier = 1
+		scorer.timer = 0
+	else
+		scorer = ClosePass.new(ClosePass.DEFAULTS, RoadGeometry.LAP)
+	end
+	ScoreHUD.set(scorer)
+	connection = RunService.PostSimulation:Connect(function(dt)
+		if controller.stopped then
+			ClosePassController.stop()
+			return
+		end
+		local root: BasePart = controller.root
+		local position = root.Position * M
+		local s, offset = RoadGeometry.project(position)
+		local _, direction = RoadGeometry.centerline(s)
+		player.s = s
+		player.offset = offset
+		player.v = (root.AssemblyLinearVelocity * M):Dot(direction)
+
+		local live = TrafficRenderer.cars()
+		for id in cars do
+			if live[id] == nil then
+				cars[id] = nil
+			end
+		end
+		for id, car in live do
+			local entry = cars[id]
+			if entry == nil then
+				local profile = DriverProfiles.profiles[DriverProfiles.order[car.profileIndex] or "normal"]
+				entry = { s = 0, offset = 0, v = 0, length = profile.length, width = profile.width }
+				cars[id] = entry
+			end
+			entry.s = car.s
+			entry.offset = RoadGeometry.offsetFromLane(car.lanePos)
+			entry.v = car.v
+		end
+		scorer:update(dt, player, cars)
+		ScoreHUD.update(dt, scorer)
+	end)
+end
+
+function ClosePassController.stop()
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+end
+
+return ClosePassController
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000033">
 <Properties>
 <string name="Name">HUD</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3612,7 +3845,7 @@ return HUD
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000031">
+<Item class="ModuleScript" referent="RBX00000034">
 <Properties>
 <string name="Name">InputController</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3762,7 +3995,7 @@ return InputController
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="LocalScript" referent="RBX00000032">
+<Item class="LocalScript" referent="RBX00000035">
 <Properties>
 <string name="Name">Main</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3781,12 +4014,15 @@ local HUD = require(Client:WaitForChild("HUD"))
 local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
 local SelfTest = require(Client:WaitForChild("SelfTest"))
 local TrafficRenderer = require(Client:WaitForChild("TrafficRenderer"))
+local ScoreHUD = require(Client:WaitForChild("ScoreHUD"))
+local ClosePassController = require(Client:WaitForChild("ClosePassController"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 InputController.init()
 HUD.init()
 TrafficRenderer.init(remotes)
+ScoreHUD.init()
 
 local active = nil
 local audio = nil
@@ -3829,6 +4065,7 @@ remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Mod
 		HUD.setVehicle(active.config)
 		audio = VehicleAudio.start(active, CameraController.mode)
 		SelfTest.run(active)
+		ClosePassController.start(active)
 	end
 end)
 
@@ -3866,7 +4103,138 @@ end)
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000033">
+<Item class="ModuleScript" referent="RBX00000036">
+<Properties>
+<string name="Name">ScoreHUD</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	ScoreHUD: the close-pass score at the top of the screen. Shows the banked score, the current
+	combo with its multiplier and a bar for the time left to chain the next pass, and short popups
+	for each pass ("CLOSE PASS +540"), banked combos and crashes.
+]]
+
+local Players = game:GetService("Players")
+
+local ScoreHUD = {}
+
+local WHITE = Color3.fromRGB(240, 240, 240)
+local AMBER = Color3.fromRGB(255, 176, 50)
+local GREEN = Color3.fromRGB(120, 230, 140)
+local RED = Color3.fromRGB(235, 60, 60)
+local POPUP_TIME = 1.4
+local POPUPS = 5
+
+local gui: ScreenGui
+local scoreLabel: TextLabel
+local comboLabel: TextLabel
+local timerBar: Frame
+local popups = {}
+local nextPopup = 1
+
+local function newLabel(parent: Instance, name: string, size: UDim2, position: UDim2, textSize: number, color: Color3): TextLabel
+	local label = Instance.new("TextLabel")
+	label.Name = name
+	label.BackgroundTransparency = 1
+	label.Size = size
+	label.Position = position
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Font = Enum.Font.GothamBlack
+	label.TextSize = textSize
+	label.TextColor3 = color
+	label.TextStrokeTransparency = 0.5
+	label.Text = ""
+	label.Parent = parent
+	return label
+end
+
+local function thousands(x: number): string
+	local s = tostring(math.floor(math.abs(x) + 0.5))
+	local out = string.reverse((string.gsub(string.reverse(s), "(%d%d%d)", "%1,")))
+	if string.sub(out, 1, 1) == "," then
+		out = string.sub(out, 2)
+	end
+	return out
+end
+
+function ScoreHUD.init()
+	gui = Instance.new("ScreenGui")
+	gui.Name = "ScoreHUD"
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.Enabled = false
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	scoreLabel = newLabel(gui, "Score", UDim2.fromOffset(400, 34), UDim2.new(0.5, 0, 0, 14), 28, WHITE)
+	comboLabel = newLabel(gui, "Combo", UDim2.fromOffset(400, 26), UDim2.new(0.5, 0, 0, 48), 22, AMBER)
+	local track = Instance.new("Frame")
+	track.Name = "ComboTimer"
+	track.AnchorPoint = Vector2.new(0.5, 0)
+	track.Position = UDim2.new(0.5, 0, 0, 78)
+	track.Size = UDim2.fromOffset(180, 4)
+	track.BackgroundColor3 = Color3.fromRGB(40, 40, 44)
+	track.BackgroundTransparency = 0.3
+	track.BorderSizePixel = 0
+	track.Parent = gui
+	timerBar = Instance.new("Frame")
+	timerBar.Name = "Fill"
+	timerBar.Size = UDim2.fromScale(0, 1)
+	timerBar.BackgroundColor3 = AMBER
+	timerBar.BorderSizePixel = 0
+	timerBar.Parent = track
+	for i = 1, POPUPS do
+		popups[i] = { label = newLabel(gui, "Popup" .. i, UDim2.fromOffset(500, 30), UDim2.new(0.5, 0, 0.3, 0), 26, WHITE), age = math.huge }
+	end
+	ScoreHUD.set(nil)
+end
+
+local function popup(text: string, color: Color3)
+	local p = popups[nextPopup]
+	nextPopup = nextPopup % POPUPS + 1
+	p.label.Text = text
+	p.label.TextColor3 = color
+	p.age = 0
+end
+
+-- scorer: a ClosePass object (or nil to hide the display)
+function ScoreHUD.set(scorer)
+	gui.Enabled = scorer ~= nil
+end
+
+function ScoreHUD.update(dt: number, scorer)
+	for _, e in scorer.events do
+		if e.kind == "pass" then
+			popup(string.format("%s  +%s", e.label, thousands(e.points)), if e.label == "INSANE PASS" then RED else WHITE)
+		elseif e.kind == "banked" then
+			popup("BANKED  +" .. thousands(e.points), GREEN)
+		elseif e.kind == "crash" then
+			popup(if e.lost > 0 then "CRASH  -" .. thousands(e.lost) else "CRASH", RED)
+		end
+	end
+	scoreLabel.Text = "SCORE  " .. thousands(scorer.total)
+	if scorer.combo > 0 then
+		comboLabel.Text = string.format("x%.1f   +%s", scorer.multiplier, thousands(scorer.combo))
+	else
+		comboLabel.Text = ""
+	end
+	timerBar.Size = UDim2.fromScale(math.clamp(scorer.timer / scorer.settings.comboWindow, 0, 1), 1)
+	for _, p in popups do
+		if p.age < POPUP_TIME then
+			p.age += dt
+			local t = math.clamp(p.age / POPUP_TIME, 0, 1)
+			p.label.Position = UDim2.new(0.5, 0, 0.3, -60 * t)
+			p.label.TextTransparency = t * t
+			p.label.TextStrokeTransparency = 0.5 + 0.5 * t
+		else
+			p.label.TextTransparency = 1
+			p.label.TextStrokeTransparency = 1
+		end
+	end
+end
+
+return ScoreHUD
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000037">
 <Properties>
 <string name="Name">SelfTest</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -4002,7 +4370,7 @@ return SelfTest
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000034">
+<Item class="ModuleScript" referent="RBX00000038">
 <Properties>
 <string name="Name">TrafficRenderer</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -4173,6 +4541,11 @@ local function render(dt: number)
 	end
 end
 
+-- The cars being drawn: id -> { s, lanePos, v, profileIndex, ... }. Other modules only read it.
+function TrafficRenderer.cars()
+	return cars
+end
+
 function TrafficRenderer.init(remotes: Folder)
 	folder = Instance.new("Folder")
 	folder.Name = "Traffic"
@@ -4185,7 +4558,7 @@ return TrafficRenderer
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000035">
+<Item class="ModuleScript" referent="RBX00000039">
 <Properties>
 <string name="Name">VehicleAudio</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -4454,7 +4827,7 @@ return VehicleAudio
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000036">
+<Item class="ModuleScript" referent="RBX0000003A">
 <Properties>
 <string name="Name">VehicleController</string>
 <ProtectedString name="Source"><![CDATA[--[[

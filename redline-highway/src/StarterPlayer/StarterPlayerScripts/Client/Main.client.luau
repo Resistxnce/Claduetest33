@@ -14,12 +14,15 @@ local HUD = require(Client:WaitForChild("HUD"))
 local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
 local SelfTest = require(Client:WaitForChild("SelfTest"))
 local TrafficRenderer = require(Client:WaitForChild("TrafficRenderer"))
+local ScoreHUD = require(Client:WaitForChild("ScoreHUD"))
+local ClosePassController = require(Client:WaitForChild("ClosePassController"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 InputController.init()
 HUD.init()
 TrafficRenderer.init(remotes)
+ScoreHUD.init()
 
 local active = nil
 local audio = nil
@@ -62,6 +65,7 @@ remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Mod
 		HUD.setVehicle(active.config)
 		audio = VehicleAudio.start(active, CameraController.mode)
 		SelfTest.run(active)
+		ClosePassController.start(active)
 	end
 end)
 

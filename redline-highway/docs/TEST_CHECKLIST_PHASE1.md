@@ -89,6 +89,17 @@ Use the 2.2 km main straight. The telemetry overlay (T) records each result.
 - [ ] Hitting a traffic car stops your car hard. Traffic cars don't get knocked around yet.
 - [ ] The frame rate stays smooth with traffic around.
 
+## Close-pass score
+
+- [ ] The score shows at the top of the screen once you're in the car.
+- [ ] Overtaking a traffic car at 120 km/h or more, at least 30 km/h faster than it and within about
+      2 m of its side, pops up NEAR MISS, CLOSE PASS or INSANE PASS with points. Closer and faster
+      passes give more.
+- [ ] Passing again within 4 seconds raises the multiplier (x1.5, x2 ...) and refills the bar. When the
+      bar runs out, BANKED adds the combo to the score.
+- [ ] Hitting a car shows CRASH and loses the combo that wasn't banked yet. Pressing R also ends it.
+- [ ] Wide passes, slow passes and being overtaken don't score.
+
 ## Things to watch for
 
 - The car hopping, bouncing or being launched into the air (suspension or force problems).

@@ -235,7 +235,9 @@ Each milestone ends with a test pass in Studio. Later phases follow your master 
 draws the real torque curve, saved builds. Each modification changes simulation parameters, never a
 made-up "speed stat".
 
-**Phase 4: traffic** (section 7). *First version built on the proving ground.* **Phase 5: environment:** highways with merges, exits, tunnels,
+**Phase 4: traffic** (section 7). *First version built on the proving ground.* A first close-pass
+score (Phase 6) is in too, so there is something to play: `Gameplay/ClosePass` with its Python copy
+and tests in `tools/close_pass_model.py`. **Phase 5: environment:** highways with merges, exits, tunnels,
 bridges and day/night. **Phase 6: gameplay:** races, close-pass scoring, money, progression, garage,
 dealership, leaderboards. **Phase 7: multiplayer hardening:** server validation, saving with
 `DataStoreService`, rate limits, anti-exploit checks, load testing. **Phase 8: more cars**, each with its
