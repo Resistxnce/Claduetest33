@@ -653,7 +653,7 @@
       "note": "NOT FOUND in BMW press material or the sources reached. Gap; check the BMW parts catalogue (ETK) part numbers or the BMW ST1916 S63TU4 training manual (bmwtechinfo link returned 404)."
     },
     "placement": {
-      "value": "Hot-V: both turbochargers inside the 90-degree V on top of the engine, one positioned over each cylinder bank; turbines exhaust rearward into close-coupled catalysts",
+      "value": "Hot-V: both turbochargers inside the 90-degree V on top of the engine, one positioned over each cylinder bank; each turbine outlet feeds a close-coupled catalyst",
       "unit": "",
       "tag": "P",
       "source": "bmw_st1202; wiki_n63",
@@ -1016,14 +1016,14 @@
       "unit": "kg",
       "tag": "F",
       "source": "bmw_spec_062020",
-      "note": "DIN: ready to drive, tank 90 % full, no driver."
+      "note": "DIN kerb weight: ready to drive with fuel, without driver or luggage."
     },
     "unladen_EU_LCI": {
       "value": 1970,
       "unit": "kg",
       "tag": "F",
       "source": "bmw_spec_062020",
-      "note": "EU: DIN plus 75 kg driver and luggage (68 + 7)."
+      "note": "EU kerb mass: 90 % fuel plus 75 kg for driver and luggage (68 + 7); here exactly DIN + 75 kg."
     },
     "unladen_DIN_preLCI": {
       "value": 1865,
@@ -2502,6 +2502,7 @@
     "Downforce/lift coefficients (none published).",
     "Other OE tyre approvals besides Pirelli P Zero (star).",
     "Onboard (limiter), dyno and flyby reference videos - the shared web-search budget ran out before these could be looked up.",
-    "Pre-LCI front/rear overhang split (only the LCI drawing was available)."
+    "Pre-LCI front/rear overhang split (only the LCI drawing was available).",
+    "The CC BY 3.0 Commons recording was not downloaded (Wikimedia returned HTTP 429 to every attempt); URL and attribution are in audio/RefM5F90/LICENSE_AND_ATTRIBUTION.txt."
   ]
 }

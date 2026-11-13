@@ -58,6 +58,7 @@ AIR_C = 343.0  # speed of sound in air at 20 C, m/s
 TARGET_A_RMS = 0.075  # every loop is stored at this A-weighted RMS; its gain is in the sheet
 REFERENCE_DBA = 95.0  # [A] an engine measured at this level plays at gain 1
 LEVEL_COMPRESSION = 0.6  # [A] game dB per real dB: idle stays audible next to full throttle
+IDLE_PULSE = 0.35  # [E] exhaust pulse strength when idling (light load, fuel on), full load = 1
 
 
 # --------------------------------------------------------------------------------------------
@@ -569,7 +570,12 @@ class EngineModel:
         lim = d["limiter"]
         fire = self.event_times(theta, 0.0)
         amps, cut_flags = self.amplitudes(fire, load, rpm, rng, cut, lim["cutLevel"], lim["type"] == "softCut")
-        pulse_level = d["overrun"]["pulseLevel"] + (1 - d["overrun"]["pulseLevel"]) * load
+        # Off throttle the engine idles (fuel on, light pulses) near idle speed, and above about 1.5x
+        # idle the fuel is cut on the overrun, so the cylinders only pump air.
+        fuel_on = min(1.0, max(0.0, (1.5 * self.idle - rpm) / (0.5 * self.idle)))
+        light = d["overrun"]["pulseLevel"] + (IDLE_PULSE - d["overrun"]["pulseLevel"]) * fuel_on
+        pulse_level = light + (1 - light) * load
+        burning = fuel_on + (1 - fuel_on) * load  # share of cylinders burning fuel
 
         # exhaust: blowdown pulses into the primaries, summed at each collector
         evo = self.event_times(theta, x["evoDeg"])
@@ -640,24 +646,26 @@ class EngineModel:
                           * pipe(f, it["snorkelLengthM"], AIR_C, 0.4)
                           * radiation(f, it["mouthDiameterM"]) * highpass(f, 30))
         # throttle hiss at part throttle
-        hiss = circular(rng.standard_normal(n), resonator(f, 2500, 0.9)) * (load * (1 - load) * 4)
-        intake = intake / (np.sqrt(np.mean(intake ** 2)) or 1) + 0.15 * hiss
+        hiss = unit(circular(rng.standard_normal(n), resonator(f, 2500, 0.9)))
+        intake = intake + hiss * (0.3 * math.sqrt(float(np.mean(intake ** 2))) * load * (1 - load) * 4)
 
-        # combustion noise radiated by the block, and valvetrain / injector ticks
+        # combustion noise radiated by the block (none from cut cylinders), valvetrain and injector ticks
         mech = d["mechanical"]
         fire_t = np.concatenate([fire[c] for c in self.cyls])
-        fire_a = np.concatenate([np.where(cut_flags[c], 0.0, amps[c]) for c in self.cyls]) * (0.45 + 0.55 * load)
+        fire_a = np.concatenate([np.where(cut_flags[c], 0.0, amps[c]) for c in self.cyls]) * (0.3 + 0.7 * load) * burning
         block_hz = mech["blockHz"]
         block = circular(burst(n, fire_t, fire_a, 0.7e-3, rng),
                          resonator(f, block_hz[0], 1.3) + 0.7 * resonator(f, block_hz[1], 1.6))
         ticks = np.zeros(n)
+        tick_total = mech["valvetrain"] + mech["injectors"]
         for offset, level, hz in ((x["evoDeg"] + 230, mech["valvetrain"], 5200), (590, mech["valvetrain"], 6100),
-                                  (-300, mech["injectors"], 3900)):
+                                  (-300, mech["injectors"] * burning, 3900)):
             if level <= 0:
                 continue
             ev = self.event_times(theta, offset)
             tt = np.concatenate([ev[c] for c in self.cyls])
-            ticks += level * circular(impulse_train(n, tt, np.ones(len(tt))), resonator(f, hz, 6) * highpass(f, 2000))
+            click = circular(impulse_train(n, tt, np.ones(len(tt))), resonator(f, hz, 6) * highpass(f, 2000))
+            ticks += level / tick_total * unit(click)
         parts = {"exhaust": exhaust_t, "intake": intake, "block": block, "ticks": ticks}
         if self.turbo:
             env = circular(np.abs(exhaust_t), lowpass(f, 60))
@@ -699,9 +707,11 @@ class EngineModel:
         return m["valves"] == "open"
 
     def mix(self, parts, scales):
+        """Weights are each component's level relative to the exhaust at full load (RMS)."""
         d = self.d
+        mech = d["mechanical"]
         w = {"exhaust": d["exhaust"]["level"], "intake": d["intake"]["level"],
-             "block": d["mechanical"]["combustion"], "ticks": 1.0,
+             "block": mech["combustion"], "ticks": mech["valvetrain"] + mech["injectors"],
              "whoosh": self.turbo["whooshLevel"] if self.turbo else 0.0}
         return sum(w[k] * scales[k] * v for k, v in parts.items())
 
@@ -711,7 +721,6 @@ class EngineModel:
         for k, v in parts.items():
             r = math.sqrt(float(np.mean(v * v)))
             out[k] = 1 / r if r > 0 else 0.0
-        out["ticks"] = 1.0 / (math.sqrt(float(np.mean(parts["exhaust"] ** 2))) or 1)  # ticks are set relative to the exhaust
         return out
 
     # ---- loops -------------------------------------------------------------------------------
@@ -890,6 +899,18 @@ def wind(rng):
     return finish(noise * gust)
 
 
+def tyre_roll(rng):
+    """Tyre and road noise heard from outside a passing car: broadband, peaking near 1 kHz."""
+    n = round(1.2 * FS)
+    f = freqs(n)
+    t = np.arange(n) / FS
+    period = n / FS
+    noise = circular(rng.standard_normal(n), (resonator(f, 950, 0.8) + 0.45 * resonator(f, 2100, 1.0)
+                                              + 0.3 * resonator(f, 420, 1.0)) * highpass(f, 120))
+    tread = 0.9 + 0.07 * np.sin(2 * np.pi * 7 / period * t) + 0.04 * np.sin(2 * np.pi * 17 / period * t + 1)
+    return finish(noise * tread)
+
+
 def whine(rng):
     n = round(0.5 * FS)
     f = freqs(n)
@@ -943,37 +964,98 @@ def damped(n, parts, noise=None, rng=None):
 # --------------------------------------------------------------------------------------------
 
 class Sheet:
-    def __init__(self, name):
+    """One sheet table: the sounds of one car (or of the driving effects) inside a pack file."""
+
+    def __init__(self, name, source, meta=None):
         self.name = name
-        self.chunks = []
-        self.length = 0
+        self.source = source
+        self.meta = meta or {}
+        self.items = []  # (kind, name, audio, extra)
         self.loops = []
         self.oneshots = []
 
-    def _add(self, x):
-        start = self.length
-        self.chunks.append(x)
-        self.length += len(x)
-        gap = np.zeros(round(GAP * FS))
-        self.chunks.append(gap)
-        self.length += len(gap)
-        return start
-
     def loop(self, name, x, **extra):
-        """Three copies; the game loops the middle one, so a slightly late loop point is harmless."""
-        start = self._add(np.concatenate([x, x, x]))
-        n = len(x)
-        self.loops.append(dict(name=name, start=start / FS, loopStart=(start + n) / FS,
-                               loopEnd=(start + 2 * n) / FS, stop=(start + 3 * n) / FS, **extra))
+        self.items.append(("loop", name, x, extra))
 
-    def oneshot(self, name, x):
-        start = self._add(x)
-        self.oneshots.append(dict(name=name, start=start / FS, stop=(start + len(x)) / FS))
+    def oneshot(self, name, x, **extra):
+        self.items.append(("oneshot", name, x, extra))
+
+    def write_luau(self, pack, length):
+        lines = [
+            "--[[",
+            f"\tRegions of assets/audio/{pack}.flac, in seconds, for {self.source}.",
+            "\tGenerated by tools/synth_audio.py; don't edit by hand. Loops: the game plays start..stop and",
+            "\tloops loopStart..loopEnd; gain is the loop's playback gain from the car's measured sound levels.",
+            "]]",
+            "",
+            "return {",
+            f'\tasset = "{pack}",',
+            f"\tlength = {luau_value(length / FS)},",
+        ]
+        for k, v in self.meta.items():
+            if v is not None:
+                lines.append(f"\t{k} = {luau_value(v)},")
+        for key, regions in (("loops", self.loops), ("oneShots", self.oneshots)):
+            lines.append(f"\t{key} = {{")
+            for r in regions:
+                lines.append("\t\t" + luau_value(r) + ",")
+            lines.append("\t},")
+        lines.append("}")
+        SHEET_DIR.mkdir(parents=True, exist_ok=True)
+        (SHEET_DIR / f"{self.name}.luau").write_text("\n".join(lines) + "\n")
+
+
+def luau_value(v):
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, str):
+        return f'"{v}"'
+    if isinstance(v, float):
+        return f"{v:.6f}".rstrip("0").rstrip(".")
+    if isinstance(v, dict):
+        return "{ " + ", ".join(f"{k} = {luau_value(x)}" for k, x in v.items() if x is not None) + " }"
+    if isinstance(v, (list, tuple)):
+        return "{ " + ", ".join(luau_value(x) for x in v) + " }"
+    return str(v)
+
+
+def seam_ratio(x):
+    """How big the jump at the loop point is next to the loop's ordinary sample-to-sample steps."""
+    steps = np.abs(np.diff(x))
+    return float(abs(x[0] - x[-1]) / (np.percentile(steps, 99) or 1))
+
+
+class Pack:
+    """One uploaded sound file holding one or more sheets."""
+
+    def __init__(self, name):
+        self.name = name
+        self.sheets = []
 
     def write(self):
+        chunks, pos = [], 0
+        gap = np.zeros(round(GAP * FS))
+        pre_n, post_n = round(PRE_ROLL * FS), round(POST_ROLL * FS)
+        for sheet in self.sheets:
+            sheet.loops, sheet.oneshots = [], []
+            for kind, name, x, extra in sheet.items:
+                if kind == "loop":
+                    # stored once, with a little of its end before it and of its start after it. The
+                    # sound starts at the loop start, so a loop that restarts from the playback start
+                    # also lands on matching audio
+                    reps = math.ceil(max(pre_n, post_n) / len(x)) + 1
+                    tiled = np.tile(x, reps)
+                    block = np.concatenate([tiled[len(tiled) - pre_n:], x, tiled[:post_n]])
+                    start = pos + pre_n
+                    sheet.loops.append(dict(name=name, start=start / FS, loopStart=start / FS,
+                                            loopEnd=(start + len(x)) / FS, stop=(start + len(x) + post_n) / FS, **extra))
+                else:
+                    block = x
+                    sheet.oneshots.append(dict(name=name, start=pos / FS, stop=(pos + len(x)) / FS, **extra))
+                chunks += [block, gap]
+                pos += len(block) + len(gap)
+        audio = np.concatenate(chunks)
         AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-        SHEET_DIR.mkdir(parents=True, exist_ok=True)
-        audio = np.concatenate(self.chunks)
         pcm = np.clip(np.round(audio * 32767), -32768, 32767).astype("<i2")
         wav = AUDIO_DIR / f"{self.name}.wav"
         with wave.open(str(wav), "wb") as w:
@@ -985,62 +1067,240 @@ class Sheet:
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-c:a", "flac",
                         "-compression_level", "8", str(flac)], check=True)
         wav.unlink()
-        self.write_luau()
+        for sheet in self.sheets:
+            sheet.write_luau(self.name, len(audio))
         return flac, len(audio) / FS
 
-    def write_luau(self):
-        def fmt(v):
-            if isinstance(v, str):
-                return f'"{v}"'
-            return f"{v:.6f}".rstrip("0").rstrip(".") if isinstance(v, float) else str(v)
 
-        lines = [
-            "--[[",
-            f"\tRegions of assets/audio/{self.name}.flac, in seconds. Generated by tools/synth_audio.py;",
-            "\tdon't edit by hand. Loops: the game plays start..stop and loops loopStart..loopEnd.",
-            "]]",
-            "",
-            "return {",
-            f'\tasset = "{self.name}",',
-            f"\tlength = {fmt(self.length / FS)},",
-            "\tloops = {",
-        ]
-        for loop in self.loops:
-            lines.append("\t\t{ " + ", ".join(f"{k} = {fmt(v)}" for k, v in loop.items()) + " },")
-        lines.append("\t},")
-        lines.append("\toneShots = {")
-        for shot in self.oneshots:
-            lines.append("\t\t{ " + ", ".join(f"{k} = {fmt(v)}" for k, v in shot.items()) + " },")
-        lines.append("\t},")
-        lines.append("}")
-        (SHEET_DIR / f"{self.name}.luau").write_text("\n".join(lines) + "\n")
+# --------------------------------------------------------------------------------------------
+# Engine-order analysis (calibrating against recordings)
+# --------------------------------------------------------------------------------------------
+
+def decode_audio(path, start=0.0, end=None):
+    cmd = ["ffmpeg", "-loglevel", "error", "-ss", str(start)]
+    if end is not None:
+        cmd += ["-t", str(end - start)]
+    cmd += ["-i", str(path), "-f", "s16le", "-ac", "1", "-ar", str(FS), "-"]
+    raw = subprocess.run(cmd, check=True, capture_output=True).stdout
+    return np.frombuffer(raw, dtype="<i2").astype(np.float64) / 32767
 
 
-def main():
+def track_rpm(x, cylinders, lo, hi, hop=0.02, win=0.16):
+    """Engine speed over time from the firing-frequency harmonics (subharmonic summation with a
+    smoothness term). Returns frame times, rpm per frame and a 0..1 confidence per frame."""
+    nwin, nhop, nfft = int(win * FS), int(hop * FS), 1 << 15
+    window = np.hanning(nwin)
+    cand = np.geomspace(lo, hi, 500)
+    fire = cand / 60 * cylinders / 2  # firing frequency of each candidate
+    fft_f = np.fft.rfftfreq(nfft, 1 / FS)
+    frames = range(0, max(1, len(x) - nwin), nhop)
+    scores = []
+    for i in frames:
+        mag = np.abs(np.fft.rfft(x[i:i + nwin] * window, nfft))
+        logmag = np.log(1e-7 + mag / (np.max(mag) or 1))
+        s = np.zeros(len(cand))
+        for h in range(1, 7):  # harmonics of the firing frequency
+            s += 0.85 ** h * np.interp(h * fire, fft_f, logmag, right=-16)
+        s -= 0.5 * np.interp(0.5 * fire, fft_f, logmag, right=-16)  # don't settle an octave low
+        scores.append(s)
+    scores = np.array(scores)
+    # dynamic programming: best path with a penalty on big jumps between frames
+    step = np.log(cand[1] / cand[0])
+    cost = scores[0].copy()
+    back = np.zeros(scores.shape, dtype=int)
+    jump = np.abs(np.arange(len(cand))[:, None] - np.arange(len(cand))[None, :]) * step
+    penalty = 40 * np.maximum(jump - 0.04, 0)  # free up to ~4% per frame
+    for k in range(1, len(scores)):
+        total = cost[None, :] - penalty
+        back[k] = np.argmax(total, axis=1)
+        cost = scores[k] + total[np.arange(len(cand)), back[k]]
+    path = [int(np.argmax(cost))]
+    for k in range(len(scores) - 1, 0, -1):
+        path.append(back[k][path[-1]])
+    path = path[::-1]
+    conf = np.array([(scores[k][p] - np.median(scores[k])) for k, p in enumerate(path)])
+    times = np.array([(i + nwin / 2) / FS for i in frames])
+    return times, cand[path], conf / (np.max(conf) or 1)
+
+
+def order_spectrum(x, times, rpms, max_order, per_cycle=1440):
+    """Resample to the crank-angle domain (per_cycle samples per 720 degrees) and return order
+    amplitudes at every half order up to max_order (relative, linear)."""
+    t = np.arange(len(x)) / FS
+    rpm_t = np.interp(t, times, rpms)
+    theta = np.concatenate([[0.0], np.cumsum(rpm_t[:-1] * 6 / FS)])
+    cycles = int(theta[-1] // 720)
+    if cycles < 4:
+        return None
+    grid = np.arange(cycles * per_cycle) * (720.0 / per_cycle)
+    y = np.interp(grid, theta, x)
+    spec = np.abs(np.fft.rfft(y * np.hanning(len(y))))
+    orders = np.arange(1, int(max_order * 2) + 1) / 2  # 0.5, 1.0, ...
+    bins = (orders * 2 * cycles).astype(int)  # order k has 2k cycles per 720 degrees
+    amp = np.array([np.max(spec[max(b - 1, 0):b + 2]) for b in bins])
+    between = np.array([np.median(spec[b + cycles // 4: b + 3 * cycles // 4]) for b in bins])
+    return orders, amp, between
+
+
+def analyze_recording(path, d, start=0.0, end=None):
+    """Print the engine-order spectrum of a recording next to the synthesized loop at the same rpm."""
+    e = d["engine"]
+    x = decode_audio(path, start, end)
+    x = x - np.mean(x)
+    times, rpms, conf = track_rpm(x, e["cylinders"], 0.6 * e["idleRpm"], 1.1 * e["limiterRpm"])
+    good = conf > 0.3
+    rpm = float(np.median(rpms[good])) if good.any() else float(np.median(rpms))
+    max_order = 3 * e["cylinders"] / 2
+    res = order_spectrum(x, times, rpms, max_order)
+    print(f"{path}: {len(x) / FS:.1f} s, tracked {np.min(rpms):.0f}-{np.max(rpms):.0f} rpm (median {rpm:.0f})")
+    if res is None:
+        print("  too short to analyse")
+        return
+    orders, amp, between = res
+    model = EngineModel(d)
+    point = min(d["loops"]["rpmPoints"], key=lambda p: abs(math.log(p / rpm)))
+    synth, srpm = model.steady_loop(point, 1.0, f"on_{point}")
+    s_times = np.array([0.0, len(synth) / FS])
+    s_res = order_spectrum(np.tile(synth, 4), s_times, np.array([srpm, srpm]), max_order)
+    fire = e["cylinders"] / 2
+    ref = amp[np.argmin(np.abs(orders - fire))]
+    s_ref = s_res[1][np.argmin(np.abs(orders - fire))]
+    print(f"  order  recording dB  synth dB (rel. firing order {fire:g}, synth at {srpm:.0f} rpm)   rec. harmonic/noise dB")
+    for o, a, b, s in zip(orders, amp, between, s_res[1]):
+        print(f"  {o:5.1f}  {20 * math.log10(a / ref + 1e-9):10.1f}  {20 * math.log10(s / s_ref + 1e-9):8.1f}"
+              f"   {20 * math.log10(a / (b + 1e-12)):8.1f}")
+
+
+# --------------------------------------------------------------------------------------------
+# Building sheets and packs
+# --------------------------------------------------------------------------------------------
+
+def engine_sheet(d, verbose=True):
+    """Every loop and one-shot of one car's engine."""
+    model = EngineModel(d)
+    e = d["engine"]
+    fi = d["forcedInduction"]
+    meta = {"car": d["id"], "idleRpm": e["idleRpm"], "limiterRpm": d["limiter"]["rpm"],
+            "forcedInduction": fi["type"] if fi else None}
+    sheet = Sheet(d["sheet"], f"{d['id']} (assets/audio/engines/{d['id']}.json)", meta)
+    report = []
+    loads = (("on", 1.0), ("off", 0.0)) if d["loops"].get("offThrottle", True) else (("on", 1.0),)
+    for point in d["loops"]["rpmPoints"]:
+        for label, load in loads:
+            name = f"{label}_{point}"
+            x, rpm = model.steady_loop(point, load, name)
+            gain = loop_gain(d, rpm, load)
+            sheet.loop(name, x, rpm=round(rpm, 3), load=label, gain=round(gain, 5))
+            report.append((name, rpm, gain, x))
+    if d["loops"].get("limiter", True):
+        for kind in ("free", "load"):
+            x, rpm = model.limiter_loop(kind)
+            gain = loop_gain(d, d["limiter"]["rpm"], 1.0)
+            sheet.loop(f"limiter_{kind}", x, rpm=round(rpm, 3), load="limiter", kind=kind, gain=round(gain, 5))
+            report.append((f"limiter_{kind}", rpm, gain, x))
+    if fi and fi["type"] == "Turbo":
+        rng = model.rng_for("turbo")
+        x, f0 = turbo_whistle(fi, rng)
+        sheet.loop("turbo_whistle", x, layer="turbo", baseHz=round(f0, 3))
+        report.append(("turbo_whistle", 0, 1, x))
+        count = fi["blowOff"].get("variants", 3)
+        for k in range(1, count + 1):
+            sheet.oneshot(f"blowoff_{k}", blow_off(fi, model.rng_for(f"blowoff_{k}"), k - 1), layer="blowoff")
+        sheet.meta["turbo"] = {"minHz": float(fi["whistleHz"][0]), "maxHz": float(fi["whistleHz"][1]),
+                               "blowOff": fi["blowOff"]["type"]}
+    if fi and fi["type"] == "Supercharger":
+        for k, crank in enumerate(fi["whineRpm"], 1):
+            x, f0 = supercharger_whine(fi, crank, model.rng_for(f"whine_{k}"))
+            sheet.loop(f"sc_whine_{k}", x, layer="supercharger", rpm=float(crank), baseHz=round(f0, 3))
+            report.append((f"sc_whine_{k}", crank, 1, x))
+        sheet.meta["supercharger"] = {"driveRatio": float(fi["driveRatio"]), "pulsesPerRev": int(fi["pulsesPerRev"])}
+    if verbose:
+        print(describe(d))
+        for name, rpm, gain, x in report:
+            print(f"    {name:16s} {rpm:7.0f} rpm  gain {20 * math.log10(gain):6.1f} dB  peak {np.max(np.abs(x)):.2f}"
+                  f"  A-rms {a_rms(x):.3f}  seam {seam_ratio(x):.2f}")
+    return sheet
+
+
+def effects_sheet():
     rng = np.random.default_rng(812)
-
-    engine = Sheet("GT12_Engine")
-    for point in ENGINE_POINTS:
-        for on in (True, False):
-            x, rpm = engine_loop(point, on, rng)
-            engine.loop(f"{'on' if on else 'off'}_{point}", x, rpm=round(rpm, 3), load="on" if on else "off")
-
-    effects = Sheet("Driving_Effects")
+    effects = Sheet("Driving_Effects", "the driving effects")
     effects.loop("squeal", squeal(rng))
     effects.loop("road", road(rng))
     effects.loop("wind", wind(rng))
     effects.loop("whine", whine(rng), baseHz=WHINE_HZ)
+    effects.loop("tyre_roll", tyre_roll(rng))
     for k in range(1, 7):
         effects.oneshot(f"crackle_{k}", crackle(rng))
     effects.oneshot("shift_cut", shift_cut(rng))
     effects.oneshot("shift_clunk", damped(round(0.15 * FS), [(170, 0.025, 1.0), (410, 0.012, 0.6), (1300, 0.004, 0.3)],
                                           noise=0.5, rng=rng))
     effects.oneshot("bump_knock", damped(round(0.25 * FS), [(55, 0.04, 1.0), (120, 0.02, 0.6)], noise=0.2, rng=rng))
+    return effects
 
-    for sheet in (engine, effects):
-        path, seconds = sheet.write()
-        print(f"Wrote {path.relative_to(ROOT)}: {seconds:.1f} s, {path.stat().st_size / 1e6:.2f} MB, "
-              f"{len(sheet.loops)} loops, {len(sheet.oneshots)} one-shots")
+
+def load_packs():
+    return json.loads(PACKS_FILE.read_text())
+
+
+def build_pack(name, spec, verbose=True):
+    pack = Pack(name)
+    if spec.get("effects"):
+        pack.sheets.append(effects_sheet())
+    missing = []
+    for car in spec.get("engines", []):
+        if not definition_path(car).exists():
+            missing.append(car)
+            continue
+        pack.sheets.append(engine_sheet(load_definition(car), verbose))
+    if not pack.sheets:
+        print(f"Skipped {name}: none of its cars has a definition yet ({', '.join(missing)})")
+        return None
+    path, seconds = pack.write()
+    mb = path.stat().st_size / 1e6
+    limits = load_packs().get("limits", {})
+    print(f"Wrote {path.relative_to(ROOT)}: {seconds:.1f} s, {mb:.2f} MB, sheets "
+          + ", ".join(s.name for s in pack.sheets))
+    if missing:
+        print(f"  (not yet in this pack, no definition: {', '.join(missing)})")
+    if seconds > limits.get("maxSeconds", 420) or mb > limits.get("maxMegabytes", 19.5):
+        print(f"  WARNING: {name} is over the upload limits in packs.json; move a car to another pack")
+    assets = (SHEET_DIR.parent / "AudioAssets.luau").read_text()
+    if f"{name} =" not in assets:
+        print(f"  NOTE: add {name} = \"\" to VehicleAudio/AudioAssets.luau")
+    return path
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--car", help="build only the pack holding this car (its config id)")
+    ap.add_argument("--check", help="check a definition and print its firing and pulse pattern")
+    ap.add_argument("--analyze", help="engine-order analysis of a recording (needs --car)")
+    ap.add_argument("--start", type=float, default=0.0)
+    ap.add_argument("--end", type=float, default=None)
+    ap.add_argument("--quiet", action="store_true")
+    args = ap.parse_args()
+    try:
+        if args.check:
+            print(describe(load_definition(args.check)))
+            return
+        if args.analyze:
+            if not args.car:
+                ap.error("--analyze needs --car")
+            analyze_recording(args.analyze, load_definition(args.car), args.start, args.end)
+            return
+        packs = load_packs()["packs"]
+        if args.car:
+            load_definition(args.car)
+            chosen = {n: s for n, s in packs.items() if args.car in s.get("engines", [])}
+            if not chosen:
+                sys.exit(f"{args.car} isn't in any pack: add it to a pack's engines in {PACKS_FILE.relative_to(ROOT)}")
+        else:
+            chosen = packs
+        for name, spec in chosen.items():
+            build_pack(name, spec, verbose=not args.quiet)
+    except DefinitionError as e:
+        sys.exit(f"Definition error: {e}")
 
 
 if __name__ == "__main__":

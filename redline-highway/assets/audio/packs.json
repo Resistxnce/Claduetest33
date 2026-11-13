@@ -1,0 +1,9 @@
+{
+  "_about": "Which sounds go into which uploaded file. Roblox counts every upload against a monthly limit (10 a month without ID verification, 100 with it, per a Roblox staff post of May 2024), so cars share files. Each car still gets its own sheet table in VehicleAudio/Sheets. Uploads must be under 20 MB and 7 minutes; limits below keep a margin. See docs/AUDIO.md.",
+  "limits": { "maxSeconds": 400, "maxMegabytes": 19.0 },
+  "packs": {
+    "GT12_Engine": { "engines": ["Prototype812"] },
+    "Engines_Pack1": { "engines": ["RefM3G80", "RefM5F90", "RefC8Stingray", "RefC8Z06", "Ref720S", "RefCamaroZL1"] },
+    "Driving_Effects": { "effects": true, "engines": ["TrafficCar", "TrafficTruck"] }
+  }
+}

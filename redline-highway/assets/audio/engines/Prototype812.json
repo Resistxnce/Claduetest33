@@ -1,0 +1,63 @@
+{
+  "id": "Prototype812",
+  "displayName": "Valenza GT12",
+  "reference": "Ferrari 812 Superfast, 6.5 L 65-degree V12 (F140GA), naturally aspirated. Engineering reference only.",
+  "sheet": "GT12_Engine",
+  "engine": {
+    "cylinders": 12,
+    "layout": "V",
+    "bankAngleDeg": 65,
+    "crank": "commonPin",
+    "firingOrder": [1, 7, 5, 11, 3, 9, 6, 12, 2, 8, 4, 10],
+    "banks": { "A": [1, 2, 3, 4, 5, 6], "B": [7, 8, 9, 10, 11, 12] },
+    "displacementCc": 6496,
+    "idleRpm": 1000,
+    "limiterRpm": 8900,
+    "aspiration": "NA"
+  },
+  "exhaust": {
+    "evoDeg": 130,
+    "pulseRiseDeg": 7,
+    "pulseDecayDeg": 40,
+    "gasTempK": 1050,
+    "pipeTempK": 750,
+    "rasp": 0.45,
+    "collectors": [
+      { "name": "A", "cylinders": [1, 2, 3, 4, 5, 6], "primaryLengthM": 0.55, "lengthSpreadM": 0.02 },
+      { "name": "B", "cylinders": [7, 8, 9, 10, 11, 12], "primaryLengthM": 0.55, "lengthSpreadM": 0.02 }
+    ],
+    "merge": { "type": "hpipe", "crossover": 0.12, "crossoverHz": 250, "pathM": 0.35 },
+    "outlets": [
+      { "collectors": ["A"], "pipeLengthM": 2.6, "tailLengthM": 0.35, "diameterM": 0.09, "offsetM": 0.0 },
+      { "collectors": ["B"], "pipeLengthM": 2.7, "tailLengthM": 0.35, "diameterM": 0.09, "offsetM": 0.6 }
+    ],
+    "muffler": { "valves": "auto", "openAboveRpm": 3500, "openAboveLoad": 0.6, "openLowpassHz": 4200, "closedLowpassHz": 1400, "closedCutDb": 6 }
+  },
+  "intake": { "level": 0.22, "runnerLengthM": 0.28, "airboxHz": 120, "snorkelLengthM": 0.45 },
+  "mechanical": { "combustion": 0.08, "valvetrain": 0.025, "injectors": 0.02 },
+  "idle": { "roughness": 0.07, "lope": 0.0 },
+  "overrun": { "pulseLevel": 0.15, "burble": 0.15 },
+  "forcedInduction": null,
+  "limiter": {
+    "type": "fuelCut",
+    "free": { "bounceHz": 9.0, "dropRpm": 350, "cutShare": 0.45 },
+    "load": { "bounceHz": 7.0, "dropRpm": 160, "cutShare": 0.35 }
+  },
+  "loops": { "rpmPoints": [1000, 1500, 2200, 3200, 4400, 5800, 7300, 8900], "seconds": 1.0, "limiterSeconds": 1.25 },
+  "loudness": {
+    "interior": { "idleDbA": 61, "fullThrottleDbA": 92 },
+    "loadRangeDb": 12
+  },
+  "notes": {
+    "engine.firingOrder": "[P] 1-7-5-11-3-9-6-12-2-8-4-10, cylinders 1-6 on one bank and 7-12 on the other (given in the project brief; F140 family).",
+    "engine.bankAngleDeg": "[F] 65-degree V12 (Ferrari).",
+    "engine.crank": "[E] Six crankpins at 120 degrees, each shared by one cylinder per bank (1 with 7, 5 with 11, ...), so the second cylinder of each pair fires 65 degrees after the first and gaps alternate 65 and 55 degrees. Derived from the firing order and bank angle; not confirmed by Ferrari.",
+    "engine.limiterRpm": "[P] 8,900 rpm max revs, 812 GTS spec sheet (same engine); matches the car config.",
+    "engine.idleRpm": "[E] matches the car config.",
+    "exhaust": "[E] Each bank's six primaries into its own collector, a small balance (H-pipe-like) connection at the rear silencer, two outlets. Pipe lengths, temperatures and the bypass-valve behaviour are estimates; the balance between them was tuned against recordings (docs/AUDIO.md, Calibration).",
+    "exhaust.muffler.valves": "[E] Bypass valves closed at low rpm and light load, open above 3,500 rpm or on throttle.",
+    "limiter": "[E] Fuel cut. Bounce rate and rpm drop estimated; the free-revving loop bounces faster and deeper than the in-gear one.",
+    "loudness.interior": "[E] Estimates (no magazine figure on file for the 812 Superfast): idle 61 dBA, full throttle 92 dBA. Replace with measured values when sourced.",
+    "loudness.loadRangeDb": "[E] Level difference between closed and full throttle at the same rpm."
+  }
+}
