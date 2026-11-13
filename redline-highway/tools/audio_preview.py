@@ -609,8 +609,12 @@ _decoded = {}
 
 
 def decode_cached(asset):
+    """A pack's audio: assets/audio/<asset>.flac, or a single-car dev build in assets/audio/dev."""
     if asset not in _decoded:
-        _decoded[asset] = decode(AUDIO_DIR / f"{asset}.flac")
+        path = AUDIO_DIR / f"{asset}.flac"
+        if not path.exists():
+            path = AUDIO_DIR / "dev" / f"{asset}.flac"
+        _decoded[asset] = decode(path)
     return _decoded[asset]
 
 

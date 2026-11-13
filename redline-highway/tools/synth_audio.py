@@ -27,6 +27,8 @@ sheet table, src/ReplicatedStorage/VehicleSystem/VehicleAudio/Sheets/<sheet>.lua
 Usage (needs numpy and ffmpeg):
   python3 tools/synth_audio.py                    build every pack
   python3 tools/synth_audio.py --car RefM3G80     build only the pack that holds this car
+  python3 tools/synth_audio.py --car RefM3G80 --dev   build that car alone (assets/audio/dev) to preview it
+  python3 tools/synth_audio.py --pack Engines_Pack1   build one pack (all its cars), ready to upload
   python3 tools/synth_audio.py --check RefM3G80   check a definition; print its firing and pulse pattern
   python3 tools/synth_audio.py --analyze REC --car RefM3G80 [--start S --end S]
                                                   engine-order analysis of a recording against the car
@@ -35,6 +37,7 @@ import argparse
 import copy
 import json
 import math
+import os
 import pathlib
 import subprocess
 import sys
@@ -47,6 +50,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 AUDIO_DIR = ROOT / "assets" / "audio"
 ENGINE_DIR = AUDIO_DIR / "engines"
 PACKS_FILE = AUDIO_DIR / "packs.json"
+DEV_DIR = AUDIO_DIR / "dev"  # single-car builds for previews while several cars are worked on
 SHEET_DIR = ROOT / "src" / "ReplicatedStorage" / "VehicleSystem" / "VehicleAudio" / "Sheets"
 FS = 44100
 GAP = 0.02  # seconds of silence between regions
@@ -1064,8 +1068,9 @@ def seam_ratio(x):
 class Pack:
     """One uploaded sound file holding one or more sheets."""
 
-    def __init__(self, name):
+    def __init__(self, name, folder=None):
         self.name = name
+        self.folder = folder or AUDIO_DIR
         self.sheets = []
 
     def write(self):
@@ -1091,15 +1096,15 @@ class Pack:
                 chunks += [block, gap]
                 pos += len(block) + len(gap)
         audio = np.concatenate(chunks)
-        AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+        self.folder.mkdir(parents=True, exist_ok=True)
         pcm = np.clip(np.round(audio * 32767), -32768, 32767).astype("<i2")
-        wav = AUDIO_DIR / f"{self.name}.wav"
+        wav = self.folder / f"{self.name}.{os.getpid()}.wav"
         with wave.open(str(wav), "wb") as w:
             w.setnchannels(1)
             w.setsampwidth(2)
             w.setframerate(FS)
             w.writeframes(pcm.tobytes())
-        flac = AUDIO_DIR / f"{self.name}.flac"
+        flac = self.folder / f"{self.name}.flac"
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-c:a", "flac",
                         "-compression_level", "8", str(flac)], check=True)
         wav.unlink()
@@ -1279,8 +1284,8 @@ def load_packs():
     return json.loads(PACKS_FILE.read_text())
 
 
-def build_pack(name, spec, verbose=True):
-    pack = Pack(name)
+def build_pack(name, spec, verbose=True, folder=None):
+    pack = Pack(name, folder)
     if spec.get("effects"):
         pack.sheets.append(effects_sheet())
     missing = []
@@ -1302,7 +1307,7 @@ def build_pack(name, spec, verbose=True):
     if seconds > limits.get("maxSeconds", 420) or mb > limits.get("maxMegabytes", 19.5):
         print(f"  WARNING: {name} is over the upload limits in packs.json; move a car to another pack")
     assets = (SHEET_DIR.parent / "AudioAssets.luau").read_text()
-    if f"{name} =" not in assets:
+    if folder is None and f"{name} =" not in assets:
         print(f"  NOTE: add {name} = \"\" to VehicleAudio/AudioAssets.luau")
     return path
 
@@ -1310,6 +1315,10 @@ def build_pack(name, spec, verbose=True):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--car", help="build only the pack holding this car (its config id)")
+    ap.add_argument("--dev", action="store_true",
+                    help="with --car: build that car alone into assets/audio/dev/Dev_<car>.flac for previews, "
+                         "leaving the shared pack alone (for building several cars at once)")
+    ap.add_argument("--pack", help="build only this pack (e.g. Engines_Pack1)")
     ap.add_argument("--check", help="check a definition and print its firing and pulse pattern")
     ap.add_argument("--analyze", help="engine-order analysis of a recording (needs --car)")
     ap.add_argument("--start", type=float, default=0.0)
@@ -1326,7 +1335,16 @@ def main():
             analyze_recording(args.analyze, load_definition(args.car), args.start, args.end)
             return
         packs = load_packs()["packs"]
-        if args.car:
+        if args.car and args.dev:
+            build_pack(f"Dev_{args.car}", {"engines": [args.car]}, verbose=not args.quiet, folder=DEV_DIR)
+            print(f"  Dev build: the sheet points at Dev_{args.car}, which the game can't play. Previews work. "
+                  f"Run the pack build (--pack) before uploading.")
+            return
+        if args.pack:
+            if args.pack not in packs:
+                sys.exit(f"no pack {args.pack} in {PACKS_FILE.relative_to(ROOT)}")
+            chosen = {args.pack: packs[args.pack]}
+        elif args.car:
             load_definition(args.car)
             chosen = {n: s for n, s in packs.items() if args.car in s.get("engines", [])}
             if not chosen:

@@ -234,9 +234,13 @@ Needs Python 3 with numpy, and ffmpeg.
    whose firing order doesn't alternate banks means the cylinder numbering is wrong.
 3. **Put the car in a pack.** List the id under a pack's `engines` in `assets/audio/packs.json`.
    `Engines_Pack1` already lists the six new cars.
-4. **Build.** Run `python3 tools/synth_audio.py --car <ConfigId>`. It rebuilds that pack and writes
-   `VehicleAudio/Sheets/<ConfigId>_Engine.luau`. It prints every loop's gain, peak, A-weighted level
-   and seam check, and warns if the pack is over its limits or its key is missing from `AudioAssets`.
+4. **Build it alone.** Run `python3 tools/synth_audio.py --car <ConfigId> --dev`.
+   - It builds just that car into `assets/audio/dev/Dev_<ConfigId>.flac` and writes
+     `VehicleAudio/Sheets/<ConfigId>_Engine.luau`.
+   - It prints every loop's gain, peak, A-weighted level and seam check.
+   - It leaves the shared pack and the other cars' sheets alone, so several cars can be worked on at
+     once.
+   - A dev-built car is silent in game, because its pack isn't uploaded. The previews work.
 5. **Hook up the config.** In the car's config, copy the GT12's `audio = { ... }` table and set
    `engineSheet = "<ConfigId>_Engine"` and `redlineRpm`. The other settings are explained in the
    GT12's table.
@@ -246,6 +250,12 @@ Needs Python 3 with numpy, and ffmpeg.
    `python3 tools/synth_audio.py --analyze REC --car <ConfigId> --start S --end E`. It tracks the
    rpm, prints the recording's engine-order spectrum next to the synthesized loop at that rpm, and
    shows harmonic-to-noise ratios. It works best on steady revs with little wind.
+8. **Pack (once, when a batch of cars is final).** Run `python3 tools/synth_audio.py --pack Engines_Pack1`,
+   then delete `assets/audio/dev`.
+   - This rebuilds the pack with all its cars and points their sheets at it.
+   - It warns if the pack is over its limits or its key is missing from `AudioAssets`.
+   - Then upload the pack once. Running `python3 tools/synth_audio.py` with no options rebuilds every
+     pack; `--car <ConfigId>` without `--dev` rebuilds the pack that holds the car.
 
 ## The engine acoustic definition
 
