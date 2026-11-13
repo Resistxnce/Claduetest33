@@ -75,4 +75,16 @@ return {
 	start = 150,
 	lighting = "Night",
 	traffic = { density = 6, seed = 1107, idBase = 30000, clearance = 200 },
+	-- scenery for CityBuilder (and the map picture): the shore line (world z, m; water to the south,
+	-- up to the far shore), and two decorative viaducts that cross the loop at a junction (s, at
+	-- angle degrees to the road, deck top height in m) and run back and ahead (m) to ramps that meet
+	-- the ground
+	decor = {
+		shore = 8970,
+		farShore = 12500,
+		flyovers = {
+			{ name = "Kirameki Bay Viaduct", s = 2860, angle = 55, top = 6.5, back = 3750, ahead = 560, ramp = 300 },
+			{ name = "Umikaze Bay Bridge", s = 12230, angle = -60, top = 23, back = 650, ahead = 3800, ramp = 420, towers = true },
+		},
+	},
 }

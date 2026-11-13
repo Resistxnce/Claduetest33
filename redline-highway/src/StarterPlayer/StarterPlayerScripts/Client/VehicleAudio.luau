@@ -1,15 +1,16 @@
 --[[
 	VehicleAudio: plays the player's car sounds.
 
-	Each sound layer is a Sound that plays one region of a sound sheet (a packed sound file, see
+	Each sound layer is a Sound that plays one region of a sound pack (a packed sound file, see
 	docs/AUDIO.md): PlaybackRegion bounds it and LoopRegion loops it. Every frame, after the
 	simulation step, EngineMix works out each layer's volume and playback speed from the car's
-	state. One-shots (shift cracks, exhaust crackles, suspension knocks) play on a small pool of
-	Sounds.
+	state: engine loops, the limiter loops, turbo whistle or supercharger whine. One-shots (shift
+	cracks, exhaust crackles, suspension knocks, turbo blow-off) play on small pools of Sounds.
 
 	The player's own car plays non-positionally (the Sounds live in SoundService), the way a driver
-	hears their own car. The cockpit camera switches on an equaliser that muffles the cabin.
-	Positional sound for other players' cars and traffic comes later (Phase 4).
+	hears their own car. The cockpit camera switches on an equaliser that muffles the cabin, and
+	AudioEnvironment adds tunnel reverb when the camera is inside a tunnel. Traffic has its own
+	positional sound (TrafficAudio).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,8 +23,10 @@ local AudioAssets = require(AudioFolder:WaitForChild("AudioAssets"))
 local EngineMix = require(AudioFolder:WaitForChild("EngineMix"))
 local Engine = require(VehicleSystem:WaitForChild("EngineSimulation"):WaitForChild("Engine"))
 local VehicleSimulation = require(VehicleSystem:WaitForChild("CorePhysics"):WaitForChild("VehicleSimulation"))
+local AudioEnvironment = require(script.Parent:WaitForChild("AudioEnvironment"))
 
 local ONE_SHOT_VOICES = 6
+local ENGINE_SHOT_VOICES = 2
 local RPM_PER_RAD_S = 30 / math.pi
 
 local VehicleAudio = {}
@@ -89,9 +92,12 @@ function VehicleAudio.start(controller, cameraMode: () -> string)
 	self.inputs = {
 		rpm = 0,
 		load = 0,
+		pedal = 0,
+		clutch = 1,
 		gear = 0,
 		shifting = false,
 		limiter = false,
+		boost = 0,
 		speed = 0,
 		slip = 0,
 		slideSpeed = 0,
@@ -116,26 +122,44 @@ function VehicleAudio.start(controller, cameraMode: () -> string)
 	self.folder.Parent = SoundService
 
 	self.engineSounds = {}
+	-- one-shot pools: the effects sheet (crackles, shifts, knocks) and the engine sheet (blow-off)
+	self.pools = {
+		effects = { shots = {}, voices = {}, next = 1 },
+		engine = { shots = {}, voices = {}, next = 1 },
+	}
 	if engineId then
 		for i, loop in engineSheet.loops do
 			self.engineSounds[i] = newSound(loop.name, engineId, loop, true, self.group, self.folder)
 		end
+		local shots = engineSheet.oneShots or {}
+		for _, shot in shots do
+			self.pools.engine.shots[shot.name] = shot
+		end
+		if #shots > 0 then
+			for v = 1, ENGINE_SHOT_VOICES do
+				self.pools.engine.voices[v] = newSound("EngineShot" .. v, engineId, shots[1], false, self.group, self.folder)
+			end
+		end
 	end
 	self.effectSounds = {}
-	self.oneShots = {}
-	self.voices = {}
-	self.nextVoice = 1
 	if effectsId then
+		local wanted = {}
+		for _, name in EngineMix.EFFECT_LOOPS do
+			wanted[name] = true
+		end
 		for _, loop in effectsSheet.loops do
-			self.effectSounds[loop.name] = newSound(loop.name, effectsId, loop, true, self.group, self.folder)
+			if wanted[loop.name] then
+				self.effectSounds[loop.name] = newSound(loop.name, effectsId, loop, true, self.group, self.folder)
+			end
 		end
 		for _, shot in effectsSheet.oneShots do
-			self.oneShots[shot.name] = shot
+			self.pools.effects.shots[shot.name] = shot
 		end
 		for v = 1, ONE_SHOT_VOICES do
-			self.voices[v] = newSound("OneShot" .. v, effectsId, effectsSheet.oneShots[1], false, self.group, self.folder)
+			self.pools.effects.voices[v] = newSound("OneShot" .. v, effectsId, effectsSheet.oneShots[1], false, self.group, self.folder)
 		end
 	end
+	AudioEnvironment.attach(self.group)
 	for _, child in self.folder:GetChildren() do
 		if child:IsA("Sound") and child.Looped then
 			child:Play()
@@ -162,10 +186,16 @@ function VehicleAudio:update(dt: number)
 
 	local input = self.inputs
 	input.rpm = t.rpm
-	input.load = t.engineTorque / math.max(Engine.curveTorque(self.config.engine, t.rpm), 1)
+	-- Load: torque as a share of full-throttle torque, or the throttle opening if that is more, so a
+	-- turbo car still off boost counts as on throttle. A fuel cut or closed throttle reads as off.
+	local torqueShare = t.engineTorque / math.max(Engine.curveTorque(self.config.engine, t.rpm), 1)
+	input.load = math.clamp(math.max(torqueShare, t.throttle or 0), 0, 1)
+	input.pedal = t.pedal or 0
+	input.clutch = t.clutch or 1
 	input.gear = t.gearNumber
 	input.shifting = t.shifting
 	input.limiter = t.limiter
+	input.boost = t.boost or 0
 	input.speed = t.speedKmh / 3.6
 
 	local slip, slide, bump, shaft, driven = 0, 0, 0, 0, 0
@@ -217,7 +247,7 @@ function VehicleAudio:update(dt: number)
 		end
 	end
 	for _, e in mix.events do
-		self:playOneShot(e.name, e.volume, e.speed)
+		self:playOneShot(e.sheet, e.name, e.volume, e.speed)
 	end
 
 	-- start any loop that wasn't playing yet (for example, its sound was still loading)
@@ -232,13 +262,14 @@ function VehicleAudio:update(dt: number)
 	end
 end
 
-function VehicleAudio:playOneShot(name: string, volume: number, speed: number)
-	local shot = self.oneShots[name]
-	if not shot or #self.voices == 0 then
+function VehicleAudio:playOneShot(sheet: string, name: string, volume: number, speed: number)
+	local pool = self.pools[sheet]
+	local shot = pool and pool.shots[name]
+	if not shot or #pool.voices == 0 then
 		return
 	end
-	local voice = self.voices[self.nextVoice]
-	self.nextVoice = self.nextVoice % #self.voices + 1
+	local voice = pool.voices[pool.next]
+	pool.next = pool.next % #pool.voices + 1
 	voice:Stop()
 	voice.PlaybackRegion = NumberRange.new(shot.start, shot.stop)
 	voice.TimePosition = shot.start
@@ -256,6 +287,7 @@ function VehicleAudio:stop()
 		self.connection:Disconnect()
 		self.connection = nil
 	end
+	AudioEnvironment.detach(self.group)
 	self.folder:Destroy()
 	self.group:Destroy()
 end

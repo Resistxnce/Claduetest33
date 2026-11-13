@@ -4,7 +4,9 @@
 
 	The chase camera follows the car's position exactly and only smooths its direction, so it
 	never falls behind at 300 km/h. Field of view widens a little with speed. A very small
-	high-speed vibration can be switched off with CameraController.settings.shake.
+	high-speed vibration can be switched off with CameraController.settings.shake. In tunnels and
+	beside walls, the chase camera moves in rather than through the wall or ceiling (one raycast a
+	frame against the maps' solid parts, Workspace.Maps).
 ]]
 
 local Players = game:GetService("Players")
@@ -32,6 +34,31 @@ CameraController.settings = {
 local modeIndex = 1
 local root: BasePart? = nil
 local smoothedLook = Vector3.new(0, 0, -1)
+local CLEARANCE = 0.4 -- m kept between the chase camera and a wall or ceiling
+local mapParams = RaycastParams.new()
+mapParams.FilterType = Enum.RaycastFilterType.Include
+local mapsFolder: Instance? = nil
+
+-- Where the chase camera can be: its wanted position, pulled in front of any map geometry between
+-- the car and there.
+local function unblocked(from: Vector3, wanted: Vector3): Vector3
+	if mapsFolder == nil or mapsFolder.Parent == nil then
+		mapsFolder = Workspace:FindFirstChild("Maps")
+		if mapsFolder == nil then
+			return wanted
+		end
+		mapParams.FilterDescendantsInstances = { mapsFolder }
+	end
+	local hit = Workspace:Raycast(from, wanted - from, mapParams)
+	if hit == nil then
+		return wanted
+	end
+	local back = from - hit.Position
+	if back.Magnitude < CLEARANCE / M then
+		return from
+	end
+	return hit.Position + back.Unit * (CLEARANCE / M)
+end
 
 local function setHeadHidden(hidden: boolean)
 	local character = Players.LocalPlayer.Character
@@ -67,6 +94,7 @@ local function update(dt: number)
 		end
 		local position = cf.Position - smoothedLook * (settings.chaseDistance / M) + Vector3.yAxis * (settings.chaseHeight / M)
 		local focus = cf.Position + smoothedLook * (2 / M) + Vector3.yAxis * (0.7 / M)
+		position = unblocked(cf.Position + Vector3.yAxis * (0.7 / M), position)
 		camera.CFrame = CFrame.lookAt(position, focus)
 		camera.FieldOfView = settings.chaseFov + settings.speedFovGain * speedShare
 	elseif mode == "Hood" then

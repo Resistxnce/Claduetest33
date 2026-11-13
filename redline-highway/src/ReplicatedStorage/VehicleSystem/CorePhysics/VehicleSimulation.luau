@@ -306,19 +306,17 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 		local ratio = Transmission.ratio(tr)
 		local inputOmega = self:_inputOmega(ratio)
 		local engagement, capacity, engineTorque
-		local turbineNext = nil
+		local shifting = false
 		if automatic then
 			-- The gearbox input (the converter's turbine) turns with the wheels, except in a shift,
-			-- when the shift clutches carry it from the old gear's speed to the new one's.
-			turbineOmega = inputOmega
-			local direction = Transmission.shiftDirection(tr)
-			if direction ~= 0 then
-				local fromOmega = self:_inputOmega(Transmission.gearRatio(tr, tr.fromGear))
-				local progress = tr.shiftElapsed / tr.shiftDuration
-				local progressNext = math.min((tr.shiftElapsed + h) / tr.shiftDuration, 1)
-				turbineOmega = fromOmega + (inputOmega - fromOmega) * progress
-				turbineNext = fromOmega + (inputOmega - fromOmega) * progressNext
+			-- when the shift clutches slip and it moves from the old gear's speed to the new one's.
+			if tr.shiftStart then
+				tr.shiftStart = false
+				tr.turbineOmega = self:_inputOmega(Transmission.gearRatio(tr, tr.fromGear))
 			end
+			shifting = tr.shifting
+			turbineOmega = if shifting then tr.turbineOmega else inputOmega
+			local direction = Transmission.shiftDirection(tr)
 			engagement = tr.lockup
 			capacity = engagement * tr.spec.lockup.maxTorque
 			local shiftPedal = enginePedal
@@ -360,7 +358,9 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 			end
 			local limit = available / (math.abs(ratio) * efficiency) * tc.headroom * (1 - self.tcCut)
 			if automatic then
-				-- a slipping converter multiplies the engine's torque
+				-- A slipping converter multiplies the engine's torque. Held on the brakes, this also works
+				-- as launch control: the engine runs up against the converter only as far as the tyres
+				-- could then take, so letting the brake off doesn't just spin the wheels.
 				engineTorque = math.min(engineTorque, limit / Transmission.torqueRatio(tr, engine.omega, turbineOmega))
 			else
 				engineTorque = math.min(engineTorque, limit)
@@ -386,20 +386,52 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 		local engineLoad = 0 -- torque taken from the engine (a slipping converter multiplies it)
 		local locked = false
 		if ratio ~= 0 and (capacity > 0 or automatic) then
-			local inertiaInput = if automatic then tr.turbineInertia else 0.02 -- gearbox internals
+			-- the driven wheels as the gearbox input sees them: their inertia and the torque they resist with
+			local inertiaInput = if automatic then 0 else 0.02 -- gearbox internals
 			local loadTorque = 0
-			for _, axle in self.axles do
-				for _, w in { axle.left, axle.right } do
-					inertiaInput += w.tire.inertia / (ratio * ratio)
-					local rolling = if w.contact then w.load * w.tire.compound.rollingResistance * w.tire.radius else 0
-					local resist = w.fxStep * w.tire.radius + (w.brakeTorque + rolling) * sign(w.omega)
-					loadTorque += resist / ratio
+			if #self.axles == 1 then
+				for _, axle in self.axles do
+					for _, w in { axle.left, axle.right } do
+						inertiaInput += w.tire.inertia / (ratio * ratio)
+						local rolling = if w.contact then w.load * w.tire.compound.rollingResistance * w.tire.radius else 0
+						local resist = w.fxStep * w.tire.radius + (w.brakeTorque + rolling) * sign(w.omega)
+						loadTorque += resist / ratio
+					end
 				end
+			else
+				-- All-wheel drive splits the torque between the axles by their shares, so the input sees
+				-- each axle's inertia and resistance weighted by its share, not as one rigid body. That
+				-- keeps the implicit clutch and converter solves consistent with the wheels' own updates.
+				local inverse, weighted = 0, 0
+				for _, axle in self.axles do
+					local axleInertia, axleResist = 0, 0
+					for _, w in { axle.left, axle.right } do
+						local rolling = if w.contact then w.load * w.tire.compound.rollingResistance * w.tire.radius else 0
+						axleInertia += w.tire.inertia
+						axleResist += w.fxStep * w.tire.radius + (w.brakeTorque + rolling) * sign(w.omega)
+					end
+					inverse += axle.share * axle.share / axleInertia
+					weighted += axle.share * axleResist / axleInertia
+				end
+				inertiaInput += 1 / (ratio * ratio * inverse)
+				loadTorque = weighted / (ratio * inverse)
 			end
-			if automatic then
+			if automatic and shifting then
+				-- the turbine runs free of the wheels, held back (or pulled up) by the shift clutches,
+				-- whose torque goes on to the wheels
+				clutchTorque = Transmission.shiftClutchTorque(tr, turbineOmega, inputOmega, engineTorque, engineInertia)
+				local delivered
+				engineLoad, delivered = Transmission.automaticTorque(tr, engine.omega, turbineOmega, engineInertia,
+					tr.turbineInertia, engineTorque, clutchTorque, capacity, h)
+				tr.turbineOmega += h * (delivered - clutchTorque) / tr.turbineInertia
+			elseif automatic then
+				-- The converter sees the wheels through the gearbox's losses (their inertia and load
+				-- grow by 1 / efficiency) plus its own turbine. The wheel update below carries the
+				-- turbine's inertia too, so the implicit solve matches what the wheels then do.
 				local lock
-				engineLoad, clutchTorque, lock = Transmission.automaticTorque(tr, engine.omega, turbineOmega, turbineNext, engineInertia, inertiaInput, engineTorque, loadTorque, capacity, h)
-				locked = turbineNext == nil and capacity > 0 and math.abs(lock) < capacity * 0.999
+				engineLoad, clutchTorque, lock = Transmission.automaticTorque(tr, engine.omega, turbineOmega, engineInertia,
+					tr.turbineInertia + inertiaInput / efficiency, engineTorque, loadTorque / efficiency, capacity, h)
+				locked = capacity > 0 and math.abs(lock) < capacity * 0.999
 			else
 				clutchTorque = Transmission.clutchTorque(tr, engine.omega, inputOmega, engineInertia, inertiaInput, engineTorque, loadTorque, capacity, h)
 				engineLoad = clutchTorque
@@ -407,7 +439,12 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 			end
 		end
 
-		local wheelTorque = clutchTorque * ratio * efficiency
+		local outputRatio = ratio
+		if shifting and tr.gear < tr.fromGear and clutchTorque > 0 then
+			-- on a downshift under power the old gear's clutch still drives until the engine has risen
+			outputRatio = Transmission.gearRatio(tr, tr.fromGear)
+		end
+		local wheelTorque = clutchTorque * outputRatio * efficiency
 		if self.coupling then
 			local front, rear = self.axles[1], self.axles[2]
 			front.torque, rear.torque = Differential.centre(self.coupling, wheelTorque,
@@ -427,15 +464,22 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 		end
 
 		engine.omega = math.clamp(engine.omega + h * (engineTorque - engineLoad) / engineInertia, minOmega, maxOmega)
-		if automatic then
-			Transmission.advanceShift(tr, h)
+		if shifting then
+			Transmission.advanceShift(tr, h, inputOmega)
 		end
 
 		for _, id in WHEEL_IDS do
 			local w = self.wheels[id]
 			local r = w.tire.radius
 			local inertia = w.tire.inertia
-			if w.driven and locked then
+			if w.driven and automatic then
+				-- the turbine, and the engine while the lock-up holds, turn with the wheels, except in
+				-- a shift, when the shift clutches slip
+				if not shifting then
+					local geared = tr.turbineInertia + (if locked then engineInertia else 0)
+					inertia += geared * efficiency * ratio * ratio * w.share / 2
+				end
+			elseif w.driven and locked then
 				inertia += engineInertia * ratio * ratio * w.share / 2
 			end
 			local drive = if w.driven then w.driveTorque else 0

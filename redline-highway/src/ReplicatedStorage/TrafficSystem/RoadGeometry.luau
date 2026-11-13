@@ -56,6 +56,20 @@ local function pointOnPiece(piece, t: number): (number, number, number)
 	return piece.cx + math.sin(heading) / piece.k, piece.cz - math.cos(heading) / piece.k, heading
 end
 
+-- Where a plan position (x, z) falls along a piece: distance t into it (not clamped: below 0 or
+-- beyond its length means before or after it) and sideways offset from it.
+local function projectOnPiece(piece, x: number, z: number): (number, number)
+	if piece.k == 0 then
+		local dx, dz = x - piece.x, z - piece.z
+		return dx * piece.cos + dz * piece.sin, dz * piece.cos - dx * piece.sin
+	end
+	local dx, dz = x - piece.cx, z - piece.cz
+	local distance = math.sqrt(dx * dx + dz * dz)
+	local angle = if piece.k > 0 then math.atan2(dx, -dz) else math.atan2(-dx, dz)
+	local middle = piece.heading + piece.k * piece.length / 2
+	return piece.length / 2 + wrapAngle(angle - middle) / piece.k, 1 / piece.k - math.sign(piece.k) * distance
+end
+
 function RoadGeometry.new(data)
 	local self = setmetatable({}, RoadGeometry)
 	self.id = data.id
@@ -329,19 +343,7 @@ function RoadGeometry:project(position: Vector3, planOnly: boolean?): (number, n
 	local bestScore, bestS, bestOffset, bestHeight = math.huge, 0, 0, 0
 	for _, i in candidates do
 		local piece = self.pieces[i]
-		local t, offset
-		if piece.k == 0 then
-			local dx, dz = x - piece.x, z - piece.z
-			t = dx * piece.cos + dz * piece.sin
-			offset = dz * piece.cos - dx * piece.sin
-		else
-			local dx, dz = x - piece.cx, z - piece.cz
-			local distance = math.sqrt(dx * dx + dz * dz)
-			local angle = if piece.k > 0 then math.atan2(dx, -dz) else math.atan2(-dx, dz)
-			local middle = piece.heading + piece.k * piece.length / 2
-			t = piece.length / 2 + wrapAngle(angle - middle) / piece.k
-			offset = 1 / piece.k - math.sign(piece.k) * distance
-		end
+		local t, offset = projectOnPiece(piece, x, z)
 		local along = if t < 0 then -t elseif t > piece.length then t - piece.length else 0
 		t = math.clamp(t, 0, piece.length)
 		local s = piece.s + t
@@ -360,6 +362,32 @@ function RoadGeometry:project(position: Vector3, planOnly: boolean?): (number, n
 		end
 	end
 	return bestS % self.length, bestOffset, bestHeight
+end
+
+--[[
+	Plan distance (m) from a position to the road's paved surface (0 on it), for placing scenery.
+	Only road within about 40 m counts: farther returns math.huge. Road within skipRange metres of
+	distance skipS is ignored, to ask about other parts of the loop than the one a point is beside.
+]]
+function RoadGeometry:distanceToRoad(position: Vector3, skipS: number?, skipRange: number?): number
+	local x, z = position.X, position.Z
+	local candidates = self.grid[cellKey(math.floor(x / CELL), math.floor(z / CELL))]
+	if candidates == nil then
+		return math.huge
+	end
+	local best = math.huge
+	for _, i in candidates do
+		local piece = self.pieces[i]
+		local t, offset = projectOnPiece(piece, x, z)
+		local along = if t < 0 then -t elseif t > piece.length then t - piece.length else 0
+		local s = piece.s + math.clamp(t, 0, piece.length)
+		if skipS == nil or math.abs(self:delta(skipS, s)) > (skipRange or 0) then
+			local edge = if offset < 0 then self.leftEdge else self.rightEdge
+			local outside = math.max(0, math.abs(offset) - edge)
+			best = math.min(best, math.sqrt(outside * outside + along * along))
+		end
+	end
+	return best
 end
 
 -- Signed shortest distance along the loop from sFrom to sTo.

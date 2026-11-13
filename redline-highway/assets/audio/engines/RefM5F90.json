@@ -1,0 +1,36 @@
+{
+  "id": "RefM5F90",
+  "displayName": "(draft) BMW M5 Competition F90 reference",
+  "reference": "BMW M5 Competition (F90), S63 4.4 L twin-turbo hot-V cross-plane V8. Engineering reference only.",
+  "engine": {
+    "cylinders": 8, "layout": "V", "bankAngleDeg": 90, "crank": "crossplane",
+    "firingOrder": [1, 5, 4, 8, 6, 3, 7, 2],
+    "banks": {"A": [1, 2, 3, 4], "B": [5, 6, 7, 8]},
+    "idleRpm": 600, "limiterRpm": 7200, "aspiration": "Turbo"
+  },
+  "exhaust": {
+    "rasp": 0.3,
+    "collectors": [
+      {"name": "turbo1", "cylinders": [1, 4, 6, 7], "primaryLengthM": 0.6, "lengthSpreadM": 0.03},
+      {"name": "turbo2", "cylinders": [2, 3, 5, 8], "primaryLengthM": 0.6, "lengthSpreadM": 0.03}
+    ],
+    "merge": {"type": "hpipe", "crossover": 0.2, "crossoverHz": 300, "pathM": 0.4},
+    "outlets": [
+      {"collectors": ["turbo1"], "pipeLengthM": 3.4, "tailLengthM": 0.3, "diameterM": 0.08},
+      {"collectors": ["turbo2"], "pipeLengthM": 3.4, "tailLengthM": 0.3, "diameterM": 0.08, "offsetM": 1.0}
+    ],
+    "muffler": {"valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.6}
+  },
+  "intake": {"level": 0.15},
+  "forcedInduction": {
+    "type": "Turbo", "count": 2, "pulseDamping": 0.6, "whistleHz": [2200, 7500],
+    "blowOff": {"type": "recirculating", "level": 0.5}
+  },
+  "limiter": {"type": "fuelCut"},
+  "overrun": {"burble": 0.25},
+  "loudness": {"interior": {"idleDbA": 45, "fullThrottleDbA": 78}},
+  "notes": {
+    "draft": "[E] Draft written to test the hot-V format; the car builder replaces it from research_notes/cars/RefM5F90.",
+    "exhaust.collectors": "[E] Hot-V cross-bank manifold: each twin-scroll turbo takes the four cylinders that fire 180 degrees apart (derived from the firing order), so each turbo sees evenly spaced pulses."
+  }
+}

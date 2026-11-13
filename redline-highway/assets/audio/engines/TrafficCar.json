@@ -1,0 +1,25 @@
+{
+  "id": "TrafficCar",
+  "displayName": "Traffic: generic family car",
+  "reference": "Generic 2.0 L naturally aspirated inline-4 with one exhaust (no particular car).",
+  "sheet": "TrafficCar_Engine",
+  "engine": {
+    "cylinders": 4, "layout": "inline", "crank": "even", "firingOrder": [1, 3, 4, 2],
+    "banks": { "A": [1, 2, 3, 4] }, "idleRpm": 800, "limiterRpm": 6500, "aspiration": "NA"
+  },
+  "exhaust": {
+    "pulseRiseDeg": 10, "pulseDecayDeg": 50, "rasp": 0.15, "gasTempK": 950, "pipeTempK": 650,
+    "collectors": [ { "name": "A", "cylinders": [1, 2, 3, 4], "primaryLengthM": 0.4, "lengthSpreadM": 0.05 } ],
+    "merge": { "type": "y" },
+    "outlets": [ { "collectors": ["A"], "pipeLengthM": 3.2, "tailLengthM": 0.4, "diameterM": 0.05 } ],
+    "muffler": { "valves": "closed", "closedLowpassHz": 1100, "closedCutDb": 4 }
+  },
+  "intake": { "level": 0.3 },
+  "mechanical": { "combustion": 0.12, "valvetrain": 0.03, "injectors": 0.0 },
+  "idle": { "roughness": 0.06 },
+  "loops": { "rpmPoints": [2000], "seconds": 1.0, "limiter": false },
+  "loudness": { "interior": { "idleDbA": 42, "fullThrottleDbA": 76 }, "loadRangeDb": 12 },
+  "notes": {
+    "all": "[E] A generic placeholder for background traffic, not modelled on any one car. Loudness figures are typical-family-car estimates."
+  }
+}

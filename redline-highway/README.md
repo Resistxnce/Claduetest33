@@ -5,8 +5,9 @@
 the Ferrari 812 Superfast's public engineering figures), a proving-ground test track, cameras and a
 dashboard with telemetry. It also has the start of **Phase 2**, the car's sound system with
 placeholder sounds (see `docs/AUDIO.md`); the start of **Phase 4**, highway traffic that follows,
-passes and makes room using two standard traffic research models (IDM and MOBIL); and a first
-**close-pass score** with combos, the arcade layer of the game.
+passes and makes room using two standard traffic research models (IDM and MOBIL), on **two maps**:
+the Redline Proving Ground oval and Sekirei Bay Loop, a night-time city expressway with tunnels; and
+a first **close-pass score** with combos, the arcade layer of the game.
 
 **Status:** written and checked outside Roblox, **not yet run in Roblox Studio.** The place file was
 generated and checked for structure, and the drivetrain maths was tested in a Python copy (see
@@ -45,6 +46,8 @@ Then:
 | C | camera: chase, hood, cockpit |
 | R | put the car back on the track |
 | T / H | telemetry overlay / controls list |
+| N | switch map (Oval / City); gamepad D-pad right |
+| G | next car; gamepad D-pad left |
 
 Gamepads work too: triggers for the pedals, left stick to steer, bumpers to shift, X for the
 handbrake, Y for the camera.
@@ -57,6 +60,7 @@ handbrake, Y for the camera.
 | `docs/PROTOTYPE_GT12.md` | The prototype's specification: sources, estimates and validation |
 | `docs/TEST_CHECKLIST_PHASE1.md` | What to test in Studio and what to report |
 | `docs/AUDIO.md` | The sound system: uploading the sounds, how it works, tuning, recordings |
+| `docs/MAPS.md`, `docs/maps/` | The two maps: layouts, lengths, what to test, and top-down pictures |
 | `assets/audio/` | The two sound files to upload, and a preview of the car driving |
 | `src/` | All scripts, laid out by Studio service (see the plan for what each does) |
 | `build/RedlineHighway.rbxlx` | Ready-to-open place file, generated from `src/` |
@@ -68,6 +72,9 @@ handbrake, Y for the camera.
 | `tools/audio_preview.py` | Renders the preview drive with a Python copy of the game's sound mixer |
 | `tools/traffic_model.py` | Python copy of the traffic simulation with collision and behaviour tests |
 | `tools/close_pass_model.py` | Python copy of the close-pass scoring with tests |
+| `tools/road_geometry.py` | Python copy of the road geometry with tests (closure, continuity, round trips, curve speeds) |
+| `tools/map_pictures.py` | Draws the top-down map pictures in `docs/maps/` |
+| `tools/render_models.py` | Draws every car's stand-in model to `docs/models/lineup.png` |
 
 After editing anything in `src/`, run `python3 tools/build_place.py` to refresh the place file.
 

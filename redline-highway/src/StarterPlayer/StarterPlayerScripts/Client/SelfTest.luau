@@ -2,7 +2,8 @@
 	SelfTest: a quick health check of the car, printed to the Output window a few seconds after it
 	spawns. It runs while the car sits parked, and compares the simulation with the numbers it should
 	settle at (docs/TEST_CHECKLIST_PHASE1.md, M2). When reporting a problem, paste the block it prints.
-	It runs again after every respawn (R).
+	It runs again after every respawn (R), car change (G) and map change (N), and says which map the
+	car is on and whether it rests on that map's road surface.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,7 +29,8 @@ local function thousands(x: number): string
 	return (if x < 0 then "-" else "") .. out
 end
 
-function SelfTest.run(controller)
+-- controller: the car's VehicleController. map: the map it's on (MapRegistry), if known.
+function SelfTest.run(controller, map)
 	task.spawn(function()
 		local frames, elapsed, slowest, driven = 0, 0, 0, false
 		local connection = RunService.Heartbeat:Connect(function(dt)
@@ -60,6 +62,17 @@ function SelfTest.run(controller)
 		end
 		local function info(text: string)
 			table.insert(lines, "  info  " .. text)
+		end
+
+		if map then
+			local road = map.road
+			local s, offset, height = road:project(root.Position * Units.METERS_PER_STUD)
+			info(string.format("%s on %s, %.0f m along its %.1f km road, lane %.1f", config.displayName or config.id,
+				map.displayName, s, road.length / 1000, road:laneFromOffset(offset)))
+			if not driven then
+				check(math.abs(height - config.mass.comHeight) < 0.25, string.format(
+					"resting on the road: centre of mass %.2f m above its surface (expected about %.2f)", height, config.mass.comHeight))
+			end
 		end
 
 		local fps = frames / math.max(elapsed, 1e-3)

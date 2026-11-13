@@ -4,7 +4,8 @@
 	would otherwise slam a 800 CV car); gamepad triggers and stick are used directly.
 
 	InputController.state = { throttle 0-1, brake 0-1, steer -1 to 1, handbrake 0-1 }
-	One-shot actions (shifts, camera, reset...) are delivered to listeners registered with on().
+	One-shot actions (shifts, camera, reset, next car (G), next map (N)...) are delivered to
+	listeners registered with on().
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -41,6 +42,10 @@ local ACTION_KEYS = {
 	[Enum.KeyCode.T] = "telemetry",
 	[Enum.KeyCode.DPadUp] = "telemetry",
 	[Enum.KeyCode.H] = "help",
+	[Enum.KeyCode.G] = "nextCar",
+	[Enum.KeyCode.DPadLeft] = "nextCar",
+	[Enum.KeyCode.N] = "nextMap",
+	[Enum.KeyCode.DPadRight] = "nextMap",
 }
 
 local STICK_DEADZONE = 0.12

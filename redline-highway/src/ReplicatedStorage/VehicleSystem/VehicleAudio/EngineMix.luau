@@ -4,21 +4,27 @@
 	outside the game: tools/audio_preview.py is a line-for-line Python copy that renders what a drive
 	sounds like. Keep the two in step.
 
-	Engine loops come in pairs (on and off throttle) recorded at several engine speeds. Each frame:
-	  * the two recorded engine speeds either side of the current rpm are crossfaded with equal
-	    power, measured in log-rpm so the blend is even in pitch, and each loop is pitched by
-	    rpm / the rpm it was recorded at;
-	  * on- and off-throttle loops are crossfaded by engine load (torque as a share of the
-	    full-throttle torque at this rpm), smoothed so it doesn't flutter;
-	  * loudness rises with rpm.
-	The rev limiter needs no special sound: the simulation cuts fuel, so the load drops and the rpm
-	bounces, and the mix follows. Upshifts at high load add an ignition-cut "crack"; lifting off at
-	high rpm sets off exhaust crackles for a moment.
+	The engine sheet (VehicleAudio/Sheets, made by tools/synth_audio.py from the car's acoustic
+	definition in assets/audio/engines) holds:
+	  * pairs of loops, on and off throttle, made at several steady engine speeds. Each frame the two
+	    speeds either side of the current rpm are crossfaded with equal power in log-rpm (even in
+	    pitch), each loop is pitched by rpm / its own rpm, and on and off are crossfaded by engine
+	    load, smoothed so it doesn't flutter. Each loop carries a gain worked out from the real
+	    car's measured sound levels, so loudness follows rpm and load;
+	  * two limiter loops with the car's cut pattern baked in, one free-revving and one in gear.
+	    While the engine is on the limiter the mix switches to them with a fast attack, so hitting
+	    the limiter is unmistakable;
+	  * forced-induction layers: a turbo whistle pitched by boost plus blow-off one-shots when the
+	    throttle shuts on boost, or supercharger whine loops pitched by rpm and raised by boost.
+	Upshifts at high load add an ignition-cut "crack"; lifting off at high rpm sets off exhaust
+	crackles for a moment.
 
-	Inputs each frame (all numbers):
-	  rpm, load (0-1), gear, shifting (bool), limiter (bool), speed (m/s), slip (largest combined
-	  tyre slip, 1 = at the grip peak), slideSpeed (fastest tyre sliding speed, m/s), shaftRpm
-	  (driveshaft), bump (bump-stop impact speed, m/s), interior (bool, cockpit camera)
+	Inputs each frame:
+	  rpm, load (0-1), pedal (0-1), clutch (0-1 engagement), gear, shifting (bool), limiter (bool:
+	  the fuel cut is active), boost (0-1), speed (m/s), slip (largest combined tyre slip, 1 = at the
+	  grip peak), slideSpeed (fastest tyre sliding speed, m/s), shaftRpm (driveshaft), bump (bump-stop
+	  impact speed, m/s), interior (bool, cockpit camera)
+	Events: { name, volume, speed, sheet } where sheet is "engine" or "effects".
 ]]
 
 local EngineMix = {}
@@ -61,14 +67,28 @@ EngineMix.EFFECT_LOOPS = EFFECT_LOOPS
 function EngineMix.new(spec, engineSheet, effectsSheet, random: Random?)
 	local self = {
 		spec = spec,
-		points = {}, -- recorded engine speeds, ascending
+		points = {}, -- engine speeds of the on/off loop pairs, ascending
 		onLoop = {}, -- index into engineSheet.loops of the on-throttle loop at each point
 		offLoop = {},
-		loopRpm = {}, -- recorded engine speed of each loop
-		engineVolume = {}, -- per engine loop, indexed like engineSheet.loops
+		loopRpm = {}, -- engine speed each loop was made at
+		loopGain = {}, -- playback gain of each loop (from the car's measured sound levels)
+		hasGains = false,
+		engineVolume = {}, -- per engine-sheet loop, indexed like engineSheet.loops
 		engineSpeed = {},
+		limiterFree = nil, -- index of the free-revving limiter loop
+		limiterLoad = nil, -- and of the in-gear one
+		turboLoop = nil,
+		turboBaseHz = 1,
+		turboMinHz = 1,
+		turboMaxHz = 1,
+		blowOffNames = {},
+		whineLoops = {}, -- supercharger whine loops, ascending rpm
+		whineRpm = {},
+		whineBaseHz = {},
+		whineWeights = {},
+		whineHzPerRpm = 0, -- rotor pulses per second per crank rpm
 		effects = {}, -- per effect loop name: { volume, speed }
-		events = {}, -- one-shots to start this frame: { name, volume, speed }
+		events = {}, -- one-shots to start this frame: { name, volume, speed, sheet }
 		weights = {},
 		load = 0,
 		lastGear = 0,
@@ -78,22 +98,45 @@ function EngineMix.new(spec, engineSheet, effectsSheet, random: Random?)
 		bumpCooldown = 0,
 		crackleNames = {},
 		whineHz = 1000,
+		limiterSeen = math.huge, -- seconds since the fuel cut was last active
+		limiterMix = 0, -- 0 = normal loops, 1 = limiter loops
+		freeMix = 0, -- 0 = in-gear limiter loop, 1 = free-revving one
+		limiterRpm = 0, -- smoothed rpm while on the limiter
+		limiterRpmSheet = engineSheet.limiterRpm or math.huge, -- where the car's limiter is
+		pedalPeak = 0,
+		boostPeak = 0,
+		blowOffCooldown = 0,
 		random = random or Random.new(),
 	}
 
 	local byRpm = {}
 	for i, loop in engineSheet.loops do
-		self.loopRpm[i] = loop.rpm
+		self.loopRpm[i] = loop.rpm or 0
+		self.loopGain[i] = loop.gain or 1
+		self.hasGains = self.hasGains or loop.gain ~= nil
 		self.engineVolume[i] = 0
 		self.engineSpeed[i] = 1
-		local key = math.floor(loop.rpm + 0.5)
-		local pair = byRpm[key]
-		if not pair then
-			pair = { rpm = loop.rpm }
-			byRpm[key] = pair
-			table.insert(self.points, pair)
+		if loop.load == "on" or loop.load == "off" then
+			local key = math.floor(loop.rpm + 0.5)
+			local pair = byRpm[key]
+			if not pair then
+				pair = { rpm = loop.rpm }
+				byRpm[key] = pair
+				table.insert(self.points, pair)
+			end
+			pair[loop.load] = i
+		elseif loop.load == "limiter" then
+			if loop.kind == "free" then
+				self.limiterFree = i
+			else
+				self.limiterLoad = i
+			end
+		elseif loop.layer == "turbo" then
+			self.turboLoop = i
+			self.turboBaseHz = loop.baseHz
+		elseif loop.layer == "supercharger" then
+			table.insert(self.whineLoops, i)
 		end
-		pair[loop.load] = i
 	end
 	table.sort(self.points, function(a, b)
 		return a.rpm < b.rpm
@@ -102,6 +145,28 @@ function EngineMix.new(spec, engineSheet, effectsSheet, random: Random?)
 		self.onLoop[k] = pair.on or pair.off
 		self.offLoop[k] = pair.off or pair.on
 		self.points[k] = pair.rpm
+	end
+	self.limiterFree = self.limiterFree or self.limiterLoad
+	self.limiterLoad = self.limiterLoad or self.limiterFree
+	if engineSheet.turbo then
+		self.turboMinHz = engineSheet.turbo.minHz
+		self.turboMaxHz = engineSheet.turbo.maxHz
+	end
+	for _, shot in engineSheet.oneShots or {} do
+		if shot.layer == "blowoff" then
+			table.insert(self.blowOffNames, shot.name)
+		end
+	end
+	table.sort(self.whineLoops, function(a, b)
+		return engineSheet.loops[a].rpm < engineSheet.loops[b].rpm
+	end)
+	for k, index in self.whineLoops do
+		self.whineRpm[k] = engineSheet.loops[index].rpm
+		self.whineBaseHz[k] = engineSheet.loops[index].baseHz
+		self.whineWeights[k] = 0
+	end
+	if engineSheet.supercharger then
+		self.whineHzPerRpm = engineSheet.supercharger.driveRatio * engineSheet.supercharger.pulsesPerRev / 60
 	end
 
 	for _, name in EFFECT_LOOPS do
@@ -122,8 +187,8 @@ function EngineMix.new(spec, engineSheet, effectsSheet, random: Random?)
 	return self
 end
 
-local function event(self, name: string, volume: number, speed: number)
-	table.insert(self.events, { name = name, volume = volume, speed = speed })
+local function event(self, name: string, volume: number, speed: number, sheet: string?)
+	table.insert(self.events, { name = name, volume = volume, speed = speed, sheet = sheet or "effects" })
 end
 
 function EngineMix.update(self, dt: number, input)
@@ -132,8 +197,12 @@ function EngineMix.update(self, dt: number, input)
 	local rpm = math.max(input.rpm, 1)
 	local interior = spec.interior
 	local engineGain = if input.interior then interior.engine else 1
-	local loud = spec.engineVolume * engineGain
-		* (spec.idleLevel + (1 - spec.idleLevel) * math.clamp(rpm / spec.redlineRpm, 0, 1.1) ^ spec.rpmCurve)
+	-- Sheets made from an acoustic definition carry per-loop gains for the loudness curve; older
+	-- sheets without them use the configured curve.
+	local loud = if self.hasGains
+		then spec.engineVolume * engineGain
+		else spec.engineVolume * engineGain
+			* (spec.idleLevel + (1 - spec.idleLevel) * math.clamp(rpm / spec.redlineRpm, 0, 1.1) ^ spec.rpmCurve)
 
 	-- gear changes: an ignition-cut crack on full-throttle upshifts, a clunk on every shift
 	local gear = input.gear
@@ -160,17 +229,75 @@ function EngineMix.update(self, dt: number, input)
 	self.load += (target - self.load) * math.clamp(rate * dt, 0, 1)
 	local load = self.load
 
+	-- the rev limiter: switch to the limiter loops while the fuel cut keeps coming back with the
+	-- pedal down (a fast attack so the first cut is heard), and back when it stops
+	if input.limiter then
+		self.limiterSeen = 0
+	else
+		self.limiterSeen += dt
+	end
+	local nearLimit = rpm > 0.92 * self.limiterRpmSheet -- an upshift off the limiter releases it at once
+	local limiterTarget = if self.limiterFree and self.limiterSeen < spec.limiterHold and input.pedal > 0.5 and nearLimit
+		then 1
+		else 0
+	local limiterRate = if limiterTarget > self.limiterMix then spec.limiterAttack else spec.limiterRelease
+	self.limiterMix += (limiterTarget - self.limiterMix) * math.clamp(limiterRate * dt, 0, 1)
+	local freeTarget = if input.gear == 0 or input.clutch < 0.5 then 1 else 0
+	self.freeMix += (freeTarget - self.freeMix) * math.clamp(8 * dt, 0, 1)
+	self.limiterRpm += (rpm - self.limiterRpm) * math.clamp(3 * dt, 0, 1)
+	local keep = 1 - self.limiterMix
+
 	-- engine loops
 	local on = math.sqrt(load)
-	local off = math.sqrt(1 - load) * spec.offThrottleLevel
+	local off = math.sqrt(1 - load) * (if self.hasGains then 1 else spec.offThrottleLevel)
 	EngineMix.rpmWeights(self.points, rpm, self.weights)
 	for k, w in self.weights do
 		local onIndex, offIndex = self.onLoop[k], self.offLoop[k]
-		self.engineVolume[onIndex] = loud * w * on
+		self.engineVolume[onIndex] = loud * w * on * keep * self.loopGain[onIndex]
 		self.engineSpeed[onIndex] = math.clamp(rpm / self.loopRpm[onIndex], spec.minPitch, spec.maxPitch)
 		if offIndex ~= onIndex then
-			self.engineVolume[offIndex] = loud * w * off
+			self.engineVolume[offIndex] = loud * w * off * keep * self.loopGain[offIndex]
 			self.engineSpeed[offIndex] = math.clamp(rpm / self.loopRpm[offIndex], spec.minPitch, spec.maxPitch)
+		end
+	end
+	if self.limiterFree then
+		local free, inGear = self.limiterFree, self.limiterLoad
+		local mix = self.limiterMix
+		if free == inGear then
+			self.engineVolume[free] = loud * mix * self.loopGain[free]
+		else
+			self.engineVolume[free] = loud * mix * math.sqrt(self.freeMix) * self.loopGain[free]
+			self.engineVolume[inGear] = loud * mix * math.sqrt(1 - self.freeMix) * self.loopGain[inGear]
+			self.engineSpeed[inGear] = math.clamp(self.limiterRpm / self.loopRpm[inGear], 0.97, 1.03)
+		end
+		self.engineSpeed[free] = math.clamp(self.limiterRpm / self.loopRpm[free], 0.97, 1.03)
+	end
+
+	-- forced induction: turbo whistle pitched by boost (shaft speed rises about as the square root
+	-- of boost pressure), blow-off when the throttle shuts on boost, supercharger whine by rpm
+	local boost = math.clamp(input.boost, 0, 1)
+	if self.turboLoop then
+		local hz = self.turboMinHz + (self.turboMaxHz - self.turboMinHz) * math.sqrt(boost)
+		self.engineVolume[self.turboLoop] = spec.turboVolume * engineGain * boost ^ 1.2 * (0.35 + 0.65 * load)
+		self.engineSpeed[self.turboLoop] = math.clamp(hz / self.turboBaseHz, 0.3, 3)
+	end
+	self.pedalPeak = math.max(input.pedal, self.pedalPeak - 3 * dt)
+	self.boostPeak = math.max(boost, self.boostPeak - 2 * dt)
+	self.blowOffCooldown = math.max(0, self.blowOffCooldown - dt)
+	if #self.blowOffNames > 0 and input.pedal < 0.2 and self.pedalPeak > 0.6
+		and self.boostPeak > spec.blowOffMinBoost and self.blowOffCooldown <= 0
+	then
+		self.blowOffCooldown = 1
+		self.pedalPeak = 0
+		local name = self.blowOffNames[self.random:NextInteger(1, #self.blowOffNames)]
+		event(self, name, spec.blowOffVolume * engineGain * self.boostPeak, 0.95 + 0.1 * self.random:NextNumber(), "engine")
+	end
+	if #self.whineLoops > 0 then
+		EngineMix.rpmWeights(self.whineRpm, rpm, self.whineWeights)
+		local level = spec.superchargerVolume * engineGain * (0.2 + 0.8 * boost) * math.clamp(rpm / 2500, 0.3, 1)
+		for k, index in self.whineLoops do
+			self.engineVolume[index] = level * self.whineWeights[k]
+			self.engineSpeed[index] = math.clamp(rpm * self.whineHzPerRpm / self.whineBaseHz[k], 0.25, 4)
 		end
 	end
 

@@ -10,9 +10,11 @@
 	Automatic   A torque converter with a lock-up clutch (Transmission.converter and
 	            Transmission.automaticTorque). The converter slips and multiplies torque at low
 	            speed, which gives the launch and idle creep. The lock-up clutch closes above a set
-	            speed in the higher gears. In a shift, the gearbox's own shift clutches carry the
-	            gearbox input from the old gear's speed to the new gear's over shiftTime while the
-	            engine's torque is cut back, the way modern 8- and 10-speed automatics shift.
+	            speed in the higher gears. In a shift the gearbox input (the converter's turbine) is
+	            let go from the wheels: the shift clutches slip, and the gearbox control sets their
+	            torque so the turbine, and the engine with it, reach the new gear's speed in shiftTime
+	            while the engine's torque is cut back, the way modern 8- and 10-speed automatics
+	            shift (Transmission.shiftClutchTorque).
 ]]
 
 local Units = require(script.Parent.Parent.Units)
@@ -22,6 +24,8 @@ local Transmission = {}
 local DEFAULT_TURBINE_INERTIA = 0.05 -- kg*m^2, converter turbine and gearbox input
 local DEFAULT_LOCKUP_STIFFNESS = 400 -- Nm per rad/s of slip, as for the dual-clutch's clutch
 local AUTO_SHIFT_MARGIN_RPM = 250 -- automatic: keeps a new gear clear of the next shift point
+local MIN_SHIFT_REMAINING = 0.03 -- s; the shift control never plans to close a gap faster than this
+local SHIFT_SYNC_RAD_S = 5 -- a shift clutch locks once the turbine is this close to the new gear's speed
 
 function Transmission.new(spec)
 	return {
@@ -33,8 +37,11 @@ function Transmission.new(spec)
 		automatic = spec.type == "Automatic",
 		fromGear = 1, -- the gear the last shift left
 		-- automatic gearboxes only
-		shiftDuration = 0, -- length of the current shift's speed change (s)
+		shifting = false, -- in a shift's speed change, with the shift clutches slipping
+		shiftStart = false, -- a shift has just begun (VehicleSimulation sets turbineOmega)
+		shiftDuration = 0, -- planned length of the shift's speed change (s)
 		shiftElapsed = 0, -- time into it (s)
+		turbineOmega = 0, -- gearbox input speed during a shift (rad/s)
 		lockup = 0, -- lock-up clutch engagement, 0 to 1
 		converterK = 0, -- converter capacity factor, Nm per (rad/s)^2 (VehicleSimulation sets it)
 		turbineInertia = spec.turbineInertia or DEFAULT_TURBINE_INERTIA,
@@ -68,7 +75,7 @@ function Transmission.shift(tr, newGear: number): boolean
 	if newGear == tr.gear or tr.sinceShift < spec.minShiftInterval then
 		return false
 	end
-	if tr.automatic and tr.shiftElapsed < tr.shiftDuration then
+	if tr.automatic and tr.shifting then
 		return false -- an automatic finishes one shift before it starts the next
 	end
 	tr.fromGear = tr.gear
@@ -77,33 +84,53 @@ function Transmission.shift(tr, newGear: number): boolean
 	tr.sinceShift = 0
 	if tr.automatic then
 		-- only a change between forward gears needs the shift clutches to change the input speed
-		local time = if newGear < tr.fromGear then spec.downshiftTime or spec.shiftTime else spec.shiftTime
-		tr.shiftDuration = if newGear >= 1 and tr.fromGear >= 1 then time else 0
+		tr.shifting = newGear >= 1 and tr.fromGear >= 1
+		tr.shiftStart = tr.shifting
+		tr.shiftDuration = if newGear < tr.fromGear then spec.downshiftTime or spec.shiftTime else spec.shiftTime
 		tr.shiftElapsed = 0
-		tr.shiftTimer = tr.shiftDuration
+		tr.shiftTimer = if tr.shifting then tr.shiftDuration else 0
 	end
 	return true
 end
 
 function Transmission.isShifting(tr): boolean
 	if tr.automatic then
-		return tr.shiftElapsed < tr.shiftDuration
+		return tr.shifting
 	end
 	return tr.shiftTimer > 0
 end
 
 -- Automatic gearboxes: 1 during an upshift, -1 during a downshift, 0 otherwise.
 function Transmission.shiftDirection(tr): number
-	if not tr.automatic or tr.shiftElapsed >= tr.shiftDuration then
+	if not (tr.automatic and tr.shifting) then
 		return 0
 	end
 	return if tr.gear > tr.fromGear then 1 else -1
 end
 
--- Automatic gearboxes: move the current shift on by one simulation step.
-function Transmission.advanceShift(tr, dt: number)
-	if tr.shiftElapsed < tr.shiftDuration then
-		tr.shiftElapsed = math.min(tr.shiftElapsed + dt, tr.shiftDuration)
+--[[
+	Automatic gearboxes, during a shift: the torque the slipping shift clutches pass from the gearbox
+	input (the turbine) to the output. The gearbox control sets it so the turbine, and the engine
+	turning with it, close the gap to the new gear's input speed (targetOmega) by the end of the
+	planned shift time: the engine's torque less what slowing (or speeding up) the engine and turbine
+	takes. It only depends gently on the wheel speed, so it needs no implicit solve.
+]]
+function Transmission.shiftClutchTorque(tr, turbineOmega: number, targetOmega: number, engineTorque: number, inertiaEngine: number): number
+	local remaining = math.max(tr.shiftDuration - tr.shiftElapsed, MIN_SHIFT_REMAINING)
+	return engineTorque - (inertiaEngine + tr.turbineInertia) * (targetOmega - turbineOmega) / remaining
+end
+
+-- Automatic gearboxes: move the shift on by one step. It ends when the turbine is within
+-- SHIFT_SYNC_RAD_S of the new gear's input speed (the shift clutch then locks), or at the latest after
+-- three times its planned time.
+function Transmission.advanceShift(tr, dt: number, targetOmega: number)
+	if not tr.shifting then
+		return
+	end
+	tr.shiftElapsed += dt
+	local direction = if tr.gear > tr.fromGear then 1 else -1
+	if (targetOmega - tr.turbineOmega) * direction >= -SHIFT_SYNC_RAD_S or tr.shiftElapsed >= 3 * tr.shiftDuration then
+		tr.shifting = false
 	end
 end
 
@@ -284,46 +311,30 @@ end
 	input speeds, like clutchTorque, so the light gearbox side stays stable. The lock-up clutch is
 	then solved on top as a stiff coupling with lockupCapacity.
 	  omegaEngine, omegaTurbine  rad/s now
-	  turbineNext  during a shift, the turbine speed at the end of this step, which the shift
-	               clutches control. Otherwise nil, and the turbine moves with the wheels
-	               (inertiaInput, loadTorque).
+	  inertiaInput, loadTorque   what the turbine drives: the wheels seen through the gearbox, or
+	                             during a shift only the turbine itself, held back by the shift clutches
 	  the rest as for clutchTorque
-	Returns the torque taken from the engine, the torque passed into the gearbox (in a shift, what
-	the shift clutches pass on after changing the turbine's own speed), and the lock-up clutch's part.
+	Returns the torque taken from the engine, the torque delivered to the turbine, and the lock-up
+	clutch's part of them.
 ]]
-function Transmission.automaticTorque(tr, omegaEngine: number, omegaTurbine: number, turbineNext: number?, inertiaEngine: number, inertiaInput: number, engineTorque: number, loadTorque: number, lockupCapacity: number, dt: number): (number, number, number)
+function Transmission.automaticTorque(tr, omegaEngine: number, omegaTurbine: number, inertiaEngine: number, inertiaInput: number, engineTorque: number, loadTorque: number, lockupCapacity: number, dt: number): (number, number, number)
 	local impeller, turbine, pa, pb, qa, qb = Transmission.converter(tr, omegaEngine, omegaTurbine)
-	local alpha = dt / inertiaEngine
-	local da, db
-	if turbineNext then
-		db = turbineNext - omegaTurbine
-		da = alpha * (engineTorque - impeller - pb * db) / (1 + alpha * pa)
-	else
-		-- [1 + alpha*pa, alpha*pb; -beta*qa, 1 - beta*qb] [da; db] = [alpha*(Te - impeller); beta*(turbine - load)]
-		local beta = dt / inertiaInput
-		local m11, m12, m21, m22 = 1 + alpha * pa, alpha * pb, -beta * qa, 1 - beta * qb
-		local r1, r2 = alpha * (engineTorque - impeller), beta * (turbine - loadTorque)
-		local det = m11 * m22 - m12 * m21 -- at least 1 for this converter model
-		da = (r1 * m22 - m12 * r2) / det
-		db = (m11 * r2 - m21 * r1) / det
-	end
+	-- [1 + alpha*pa, alpha*pb; -beta*qa, 1 - beta*qb] [da; db] = [alpha*(Te - impeller); beta*(turbine - load)]
+	local alpha, beta = dt / inertiaEngine, dt / inertiaInput
+	local m11, m12, m21, m22 = 1 + alpha * pa, alpha * pb, -beta * qa, 1 - beta * qb
+	local r1, r2 = alpha * (engineTorque - impeller), beta * (turbine - loadTorque)
+	local det = m11 * m22 - m12 * m21 -- at least 1 for this converter model
+	local da = (r1 * m22 - m12 * r2) / det
+	local db = (m11 * r2 - m21 * r1) / det
 	impeller += pa * da + pb * db
 	turbine += qa * da + qb * db
 
 	local lock = 0
 	if lockupCapacity > 0 then
 		local stiffness = tr.spec.lockup.stiffness or DEFAULT_LOCKUP_STIFFNESS
-		if turbineNext then
-			lock = couplingTorque(stiffness, omegaEngine, turbineNext, inertiaEngine, math.huge, engineTorque - impeller, 0, lockupCapacity, dt)
-		else
-			lock = couplingTorque(stiffness, omegaEngine, omegaTurbine, inertiaEngine, inertiaInput, engineTorque - impeller, loadTorque - turbine, lockupCapacity, dt)
-		end
+		lock = couplingTorque(stiffness, omegaEngine, omegaTurbine, inertiaEngine, inertiaInput, engineTorque - impeller, loadTorque - turbine, lockupCapacity, dt)
 	end
-	local delivered = turbine + lock
-	if turbineNext then
-		delivered -= tr.turbineInertia * (turbineNext - omegaTurbine) / dt
-	end
-	return impeller + lock, delivered, lock
+	return impeller + lock, turbine + lock, lock
 end
 
 function Transmission.gearLabel(tr): string

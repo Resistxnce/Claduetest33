@@ -1,0 +1,29 @@
+{
+  "id": "RefC8Stingray",
+  "displayName": "(draft) Corvette Stingray C8 Z51 reference",
+  "reference": "Chevrolet Corvette Stingray (C8) with Z51, LT2 6.2 L naturally aspirated pushrod cross-plane V8, valved exhaust. Engineering reference only.",
+  "engine": {
+    "cylinders": 8, "layout": "V", "bankAngleDeg": 90, "crank": "crossplane",
+    "firingOrder": [1, 8, 7, 2, 6, 5, 4, 3],
+    "banks": {"L": [1, 3, 5, 7], "R": [2, 4, 6, 8]},
+    "idleRpm": 600, "limiterRpm": 6600, "aspiration": "NA"
+  },
+  "exhaust": {
+    "rasp": 0.45,
+    "merge": {"type": "xpipe", "crossover": 0.3, "crossoverHz": 600, "pathM": 0.3},
+    "outlets": [
+      {"collectors": ["L"], "pipeLengthM": 1.8, "tailLengthM": 0.3, "diameterM": 0.09},
+      {"collectors": ["R"], "pipeLengthM": 1.9, "tailLengthM": 0.3, "diameterM": 0.09, "offsetM": 1.1}
+    ],
+    "muffler": {"valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.5}
+  },
+  "intake": {"level": 0.3},
+  "mechanical": {"combustion": 0.06, "valvetrain": 0.015, "injectors": 0.01},
+  "idle": {"roughness": 0.09, "lope": 0.15},
+  "overrun": {"burble": 0.35},
+  "limiter": {"type": "fuelCut", "free": {"bounceHz": 6.0, "dropRpm": 300, "cutShare": 0.5}},
+  "loudness": {"interior": {"idleDbA": 48, "fullThrottleDbA": 85}},
+  "notes": {
+    "draft": "[E] Draft written to test the valved cross-plane format; the car builder replaces it from research_notes/cars/RefC8Stingray."
+  }
+}

@@ -169,9 +169,10 @@ def blowdown(f, rise_s, decay_s):
     return 1 / ((1 + 2j * np.pi * f * rise_s) * (1 + 2j * np.pi * f * decay_s))
 
 
-def radiation(f, diameter_m):
-    """A pipe end radiates the rate of change of its flow until ka ~ 1, then evenly."""
-    s = 1j * f / (AIR_C / (math.pi * diameter_m))
+def radiation(f, diameter_m, corner_hz=None):
+    """A pipe end radiates the rate of change of its flow until ka ~ 1, then evenly. corner_hz
+    overrides the corner (calibrated: real exhausts tilt less than the ideal far field)."""
+    s = 1j * f / (corner_hz or AIR_C / (math.pi * diameter_m))
     return s / (1 + s)
 
 
@@ -210,17 +211,24 @@ DEFAULTS = {
         "idleRpm": 800,
         "limiterRpm": 6500,
         "aspiration": "NA",  # "NA", "Turbo" or "Supercharger"
+        "cylinderSpread": 0.06,  # how much cylinders differ from each other (puts half orders in the sound)
     },
     "exhaust": {
         "evoDeg": 130,  # exhaust valve opens this many crank degrees after the firing
-        "pulseRiseDeg": 8,  # blowdown pulse rise, crank degrees
-        "pulseDecayDeg": 45,  # and decay
+        "pulseRiseDeg": 4,  # blowdown pulse rise, crank degrees
+        "pulseDecayDeg": 30,  # and decay
         "minRiseMs": 0.06,  # the rise can't be quicker than this
         "gasTempK": 1000,  # in the primaries (sets pulse travel time and primary resonances)
         "pipeTempK": 700,  # downstream of the collectors
         "primaryReflection": -0.55,  # round-trip reflection of a primary (closed valve end)
         "pipeReflection": 0.45,  # of the pipes after the collector
         "rasp": 0.35,  # 0..1: how much full-load pulses sharpen (harmonic richness)
+        "timingJitterDeg": 0.8,  # random spread of pulse timing, crank degrees (smears high harmonics)
+        "shapeSpread": 0.25,  # random spread of pulse duration, share
+        "flowNoise": 0.6,  # turbulent flow noise riding on the pulses, relative to the pulses
+        "flowNoiseHz": 600,  # where that noise is strongest
+        "offPulseSoftening": 1.0,  # off throttle, pulses rise this much slower
+        "radiationHz": 500,  # corner of the tailpipe radiation tilt (calibrated; null = from the pipe diameter)
         "level": 1.0,
         "collectors": None,  # default: one per bank, see BANK_COLLECTOR
         "merge": {"type": "separate", "crossover": 0.0, "crossoverHz": 400, "pathM": 0.3},
@@ -243,12 +251,14 @@ DEFAULTS = {
         "airboxHz": 110,  # Helmholtz resonance of the plenum and airbox
         "snorkelLengthM": 0.5,
         "mouthDiameterM": 0.09,
+        "filterLowpassHz": 2200,
     },
     "mechanical": {
-        "combustion": 0.10,  # block-radiated combustion noise
-        "valvetrain": 0.03,  # valve seating ticks
-        "injectors": 0.025,  # direct-injection ticks (0 for port injection)
+        "combustion": 0.05,  # block-radiated combustion noise
+        "valvetrain": 0.008,  # valve seating ticks
+        "injectors": 0.006,  # direct-injection ticks (0 for port injection)
         "blockHz": [1800, 3300],
+        "bayLowpassHz": 2500,
     },
     "idle": {"roughness": 0.08, "lope": 0.0},  # cycle-to-cycle variation at idle; cam lope 0..1
     "overrun": {"pulseLevel": 0.16, "burble": 0.0},  # off-throttle pulse strength; pops per second / 6
@@ -447,7 +457,8 @@ def describe(d):
     angles = firing_angles(d)
     order = e["firingOrder"]
     bank_of = {c: b for b, cyls in e["banks"].items() for c in cyls}
-    lines = [f"{d['id']}: {e['cylinders']} cylinders, {e['layout']} {e.get('bankAngleDeg', '')} deg, "
+    angle = f" {e['bankAngleDeg']:g} deg" if e["layout"] in ("V", "flat") else ""
+    lines = [f"{d['id']}: {e['cylinders']} cylinders, {e['layout']}{angle}, "
              f"crank {e['crank']}, {e['aspiration']}, idle {e['idleRpm']} rpm, limiter {e['limiterRpm']} rpm",
              "  firing gaps: " + "-".join(f"{g:g}" for g in pulse_gaps(angles, order)),
              "  bank sequence: " + " ".join(f"{c}{bank_of[c]}" for c in order)]
@@ -516,7 +527,7 @@ class EngineModel:
         rng = np.random.default_rng(d["seed"])
         # each cylinder breathes and burns slightly differently (fixed for the car): this puts the
         # half orders in the sound that every real engine has
-        self.cyl_gain = {c: 1 + 0.035 * rng.standard_normal() for c in self.cyls}
+        self.cyl_gain = {c: 1 + e["cylinderSpread"] * rng.standard_normal() for c in self.cyls}
         self.primary_len = {}
         for col in x["collectors"]:
             for c in col["cylinders"]:
@@ -581,13 +592,25 @@ class EngineModel:
         evo = self.event_times(theta, x["evoDeg"])
         c_hot = gas_c(x["gasTempK"] if on else x["gasTempK"] * 0.75)
         cols = x["collectors"]
-        trains = np.zeros((len(cols), n))
+        # No two combustions are alike: each pulse is a little early or late, and its blowdown a
+        # little quicker or slower (three pulse shapes, picked at random). This smears the high
+        # harmonics into noise the way real exhaust sound does.
+        spread = x["shapeSpread"]
+        groups = (1 - spread, 1.0, 1 + spread)
+        trains = np.zeros((len(groups), len(cols), n))
+        jitter = x["timingJitterDeg"] * (1 if on else 1.6)
         for c in self.cyls:
             k = self.collector_of[c]
-            trains[k] += impulse_train(n, evo[c] + self.primary_len[c] / c_hot, amps[c] * pulse_level)
-        rise = max(x["pulseRiseDeg"] * deg_s * (1 if on else 1.6), x["minRiseMs"] * 1e-3)
+            ts = evo[c] + self.primary_len[c] / c_hot + rng.normal(0, jitter, len(evo[c])) * deg_s
+            pick = rng.integers(0, len(groups), len(ts))
+            for g in range(len(groups)):
+                sel = pick == g
+                if sel.any():
+                    trains[g, k] += impulse_train(n, ts[sel], (amps[c] * pulse_level)[sel])
+        rise = max(x["pulseRiseDeg"] * deg_s * (1 if on else x["offPulseSoftening"]), x["minRiseMs"] * 1e-3)
         fall = x["pulseDecayDeg"] * deg_s * (1 if on else 1.3)
-        shaped = np.fft.rfft(trains, axis=1) * blowdown(f, rise, fall)[None, :]
+        shaped = sum(np.fft.rfft(trains[g], axis=1) * blowdown(f, rise * m, fall * m)[None, :]
+                     for g, m in enumerate(groups))
         for k, col in enumerate(cols):
             shaped[k] *= pipe(f, col["primaryLengthM"], c_hot, x["primaryReflection"])
         pressure = np.fft.irfft(shaped, n=n, axis=1)
@@ -595,6 +618,17 @@ class EngineModel:
         peak = np.max(np.abs(pressure)) or 1.0
         gamma = 1 + x["rasp"] * load
         pressure = np.sign(pressure) * (np.abs(pressure) / peak) ** gamma * peak
+        # turbulent flow noise rides on each pulse (valve, collector and tailpipe jets), then
+        # travels through the same pipes and silencers
+        if x["flowNoise"] > 0:
+            hiss_shape = highpass(f, 0.4 * x["flowNoiseHz"], 0.7) * (0.5 + resonator(f, x["flowNoiseHz"], 0.6))
+            for k in range(len(cols)):
+                env = circular(np.maximum(pressure[k], 0), lowpass(f, 400))
+                r = math.sqrt(float(np.mean(pressure[k] ** 2))) or 1.0
+                noise = circular(rng.standard_normal(n) * env, hiss_shape)
+                nr = math.sqrt(float(np.mean(noise ** 2))) or 1.0
+                flow = (0.4 + 0.6 * load) * (0.35 + 0.65 * min(rpm / self.top, 1.0))  # faster gas, more hiss
+                pressure[k] += x["flowNoise"] * flow * r / nr * noise
         # afterfire pops (limiter ignition cut, overrun burble) explode in the exhaust
         pops = self.pops(n, fire, cut_flags, load, rpm, rng)
         if pops is not None:
@@ -630,7 +664,7 @@ class EngineModel:
                         feed = feed + cross * spectra[others].sum(axis=0)
             path = (pipe(f, o["pipeLengthM"], c_pipe, x["pipeReflection"]) * silencer
                     * pipe(f, o["tailLengthM"], gas_c(x["pipeTempK"] * 0.7), 0.35)
-                    * radiation(f, o["diameterM"]) * shift(f, o["offsetM"] / AIR_C))
+                    * radiation(f, o["diameterM"], x["radiationHz"]) * shift(f, o["offsetM"] / AIR_C))
             exhaust += o["gain"] * feed * path
         exhaust_t = np.fft.irfft(exhaust * highpass(f, 25), n=n)
 
@@ -644,7 +678,8 @@ class EngineModel:
                           * pipe(f, it["runnerLengthM"], 360.0, -0.5)
                           * (0.35 + resonator(f, it["airboxHz"], 1.8))
                           * pipe(f, it["snorkelLengthM"], AIR_C, 0.4)
-                          * radiation(f, it["mouthDiameterM"]) * highpass(f, 30))
+                          * radiation(f, it["mouthDiameterM"]) * highpass(f, 30)
+                          * lowpass(f, it["filterLowpassHz"], 0.6))  # the air filter element and airbox walls
         # throttle hiss at part throttle
         hiss = unit(circular(rng.standard_normal(n), resonator(f, 2500, 0.9)))
         intake = intake + hiss * (0.3 * math.sqrt(float(np.mean(intake ** 2))) * load * (1 - load) * 4)
@@ -654,8 +689,9 @@ class EngineModel:
         fire_t = np.concatenate([fire[c] for c in self.cyls])
         fire_a = np.concatenate([np.where(cut_flags[c], 0.0, amps[c]) for c in self.cyls]) * (0.3 + 0.7 * load) * burning
         block_hz = mech["blockHz"]
+        bay = lowpass(f, mech["bayLowpassHz"], 0.6)  # heard through the engine bay and bodywork
         block = circular(burst(n, fire_t, fire_a, 0.7e-3, rng),
-                         resonator(f, block_hz[0], 1.3) + 0.7 * resonator(f, block_hz[1], 1.6))
+                         (resonator(f, block_hz[0], 1.3) + 0.7 * resonator(f, block_hz[1], 1.6)) * bay)
         ticks = np.zeros(n)
         tick_total = mech["valvetrain"] + mech["injectors"]
         for offset, level, hz in ((x["evoDeg"] + 230, mech["valvetrain"], 5200), (590, mech["valvetrain"], 6100),
@@ -664,7 +700,7 @@ class EngineModel:
                 continue
             ev = self.event_times(theta, offset)
             tt = np.concatenate([ev[c] for c in self.cyls])
-            click = circular(impulse_train(n, tt, np.ones(len(tt))), resonator(f, hz, 6) * highpass(f, 2000))
+            click = circular(impulse_train(n, tt, np.ones(len(tt))), resonator(f, hz, 6) * highpass(f, 2000) * bay)
             ticks += level / tick_total * unit(click)
         parts = {"exhaust": exhaust_t, "intake": intake, "block": block, "ticks": ticks}
         if self.turbo:

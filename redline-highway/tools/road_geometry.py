@@ -61,6 +61,18 @@ def point_on_piece(piece, t):
     return piece["cx"] + math.sin(heading) / piece["k"], piece["cz"] - math.cos(heading) / piece["k"], heading
 
 
+def project_on_piece(piece, x, z):
+    """Where a plan position falls along a piece: distance t into it (not clamped) and offset."""
+    if piece["k"] == 0:
+        dx, dz = x - piece["x"], z - piece["z"]
+        return dx * piece["cos"] + dz * piece["sin"], dz * piece["cos"] - dx * piece["sin"]
+    dx, dz = x - piece["cx"], z - piece["cz"]
+    distance = math.sqrt(dx * dx + dz * dz)
+    angle = math.atan2(dx, -dz) if piece["k"] > 0 else math.atan2(-dx, dz)
+    middle = piece["heading"] + piece["k"] * piece["length"] / 2
+    return piece["length"] / 2 + wrap_angle(angle - middle) / piece["k"], 1 / piece["k"] - sign(piece["k"]) * distance
+
+
 class Road:
     def __init__(self, data):
         self.id = data["id"]
@@ -254,17 +266,7 @@ class Road:
         best_score, best_s, best_offset, best_height = math.inf, 0.0, 0.0, 0.0
         for i in candidates:
             piece = self.pieces[i]
-            if piece["k"] == 0:
-                dx, dz = x - piece["x"], z - piece["z"]
-                t = dx * piece["cos"] + dz * piece["sin"]
-                offset = dz * piece["cos"] - dx * piece["sin"]
-            else:
-                dx, dz = x - piece["cx"], z - piece["cz"]
-                distance = math.sqrt(dx * dx + dz * dz)
-                angle = math.atan2(dx, -dz) if piece["k"] > 0 else math.atan2(-dx, dz)
-                middle = piece["heading"] + piece["k"] * piece["length"] / 2
-                t = piece["length"] / 2 + wrap_angle(angle - middle) / piece["k"]
-                offset = 1 / piece["k"] - sign(piece["k"]) * distance
+            t, offset = project_on_piece(piece, x, z)
             along = -t if t < 0 else (t - piece["length"] if t > piece["length"] else 0.0)
             t = min(max(t, 0.0), piece["length"])
             s = piece["s"] + t
@@ -280,6 +282,24 @@ class Road:
                 best_score, best_s, best_offset, best_height = score, s, offset, height
         self.tested += len(candidates)
         return best_s % self.length, best_offset, best_height
+
+    def distance_to_road(self, x, z, skip_s=None, skip_range=0):
+        """Plan distance (m) from a position to the road's paved surface (0 on it), counting only
+        road within about 40 m (farther: inf), and ignoring road within skip_range of skip_s."""
+        candidates = self.grid.get(cell_key(math.floor(x / CELL), math.floor(z / CELL)))
+        if candidates is None:
+            return math.inf
+        best = math.inf
+        for i in candidates:
+            piece = self.pieces[i]
+            t, offset = project_on_piece(piece, x, z)
+            along = -t if t < 0 else (t - piece["length"] if t > piece["length"] else 0.0)
+            s = piece["s"] + min(max(t, 0.0), piece["length"])
+            if skip_s is None or abs(self.delta(skip_s, s)) > skip_range:
+                edge = self.left_edge if offset < 0 else self.right_edge
+                outside = max(0.0, abs(offset) - edge)
+                best = min(best, math.sqrt(outside * outside + along * along))
+        return best
 
     def delta(self, s_from, s_to):
         """Signed shortest distance along the loop from s_from to s_to."""

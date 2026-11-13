@@ -162,12 +162,16 @@ return {
 		ackermann = 0.6, -- [E] 0 = parallel steering, 1 = full Ackermann
 	},
 
-	-- [E] Sound. The sheets are packed sound files in VehicleAudio/Sheets (see docs/AUDIO.md);
-	-- volumes are Roblox Sound volumes. Tuned by ear in testing.
+	-- [E] Sound. The engine sheet is made from the car's acoustic definition,
+	-- assets/audio/engines/Prototype812.json, by tools/synth_audio.py; sheets are regions of packed
+	-- sound files (VehicleAudio/Sheets, see docs/AUDIO.md). Volumes are Roblox Sound volumes. The
+	-- engine's loudness curve over rpm and load comes from the sheet's per-loop gains (from the
+	-- real car's measured sound levels); engineVolume scales all of it. Tuned by ear in testing.
 	audio = {
 		engineSheet = "GT12_Engine",
 		effectsSheet = "Driving_Effects",
-		engineVolume = 0.9, -- at the redline on full throttle
+		engineVolume = 1.0, -- overall engine level (1 = the sheet's calibrated gains)
+		-- used only with a sheet that has no per-loop gains:
 		idleLevel = 0.3, -- loudness at idle as a share of engineVolume
 		rpmCurve = 1.0, -- how loudness rises with rpm (1 = in proportion)
 		redlineRpm = 8900,
@@ -176,6 +180,15 @@ return {
 		loadRelease = 12, -- 1/s, and closing
 		minPitch = 0.5,
 		maxPitch = 2.0,
+		-- rev limiter: the limiter loops take over while the fuel cut keeps coming back
+		limiterHold = 0.3, -- s after the last cut before the normal loops return (cuts come about 4 times a second)
+		limiterAttack = 40, -- 1/s, how fast the limiter loops come in (about 25 ms)
+		limiterRelease = 10, -- 1/s, and go out
+		-- forced induction (only used by turbo or supercharged engine sheets)
+		turboVolume = 0.35, -- whistle at full boost
+		blowOffVolume = 0.6,
+		blowOffMinBoost = 0.35, -- boost (0-1) needed for a blow-off when the throttle shuts
+		superchargerVolume = 0.3, -- whine at full boost
 		shiftCutTime = 0.08, -- seconds of ignition cut heard on a full-throttle upshift
 		shiftCutMinRpm = 4500,
 		shiftCutVolume = 0.6,

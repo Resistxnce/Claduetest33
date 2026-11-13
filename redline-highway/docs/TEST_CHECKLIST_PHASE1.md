@@ -14,7 +14,8 @@ and stop at the first thing that fails. Then send me the exact text from Studio'
 
 ## M1. It loads and you're in the car
 
-- [ ] Output shows `[Redline] Proving ground built in ... s (lap 8484 m)` with no red errors.
+- [ ] Output shows `[Redline] Map Oval (Redline Proving Ground) built in ... s: 9.3 km, 4 lanes, ... parts`,
+      the same line for `Map City`, and no red errors.
 - [ ] A grey oval track with lane lines, barriers and light poles appears.
 - [ ] A red stand-in car appears on the start grid and your avatar is sitting in it.
 - [ ] The speed, gear and RPM panel shows at the bottom right, and the controls list at the bottom left.
@@ -51,7 +52,7 @@ and stop at the first thing that fails. Then send me the exact text from Studio'
 
 ## M5. Performance against the factory figures
 
-Use the 2.2 km main straight. The telemetry overlay (T) records each result.
+Use the 2.4 km main straight. The telemetry overlay (T) records each result.
 
 - [ ] **0–100 / 0–200 km/h:** stop completely, then hold W. Model expectation: about 3.4 s / 8.2 s.
       Factory: 2.9 s / 7.9 s.
@@ -77,7 +78,8 @@ Use the 2.2 km main straight. The telemetry overlay (T) records each result.
 
 ## Traffic (Phase 4, first version)
 
-- [ ] Output shows `[Redline] Traffic: ... cars on 8.5 km of 4-lane road`.
+- [ ] Output shows `[Redline] Traffic on Oval: ... cars on 9.3 km of 4-lane road` and
+      `[Redline] Traffic on City: ... cars on 12.7 km of 3-lane road`.
 - [ ] Stand-in cars and trucks drive round the oval. Most keep to the right-hand lanes and faster ones
       use the left; trucks stay in the two right-hand lanes.
 - [ ] They move smoothly, with no stutter or jumps, even when you drive alongside at their speed.
@@ -88,6 +90,12 @@ Use the 2.2 km main straight. The telemetry overlay (T) records each result.
       over to let you by.
 - [ ] Hitting a traffic car stops your car hard. Traffic cars don't get knocked around yet.
 - [ ] The frame rate stays smooth with traffic around.
+
+## Maps
+
+- [ ] Work through `docs/MAPS.md`, "What to test in Studio": switching maps with N, the city at night,
+      the tunnels and the loop that passes over its own approach.
+- [ ] G cycles through the cars, and each one spawns at the right size, with the wheels on the road.
 
 ## Close-pass score
 

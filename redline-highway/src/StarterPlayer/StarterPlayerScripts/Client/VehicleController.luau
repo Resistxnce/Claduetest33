@@ -75,7 +75,8 @@ function VehicleController.start(model: Model)
 
 	self.rayParams = RaycastParams.new()
 	self.rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	self.rayParams.FilterDescendantsInstances = { model, Players.LocalPlayer.Character }
+	self.filterTimer = 0
+	self:_updateRayFilter()
 
 	self.forcePoints = {}
 	self.wheelForces = {}
@@ -117,6 +118,28 @@ function VehicleController.start(model: Model)
 	return self
 end
 
+-- The suspension rays ignore the car itself, the driver and the traffic cars (a ray landing on a
+-- traffic car in a crash would launch the car). The traffic folder can appear later or be replaced
+-- on a map switch, so step() checks again about once a second.
+function VehicleController:_updateRayFilter()
+	local traffic = Workspace:FindFirstChild("Traffic")
+	local character = Players.LocalPlayer.Character
+	if self.filterReady and traffic == self.filterTraffic and character == self.filterCharacter then
+		return
+	end
+	self.filterReady = true
+	self.filterTraffic = traffic
+	self.filterCharacter = character
+	local exclude: { Instance } = { self.model }
+	if character then
+		table.insert(exclude, character)
+	end
+	if traffic then
+		table.insert(exclude, traffic)
+	end
+	self.rayParams.FilterDescendantsInstances = exclude
+end
+
 function VehicleController:step(dt: number)
 	local root = self.root
 	if not root.Parent then
@@ -124,6 +147,11 @@ function VehicleController:step(dt: number)
 	end
 	dt = math.clamp(dt, 1 / 240, 1 / 20)
 	local sim = self.sim
+	self.filterTimer += dt
+	if self.filterTimer > 1 then
+		self.filterTimer = 0
+		self:_updateRayFilter()
+	end
 
 	InputController.update(dt)
 	local input = InputController.state

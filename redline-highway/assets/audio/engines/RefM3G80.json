@@ -1,0 +1,32 @@
+{
+  "id": "RefM3G80",
+  "displayName": "(draft) BMW M3 Competition G80 reference",
+  "reference": "BMW M3 Competition (G80), S58 3.0 L twin-turbo inline-6. Engineering reference only.",
+  "engine": {
+    "cylinders": 6, "layout": "inline", "crank": "even",
+    "firingOrder": [1, 5, 3, 6, 2, 4],
+    "banks": { "A": [1, 2, 3, 4, 5, 6] },
+    "idleRpm": 750, "limiterRpm": 7200, "aspiration": "Turbo"
+  },
+  "exhaust": {
+    "evoDeg": 125, "pulseRiseDeg": 8, "pulseDecayDeg": 45, "rasp": 0.3,
+    "collectors": [
+      { "name": "front", "cylinders": [1, 2, 3], "primaryLengthM": 0.35, "lengthSpreadM": 0.03 },
+      { "name": "rear", "cylinders": [4, 5, 6], "primaryLengthM": 0.35, "lengthSpreadM": 0.03 }
+    ],
+    "merge": { "type": "hpipe", "crossover": 0.2, "crossoverHz": 300, "pathM": 0.4 },
+    "outlets": [
+      { "collectors": ["front"], "pipeLengthM": 3.0, "tailLengthM": 0.3, "diameterM": 0.08 },
+      { "collectors": ["rear"], "pipeLengthM": 3.0, "tailLengthM": 0.3, "diameterM": 0.08, "offsetM": 0.8 }
+    ],
+    "muffler": { "valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.6 }
+  },
+  "intake": { "level": 0.18 },
+  "forcedInduction": {
+    "type": "Turbo", "count": 2, "pulseDamping": 0.55, "whistleHz": [2500, 8000],
+    "blowOff": { "type": "recirculating", "level": 0.5 }
+  },
+  "limiter": { "type": "softCut" },
+  "loudness": { "interior": { "idleDbA": 45, "fullThrottleDbA": 80 } },
+  "notes": { "draft": "[E] Draft for testing the format; to be replaced by the car builder from research_notes/cars/RefM3G80." }
+}

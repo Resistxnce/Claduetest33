@@ -2,9 +2,14 @@
 	ScoreHUD: the close-pass score at the top of the screen. Shows the banked score, the current
 	combo with its multiplier and a bar for the time left to chain the next pass, and short popups
 	for each pass ("CLOSE PASS +540"), banked combos and crashes.
+
+	Also the always-on parts of the screen: a notice banner (map and car names when they change,
+	ScoreHUD.notice) and two buttons at the top right for changing map and car with a mouse or a
+	touch screen (ScoreHUD.menu), which do the same as the N and G keys.
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local ScoreHUD = {}
 
@@ -21,6 +26,10 @@ local comboLabel: TextLabel
 local timerBar: Frame
 local popups = {}
 local nextPopup = 1
+local menu: ScreenGui
+local noticeLabel: TextLabel
+local noticeLeft = 0
+local mapButton: TextButton
 
 local function newLabel(parent: Instance, name: string, size: UDim2, position: UDim2, textSize: number, color: Color3): TextLabel
 	local label = Instance.new("TextLabel")
@@ -76,6 +85,65 @@ function ScoreHUD.init()
 		popups[i] = { label = newLabel(gui, "Popup" .. i, UDim2.fromOffset(500, 30), UDim2.new(0.5, 0, 0.3, 0), 26, WHITE), age = math.huge }
 	end
 	ScoreHUD.set(nil)
+
+	-- always on: the notice banner (fades out by itself) and the menu buttons
+	menu = Instance.new("ScreenGui")
+	menu.Name = "MapMenu"
+	menu.ResetOnSpawn = false
+	menu.IgnoreGuiInset = true
+	menu.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	noticeLabel = newLabel(menu, "Notice", UDim2.fromOffset(700, 40), UDim2.new(0.5, 0, 0, 104), 32, WHITE)
+	RunService.Heartbeat:Connect(function(dt)
+		if noticeLeft > 0 then
+			noticeLeft -= dt
+			local fade = math.clamp(1 - noticeLeft / 0.6, 0, 1)
+			noticeLabel.TextTransparency = fade
+			noticeLabel.TextStrokeTransparency = 0.5 + 0.5 * fade
+		end
+	end)
+end
+
+-- Show a short line of text (a map's or car's name) under the score for a few seconds.
+function ScoreHUD.notice(text: string, seconds: number?)
+	noticeLabel.Text = text
+	noticeLabel.TextTransparency = 0
+	noticeLabel.TextStrokeTransparency = 0.5
+	noticeLeft = seconds or 2.5
+end
+
+local function menuButton(name: string, text: string, y: number, onClick: () -> ()): TextButton
+	local button = Instance.new("TextButton")
+	button.Name = name
+	button.AnchorPoint = Vector2.new(1, 0)
+	button.Position = UDim2.new(1, -16, 0, y)
+	button.Size = UDim2.fromOffset(190, 30)
+	button.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
+	button.BackgroundTransparency = 0.35
+	button.BorderSizePixel = 0
+	button.AutoButtonColor = true
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 14
+	button.TextColor3 = WHITE
+	button.Text = text
+	button.Parent = menu
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = button
+	button.Activated:Connect(onClick)
+	return button
+end
+
+-- The two buttons at the top right: change map (N) and change car (G).
+function ScoreHUD.menu(onMap: () -> (), onCar: () -> ())
+	mapButton = menuButton("MapButton", "MAP  (N)", 64, onMap)
+	menuButton("CarButton", "NEXT CAR  (G)", 100, onCar)
+end
+
+-- Show which map the player is on, on the map button.
+function ScoreHUD.setMapName(name: string)
+	if mapButton then
+		mapButton.Text = string.upper(name) .. "   (N)"
+	end
 end
 
 local function popup(text: string, color: Color3)

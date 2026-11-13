@@ -9,9 +9,15 @@ small gap between the two cars' sides while they are alongside. Closer and faste
 Passes within a few seconds of each other build a combo multiplier; the combo is banked once the
 chain ends, and lost if the player hits a car first.
 
+The tests run on each map's real loop length (read from the game's map data by
+tools/road_geometry.py), since the scorer measures who is ahead along the loop and must handle the
+start line of each map.
+
 Usage: python3 tools/close_pass_model.py
 """
 import math
+import pathlib
+import sys
 
 SETTINGS = dict(
     minSpeedKmh=120,  # the player must be at least this fast
@@ -115,7 +121,7 @@ class ClosePass:
 # Tests
 # ---------------------------------------------------------------------------------------------
 
-LAP = 8484.0
+LAP = 8484.0  # set to each map's loop length by main()
 CAR = dict(length=4.7, width=1.85)
 PLAYER = dict(length=4.657, width=1.971)
 
@@ -146,7 +152,7 @@ def check(name, ok, detail):
     return ok
 
 
-def main():
+def run_tests():
     results = []
 
     cp = ClosePass(SETTINGS, LAP)
@@ -188,6 +194,18 @@ def main():
     ev = drive(cp, 3, 250, {1: (20, side_offset(0.6), 110)}, start_s=LAP - 10)
     results.append(check("a pass across the lap's start line counts", sum(e["kind"] == "pass" for e in ev) == 1, str(ev)))
 
+    return results
+
+
+def main():
+    global LAP
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    import road_geometry
+    results = []
+    for map_id in road_geometry.MAP_IDS:
+        LAP = road_geometry.load_road(map_id).length
+        print(f"{map_id}: {LAP:,.0f} m loop")
+        results += run_tests()
     ok = all(results)
     print("PASS: all close-pass tests" if ok else "FAIL: see above")
     return 0 if ok else 1
