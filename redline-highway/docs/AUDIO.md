@@ -149,6 +149,11 @@ Every frame:
   pedal down, rpm within 8% of the limiter), the mix switches to the limiter loops with a 25 ms attack.
   It uses the free-revving loop in neutral or with the clutch open, the in-gear loop otherwise. An
   upshift off the limiter drops the rpm below the band and releases it at once.
+
+  A full-throttle gear change flares the engine into the fuel cut for a few frames while the clutch
+  slips. That isn't the limiter, so cuts are ignored while the gearbox reports `shifting`, and for
+  `limiterShiftMask` (0.15 s) after it or after any gear change. The gear-change test also covers
+  automatics.
 - **Turbo.**
   - The whistle's volume follows boost (`t.boost`).
   - Its pitch follows the turbo's shaft speed, which rises about as the square root of boost
@@ -418,6 +423,7 @@ Engine orders at idle (dB relative to the firing order, 4):
 | `loadAttack`, `loadRelease` | How quickly the on/off blend follows the throttle. |
 | `minPitch`, `maxPitch` | Playback-speed limits. |
 | `limiterHold` (0.3 s), `limiterAttack` (40/s, about 25 ms), `limiterRelease` (10/s) | The limiter switch. The simulation cuts fuel about 4 times a second on the limiter, so the hold must bridge the gaps. |
+| `limiterShiftMask` (optional, default 0.15 s) | Fuel cuts during a gear change and this long after it don't count as the limiter. |
 | `turboVolume`, `blowOffVolume`, `blowOffMinBoost`, `superchargerVolume` | Forced-induction layers. Only turbo or supercharged engine sheets use them. |
 | `superchargerIdleShare` (0.2), `superchargerFullRpm` (2,500), `superchargerRpmFloor` (0.3) | Optional whine shape: the share left with no boost, the rpm where it reaches full level, and the share left at very low rpm. Leaving them out gives these defaults. |
 | `shiftCut*`, `shiftClunkVolume`, `crackle*`, `bump*`, `squeal*`, `roadVolume`, `windVolume`, `whine*` | As before. |

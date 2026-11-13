@@ -138,8 +138,9 @@ reaches the limiter in 0.45 s.
   - The 1-2 upshift then spins the tyres (slip 0.36). Traction control's slow recovery (2 /s) costs
     another 0.1-0.15 s.
   - A scratch emulation of launch control alone (engine started at 2,700 rpm with boost built) did not
-    help. The traction-control cap, divided by the converter's torque multiplication, drags the engine
-    straight back to about 1,500 rpm.
+    help. Released at stall, the converter spins the rear tyres. Traction control (its cap, divided by
+    the converter's torque multiplication, and its slip cut) then drags the engine back to about
+    1,500 rpm within 0.12 s, and the boost dumps.
 - **The magazines' cars are a little quicker everywhere power matters** (quarter-mile trap 197 km/h
   against 200-202 measured). That fits the research's note that the 375 kW rating is conservative:
   ARM Motorsports' Mustang dyno measured 335 kW at the wheels of a stock xDrive car, which implies
@@ -181,15 +182,24 @@ reaches the limiter in 0.45 s.
   - optionally add a `launchGear` (2 for this car).
 
   Without it, no automatic turbo car can reach its launch-control figures.
-- **Rev limiter overshoot.** The fuel cut acts through the throttle's first-order response
-  (`Engine.luau` `target = 0 if cut`, and the same in `drivetrain_model.py`). So this light, torquey
-  engine overshoots its first free-rev hit to the model's 7,650 rpm clamp (limiter + 400) before
-  bouncing at 7,140-7,470 rpm. A fuel cut should remove combustion torque at once: in `Engine.net`, when
-  `cut` is set, also set `throttle = 0`.
-- **Speed limiter.** It closes the throttle over the last 3 km/h, so limited cars settle 2-3 km/h under
-  their limit. Tapering over the last 1 km/h (`clamp((limit - v) / 1, 0, 1)`) would hold within 1 km/h.
-- **HUD labels.** Every target is labelled "factory", including magazine figures such as `quarterMile`
-  (`HUD.luau` `factory()`). Proposed: label them "target".
+- **Rev limiter overshoot.**
+  - The problem: the fuel cut only sets the throttle target to 0 (`Engine.luau` `Engine.netTorque`,
+    lines 107-112; `drivetrain_model.Engine.net`), and the throttle decays at `throttleResponse`. So this
+    light, torquey engine overshoots its first free-rev hit to the model's 7,650 rpm clamp (limiter +
+    400) before settling into a 7,140-7,470 rpm bounce.
+  - Proposed: a fuel cut removes combustion torque at once. In `Engine.netTorque`,
+    `local drive = if engine.limiterCut then 0 else Engine.curveTorque(spec, rpm) * delivered`, and the
+    same in Python (`drive = 0 if s.cut else curve_torque_of(spec, r) * delivered`).
+  - Tested in memory: this car's first free-rev peak falls from 7,650 to 7,265 rpm, then it bounces at
+    7,146-7,264 rpm 15 times a second. The GT12 (which also hits its 9,300 rpm clamp now) peaks at
+    8,924 rpm and bounces 13.5 times a second.
+  - This changes every car's limiter bounce, so the GT12's validated figures would need rechecking.
+- **Speed limiter.**
+  - The problem: it closes the throttle over the last 3 km/h (`VehicleSimulation.luau` line 249,
+    `drivetrain_model.run`), so limited cars settle 2-3 km/h under their limit.
+  - Proposed: dividing by 1 instead of 3 holds within about 1 km/h.
+- **HUD labels.** Every target is labelled "factory", including magazine figures such as `quarterMile`.
+  Proposed: in `HUD.luau` line 99, `"factory "` becomes `"target "`.
 - **Boost ceiling.** A linear ceiling can't follow a convex factory boost rise. An optional
   `forcedInduction.boostCeiling = { {rpm, share}, ... }` table in `Engine.boostCeiling` and
   `drivetrain_model.boost_ceiling` would let the full-boost curve stay a flat 650 Nm. For the S58 that
