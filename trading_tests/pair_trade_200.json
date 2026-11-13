@@ -1,0 +1,20 @@
+{
+  "description": "Paper pair trade: $200 long Nvidia and $200 short AMD, opened 2026-11-13 and closed 4 hours later. SPY recorded for context.",
+  "entry": {
+    "time_utc": "2026-11-13T15:05:40Z",
+    "time_est": "2026-11-13 10:05:40 AM EST",
+    "nvda_price": 162.405,
+    "nvda_shares_long": 1.231489,
+    "amd_price": 539.6,
+    "amd_shares_short": 0.370645,
+    "spy_price": 752.93
+  },
+  "planned_exit": {
+    "time_utc": "2026-11-13T19:05:00Z",
+    "time_est": "2026-11-13 02:05 PM EST",
+    "price_rule": "open of the 1-minute bar starting at the exit time"
+  },
+  "costs": "No commission. Borrow fee on the AMD short and bid/ask gaps are a few cents at most over 4 hours, so they are ignored.",
+  "realism_note": "Most brokers only let you short whole shares and need a margin account, so a $200 AMD short (0.37 shares) is simulated pro rata.",
+  "price_source": "Yahoo Finance chart API, 1-minute bars"
+}

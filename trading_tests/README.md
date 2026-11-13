@@ -34,6 +34,11 @@ exchange fee.
   comparison. No commission. Score it with
   `python3 -I trading_tests/nvda_300_test.py trading_tests/nvda_300_test.json`.
 
+- **$200 long Nvidia / $200 short AMD, four hours** (`pair_trade_200.json`,
+  `pair_trade_200.py`): opened 2026-11-13 around 10:05 am EST, closed four
+  hours later. Score it with
+  `python3 -I trading_tests/pair_trade_200.py trading_tests/pair_trade_200.json`.
+
 To score the day test once it has ended (needs only Python 3):
 
 ```sh
