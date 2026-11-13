@@ -188,6 +188,7 @@ return {
 		limiterHold = 0.3, -- s after the last cut before the normal loops return (cuts come about 4 times a second)
 		limiterAttack = 40, -- 1/s, how fast the limiter loops come in (about 25 ms)
 		limiterRelease = 10, -- 1/s, and go out
+		limiterShiftMask = 0.15, -- s: fuel cuts during a gear change and this long after it aren't the limiter
 		-- forced induction (only used by turbo or supercharged engine sheets)
 		turboVolume = 0.35, -- whistle at full boost
 		blowOffVolume = 0.6,

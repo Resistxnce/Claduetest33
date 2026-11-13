@@ -193,8 +193,9 @@ return {
 		compounds = {
 			-- [E] Road tyre in the class of the Michelin Pilot Sport 4S fitted to every test car (engineering
 			-- reference only). muLong fitted between the measured braking (MotorTrend 60-0 mph 1.18 g, Car and
-			-- Driver 70-0 mph 1.09 g mean, both including brake build-up) and the traction-limited launch (about
-			-- 0.77 g to 50 mph); muLat for the 1.03 g skidpad (Car and Driver, MotorTrend). See docs/cars/RefM3G80.md.
+			-- Driver 70-0 mph 1.09 g mean, both including brake build-up) and the traction-limited launch
+			-- (MotorTrend about 0.73 g average to 50 mph, 1-2 shift included); muLat for the 1.03 g skidpad
+			-- (Car and Driver, MotorTrend). See docs/cars/RefM3G80.md.
 			RoadPerformance = { base = "Performance", muLong = 1.25, muLat = 1.08 },
 			-- [E] Track tyre in the class of the optional Pilot Sport Cup 2, about 12% more grip (not fitted by default).
 			TrackTyre = { base = "SemiSlick", muLong = 1.40, muLat = 1.21, rollingResistance = 0.012 },

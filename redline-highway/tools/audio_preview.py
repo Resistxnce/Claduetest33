@@ -143,6 +143,7 @@ class EngineMix:
         self.whine_hz = 1000.0
         self.crackle_names = []
         self.limiter_seen = math.inf
+        self.since_shift = math.inf
         self.limiter_mix = 0.0
         self.free_mix = 0.0
         self.limiter_rpm = 0.0
