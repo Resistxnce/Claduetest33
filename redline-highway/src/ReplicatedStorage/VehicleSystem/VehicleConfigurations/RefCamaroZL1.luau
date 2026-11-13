@@ -256,7 +256,16 @@ return {
 		turboVolume = 0.35,
 		blowOffVolume = 0.6,
 		blowOffMinBoost = 0.35,
-		superchargerVolume = 0.06, -- rotor whine (0.4133 x rpm Hz) at full boost: about 15-16 dB(A) under the exhaust at full throttle, more at part throttle and idle
+		-- [E] Supercharger whine (0.4133 x rpm Hz, plus a weaker line at half that pitch from the sheet).
+		-- Reviewers hear it most at low revs and part throttle, faintly at a quiet idle, and covered by the
+		-- exhaust at high revs [P]. Level = superchargerVolume x (idleShare + (1 - idleShare) x boost) x
+		-- clamp(rpm / fullRpm, rpmFloor, 1). Measured against the rest of the mix: about 11-13 dB(A) under
+		-- in full-throttle pulls from 1,500 to 4,500 rpm, 15-17 under at part throttle, 16 under at full
+		-- throttle above 4,500 rpm and 21 under at idle.
+		superchargerVolume = 0.06,
+		superchargerIdleShare = 0.4, -- the rotors still sweep their pockets with the bypass valve open
+		superchargerFullRpm = 1500,
+		superchargerRpmFloor = 0.5,
 		-- 10-speed upshifts at full throttle: a short torque cut; GM says pops during wide-open-throttle
 		-- manoeuvres in Sport or Track are normal [F]
 		shiftCutTime = 0.06,

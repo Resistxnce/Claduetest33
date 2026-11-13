@@ -18,7 +18,7 @@
 
 	What the simulation can't represent, and how it is approximated (details in the doc):
 	  * the real rev limit is 8,100 rpm in 1st and 2nd and 8,200 rpm above; the game has one limiter,
-	    so it uses 8,200 (full-throttle automatic upshifts come at 8,050, below both);
+	    so it uses 8,200 (full-throttle automatic upshifts come at 8,100, the real 1st-2nd limit);
 	  * the rear differential is open and McLaren's Brake Steer brakes the spinning rear wheel; this
 	    is approximated with a no-preload, power-only limited slip (drivetrain);
 	  * the active rear wing (Driver Downforce, DRS and airbrake modes) is one fixed drag area and
@@ -38,8 +38,8 @@ return {
 		driverKg = 75, -- [A] the simulation carries one driver: 1,494 kg simulated
 		frontShare = 0.41, -- [F] 41% front / 59% rear, coupe (Autocar weighed 42/58, AMS 41.5/58.5 [M])
 		comHeight = 0.42, -- [E] not published; carbon tub, dry-sump V8 low behind the seats ("3% lower than the 650S" [F])
-		-- [E] Box that carries the mass, sized for about 2,150 kg*m^2 in yaw, 460 in roll and 1,770 in
-		-- pitch: a dynamic index k^2/(a*b) of about 0.85, typical of a compact mid-engined car (the mass
+		-- [E] Box that carries the mass, sized for about 2,150 kg*m^2 in yaw, 460 in roll and 1,810 in
+		-- pitch: a dynamic index k^2/(a*b) of about 0.84, typical of a compact mid-engined car (the mass
 		-- sits between the axles, so the polar moment is lower than a front-engined GT's).
 		inertiaBox = { width = 1.80, height = 0.70, length = 3.75 },
 	},
@@ -199,10 +199,12 @@ return {
 
 	tires = {
 		-- [E] The car's own compounds (engineering references only). AR7Road is the standard tyre, a
-		-- McLaren-specific Pirelli P Zero in the real car [F/P]: a road performance tyre, with its
-		-- braking/driving grip set to 1.42 so the launch matches McLaren's 0-100 km/h (1.40-1.45 tested).
-		-- AR7Track is the optional P Zero Corsa class [F], which McLaren says gives "six percent more
-		-- mechanical grip" than the 650S had: about 6% more grip here. Not fitted by default.
+		-- McLaren-specific Pirelli P Zero in the real car [F/P]: a road performance tyre. Its braking/
+		-- driving grip is 1.42, a little under the shared Performance compound's 1.45, because the model
+		-- stops shorter than the real car (doc: Braking); 1.42 trades about 0.05 s of 0-100 km/h for
+		-- 0.6 m of 100-0 km/h braking (1.40-1.45 tested). AR7Track is the optional P Zero Corsa class [F],
+		-- which McLaren says gives "six percent more mechanical grip" than the 650S had: about 6% more
+		-- grip here. Not fitted by default.
 		compounds = {
 			AR7Road = { base = "Performance", muLong = 1.42, muLat = 1.22 },
 			AR7Track = { base = "Performance", muLong = 1.54, muLat = 1.29, peakSlipRatio = 0.095, peakSlipAngle = 7.0, relaxationLength = 0.22 },
@@ -221,7 +223,7 @@ return {
 
 	aero = {
 		-- [E] CdA in m^2. McLaren publishes no Cd. Fitted so the car tops out at the factory 341 km/h in
-		-- 6th, below the upshift point (7th is an overdrive), on the factory power: 341.4 km/h at
+		-- 6th, below the upshift point (7th is an overdrive), on the factory power: 341 km/h at about
 		-- 7,970 rpm. It lumps in the partly deployed rear wing and cooling drag (Cd about 0.47 on an
 		-- estimated 1.85 m^2). The research's 0.85-0.91 used a 0.335 m rolling radius; the game uses the
 		-- unloaded radius from the tyre size.

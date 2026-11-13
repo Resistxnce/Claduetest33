@@ -48,6 +48,7 @@
     "rotorLobes": 4,
     "driveRatio": 3.1,
     "pulsesPerRev": 8,
+    "singleRotorLevel": 0.2,
     "whineRpm": [1200, 4000]
   },
   "limiter": {
@@ -82,7 +83,8 @@
     "idle.lope": "[E] Mild cam (wide 120-degree lobe separation [P]): little lope.",
     "overrun.burble": "[F]/[E] GM bulletin 17-NA-078: 'pop' or 'backfire' sounds during wide-open-throttle manoeuvres in Sport or Track are normal; reviewers mention 'exhaust blatting on the overrun'. Burble level 0.4 is an estimate.",
     "forcedInduction": "[P] Eaton R1740 TVS: twin-rotor Roots type, two 4-lobe rotors with 160-degree twist, driven at 3.10 x crank speed (20,150 rotor rpm at 6,500) (EngineLabs, Corvette Action Center).",
-    "forcedInduction.pulsesPerRev": "[E] 8 pulses per rotor turn (2 rotors x 4 lobes), the standard twin-rotor relation: whine = rpm / 60 x 3.10 x 8 = 0.4133 x rpm Hz (engine order 24.8, 6.2 x the firing frequency): 269 Hz at idle, 1,240 Hz at 3,000 rpm, 2,728 Hz at 6,600. The weaker single-rotor line at half that pitch is not modelled (the synthesizer has no subharmonic option).",
+    "forcedInduction.pulsesPerRev": "[E] 8 pulses per rotor turn (2 rotors x 4 lobes), the standard twin-rotor relation: whine = rpm / 60 x 3.10 x 8 = 0.4133 x rpm Hz (engine order 24.8, 6.2 x the firing frequency): 269 Hz at idle, 1,240 Hz at 3,000 rpm, 2,728 Hz at 6,600.",
+    "forcedInduction.singleRotorLevel": "[E] The research expects a weaker line at half the whine pitch (4 pulses per turn, one rotor's lobes passing: 0.207 x rpm Hz, 134 Hz at idle, 1,364 Hz at 6,600) but gives no level. 0.2 of the main line's fundamental, about 14 dB under it.",
     "forcedInduction.whineRpm": "[E] Whine loops made at 1,200 and 4,000 rpm so the game's playback speed stays within 0.54-1.65 from idle to the limiter.",
     "limiter": "[E] Not documented: fuel cut at about 6,600 rpm. Free revving bounces deeper and a little slower than in gear. Rates and drops are estimates.",
     "loops": "[E] Default rpm points (idle to the limiter, about 1.29x apart).",
