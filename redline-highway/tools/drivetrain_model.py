@@ -11,6 +11,7 @@ Runs four tests: full-throttle launch to top speed, 100-0 km/h braking with ABS,
 part-throttle cruise followed by coasting.
 
 Usage: python3 tools/drivetrain_model.py
+Other tools (tools/audio_preview.py) import run() from here.
 """
 import math
 G, RHO = 9.81, 1.225
@@ -118,7 +119,7 @@ def run(test, seconds, pedal_fn, brake_fn, v0=0.0, start_gear=1, dt=1/60, sub=8)
         for w in wheels: w.load = max(fl if w.front else rl, 0)
         ir = rpm_of(abs(tr.ratio() * sum(w.omega for w in rear) / 2)) if tr.ratio() else 0
         tr.update_auto(dt, ir, pedal)
-        h = dt / sub; fxsum = [0.0]*4
+        h = dt / sub; fxsum = [0.0]*4; te_sum = 0.0
         for _ in range(sub):
             ratio = tr.ratio(); win = ratio * sum(w.omega for w in rear)/2 if ratio else 0
             eng_rpm = rpm_of(eng.omega)
@@ -132,6 +133,7 @@ def run(test, seconds, pedal_fn, brake_fn, v0=0.0, start_gear=1, dt=1/60, sub=8)
                 limit = available / (abs(ratio) * TR['eff']) * 1.3 * (1 - tc_cut)
                 Te = min(Te, limit)
                 cap = min(cap, limit)
+            te_sum += Te
             for w in wheels:
                 fx, fy, w.slip, w.alphaOut = w.tyre(w.load, v, 0.0, w.omega*w.r, 1.0, h); w.fx = fx
                 w.brake = brake_torque(w.front, brake, 0, w.slip, True)
@@ -162,33 +164,41 @@ def run(test, seconds, pedal_fn, brake_fn, v0=0.0, start_gear=1, dt=1/60, sub=8)
         if v < 0.4 and brake > 0.1: a = -v / dt  # parking hold
         v = max(0.0, v + a*dt); x += v*dt; t += dt; a_prev = a
         if any(math.isnan(w.omega) for w in wheels) or math.isnan(v): return {"error": "NaN at t=%.2f" % t}
-        log.append((t, v*3.6, rpm_of(eng.omega), tr.gear, e, [w.slip for w in rear], a/G, x))
+        # row: time, km/h, rpm, gear, clutch, rear slip ratios, g, distance, then (for the audio
+        # preview) throttle, mean engine torque, rev limiter cut, mean rear wheel speed (rad/s)
+        log.append((t, v*3.6, rpm_of(eng.omega), tr.gear, e, [w.slip for w in rear], a/G, x,
+                    eng.throttle, te_sum / sub, eng.cut, sum(w.omega for w in rear) / 2))
     return log
 
 def first(log, cond):
     for row in log:
         if cond(row): return row
     return None
-# 1. full-throttle launch to top speed
-log = run("launch", 70, lambda t, v: 1.0, lambda t, v: 0.0)
-r100, r200 = first(log, lambda r: r[1] >= 100), first(log, lambda r: r[1] >= 200)
-top = max(r[1] for r in log)
-print(f"launch: 0-100 {r100[0]:.2f}s  0-200 {r200[0]:.2f}s  top {top:.1f} km/h  final gear {log[-1][3]}  final rpm {log[-1][2]:.0f}")
-for tt in (0.1, 0.3, 0.6, 1.0, 2.0, 3.0):
-    row = first(log, lambda r: r[0] >= tt)
-    print(f"  t={row[0]:.2f}s  {row[1]:6.1f} km/h  {row[2]:5.0f} rpm  gear {row[3]}  clutch {row[4]:.2f}  rear slip {row[5][0]:+.3f}  {row[6]:.2f} g")
-shifts = [(log[i][0], log[i][1], log[i-1][2], log[i][3]) for i in range(1, len(log)) if log[i][3] != log[i-1][3]]
-print("  shifts (time, km/h, rpm before, new gear):", [(round(a,2), round(b), round(c), d) for a,b,c,d in shifts])
-# steadiness: wheel slip jitter at a steady 200 km/h cruise is checked via frame-to-frame rpm change in 7th
-late = [r[2] for r in log if r[0] > 60]
-print(f"  rpm range in the last 10 s: {min(late):.0f}-{max(late):.0f}")
-# 2. braking from 100 km/h with ABS
-log = run("brake", 10, lambda t, v: 0.0, lambda t, v: 1.0, v0=100/3.6, start_gear=2)
-stop = first(log, lambda r: r[1] < 0.5)
-print(f"brake 100-0 with ABS: {stop[7]:.1f} m in {stop[0]:.2f}s; peak decel {min(r[6] for r in log):.2f} g")
-# 3. idle with no input
-log = run("idle", 5, lambda t, v: 0.0, lambda t, v: 0.0)
-print(f"idle 5 s: speed {log[-1][1]:.3f} km/h, rpm {log[-1][2]:.0f} (min {min(r[2] for r in log):.0f}, max {max(r[2] for r in log):.0f}), clutch {log[-1][4]:.2f}")
-# 4. part throttle cruise then lift: engine braking and auto downshifts
-log = run("cruise", 40, lambda t, v: 0.35 if t < 25 else 0.0, lambda t, v: 0.0)
-print(f"35% pedal for 25 s: {first(log, lambda r: r[0] >= 25)[1]:.0f} km/h in gear {first(log, lambda r: r[0] >= 25)[3]}; after 15 s coasting: {log[-1][1]:.0f} km/h gear {log[-1][3]} rpm {log[-1][2]:.0f}")
+def main():
+    # 1. full-throttle launch to top speed
+    log = run("launch", 70, lambda t, v: 1.0, lambda t, v: 0.0)
+    r100, r200 = first(log, lambda r: r[1] >= 100), first(log, lambda r: r[1] >= 200)
+    top = max(r[1] for r in log)
+    print(f"launch: 0-100 {r100[0]:.2f}s  0-200 {r200[0]:.2f}s  top {top:.1f} km/h  final gear {log[-1][3]}  final rpm {log[-1][2]:.0f}")
+    for tt in (0.1, 0.3, 0.6, 1.0, 2.0, 3.0):
+        row = first(log, lambda r: r[0] >= tt)
+        print(f"  t={row[0]:.2f}s  {row[1]:6.1f} km/h  {row[2]:5.0f} rpm  gear {row[3]}  clutch {row[4]:.2f}  rear slip {row[5][0]:+.3f}  {row[6]:.2f} g")
+    shifts = [(log[i][0], log[i][1], log[i-1][2], log[i][3]) for i in range(1, len(log)) if log[i][3] != log[i-1][3]]
+    print("  shifts (time, km/h, rpm before, new gear):", [(round(a,2), round(b), round(c), d) for a,b,c,d in shifts])
+    # steadiness: wheel slip jitter at a steady 200 km/h cruise is checked via frame-to-frame rpm change in 7th
+    late = [r[2] for r in log if r[0] > 60]
+    print(f"  rpm range in the last 10 s: {min(late):.0f}-{max(late):.0f}")
+    # 2. braking from 100 km/h with ABS
+    log = run("brake", 10, lambda t, v: 0.0, lambda t, v: 1.0, v0=100/3.6, start_gear=2)
+    stop = first(log, lambda r: r[1] < 0.5)
+    print(f"brake 100-0 with ABS: {stop[7]:.1f} m in {stop[0]:.2f}s; peak decel {min(r[6] for r in log):.2f} g")
+    # 3. idle with no input
+    log = run("idle", 5, lambda t, v: 0.0, lambda t, v: 0.0)
+    print(f"idle 5 s: speed {log[-1][1]:.3f} km/h, rpm {log[-1][2]:.0f} (min {min(r[2] for r in log):.0f}, max {max(r[2] for r in log):.0f}), clutch {log[-1][4]:.2f}")
+    # 4. part throttle cruise then lift: engine braking and auto downshifts
+    log = run("cruise", 40, lambda t, v: 0.35 if t < 25 else 0.0, lambda t, v: 0.0)
+    print(f"35% pedal for 25 s: {first(log, lambda r: r[0] >= 25)[1]:.0f} km/h in gear {first(log, lambda r: r[0] >= 25)[3]}; after 15 s coasting: {log[-1][1]:.0f} km/h gear {log[-1][3]} rpm {log[-1][2]:.0f}")
+
+
+if __name__ == "__main__":
+    main()

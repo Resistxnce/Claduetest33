@@ -3,7 +3,8 @@
 *Working title.* An original high-speed highway driving and racing game for Roblox. This folder holds
 **Phase 1**: the shared vehicle physics framework, the first prototype car (the Valenza GT12, built to
 the Ferrari 812 Superfast's public engineering figures), a proving-ground test track, cameras and a
-dashboard with telemetry.
+dashboard with telemetry. It also has the start of **Phase 2**: the car's sound system with
+placeholder sounds (see `docs/AUDIO.md`).
 
 **Status:** written and checked outside Roblox, **not yet run in Roblox Studio.** The place file was
 generated and checked for structure, and the drivetrain maths was tested in a Python copy (see
@@ -24,6 +25,9 @@ this repository and use **Code > Download ZIP**, or clone the repository and che
 Then:
 1. Select **Lighting** and set **Technology** to **Future** (scripts can't set it).
 2. Press **Play**.
+3. For sound, upload the two files in `assets/audio` and paste their IDs into
+   **ReplicatedStorage > VehicleSystem > VehicleAudio > AudioAssets** (see `docs/AUDIO.md`). Without
+   them the game runs silently. To hear the sounds first, play `assets/audio/preview/GT12_drive_preview.mp3`.
 
 ## Controls
 
@@ -49,12 +53,16 @@ handbrake, Y for the camera.
 | `docs/DEVELOPMENT_PLAN.md` | The technical plan: Roblox limits, architecture, physics design, phases, milestones |
 | `docs/PROTOTYPE_GT12.md` | The prototype's specification: sources, estimates and validation |
 | `docs/TEST_CHECKLIST_PHASE1.md` | What to test in Studio and what to report |
+| `docs/AUDIO.md` | The sound system: uploading the sounds, how it works, tuning, recordings |
+| `assets/audio/` | The two sound files to upload, and a preview of the car driving |
 | `src/` | All scripts, laid out by Studio service (see the plan for what each does) |
 | `build/RedlineHighway.rbxlx` | Ready-to-open place file, generated from `src/` |
 | `default.project.json` | Rojo project |
 | `tools/build_place.py` | Rebuilds the place file from `src/` (Python 3, no other tools needed) |
 | `tools/drivetrain_model.py` | Python copy of the drivetrain code for quick straight-line checks |
 | `tools/luau_check.py` | Checks every script for syntax errors, typos and Roblox API mistakes (see below) |
+| `tools/synth_audio.py` | Makes the placeholder sounds and their region tables (needs numpy and ffmpeg) |
+| `tools/audio_preview.py` | Renders the preview drive with a Python copy of the game's sound mixer |
 
 After editing anything in `src/`, run `python3 tools/build_place.py` to refresh the place file.
 

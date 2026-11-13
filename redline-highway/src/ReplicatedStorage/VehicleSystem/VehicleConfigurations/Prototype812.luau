@@ -162,6 +162,41 @@ return {
 		ackermann = 0.6, -- [E] 0 = parallel steering, 1 = full Ackermann
 	},
 
+	-- [E] Sound. The sheets are packed sound files in VehicleAudio/Sheets (see docs/AUDIO.md);
+	-- volumes are Roblox Sound volumes. Tuned by ear in testing.
+	audio = {
+		engineSheet = "GT12_Engine",
+		effectsSheet = "Driving_Effects",
+		engineVolume = 0.9, -- at the redline on full throttle
+		idleLevel = 0.3, -- loudness at idle as a share of engineVolume
+		rpmCurve = 1.0, -- how loudness rises with rpm (1 = in proportion)
+		redlineRpm = 8900,
+		offThrottleLevel = 0.55, -- off-throttle loops relative to on-throttle
+		loadAttack = 25, -- 1/s, how fast the mix follows the throttle opening
+		loadRelease = 12, -- 1/s, and closing
+		minPitch = 0.5,
+		maxPitch = 2.0,
+		shiftCutTime = 0.08, -- seconds of ignition cut heard on a full-throttle upshift
+		shiftCutMinRpm = 4500,
+		shiftCutVolume = 0.6,
+		shiftClunkVolume = 0.25,
+		crackleMinRpm = 4000, -- exhaust crackles after lifting off above this
+		crackleDuration = 1.2,
+		crackleRate = 14, -- crackles per second at first, fading out
+		crackleVolume = 0.5,
+		bumpMinSpeed = 0.6, -- m/s into the bump stops before a knock is heard
+		bumpVolume = 0.5,
+		squealVolume = 0.5,
+		squealStart = 1.2, -- tyres start to squeal past this multiple of their peak slip
+		squealRange = 1.5, -- and reach full volume this much further past it
+		roadVolume = 0.35,
+		windVolume = 0.5,
+		whineVolume = 0.06,
+		whineTeeth = 31, -- final drive pinion teeth, sets the gearbox whine pitch
+		-- cockpit camera: level changes and an equaliser (dB) for the cabin
+		interior = { engine = 0.8, wind = 0.45, road = 1.25, squeal = 0.7, lowGain = 3, midGain = -2, highGain = -12 },
+	},
+
 	-- [F] Factory figures the telemetry timer compares against.
 	performanceTargets = { zeroTo100 = 2.9, zeroTo200 = 7.9, topSpeedKmh = 340 },
 

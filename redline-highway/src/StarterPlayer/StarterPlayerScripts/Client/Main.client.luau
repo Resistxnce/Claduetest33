@@ -9,6 +9,7 @@ local InputController = require(Client:WaitForChild("InputController"))
 local VehicleController = require(Client:WaitForChild("VehicleController"))
 local CameraController = require(Client:WaitForChild("CameraController"))
 local HUD = require(Client:WaitForChild("HUD"))
+local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
@@ -16,8 +17,13 @@ InputController.init()
 HUD.init()
 
 local active = nil
+local audio = nil
 
 remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Model)
+	if audio then
+		audio:stop()
+		audio = nil
+	end
 	if active then
 		active:stop()
 		active = nil
@@ -26,6 +32,7 @@ remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Mod
 	if active then
 		CameraController.start(model)
 		HUD.setVehicle(active.config)
+		audio = VehicleAudio.start(active, CameraController.mode)
 	end
 end)
 

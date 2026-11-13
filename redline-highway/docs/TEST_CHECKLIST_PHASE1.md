@@ -55,6 +55,21 @@ Use the 2.2 km main straight. The telemetry overlay (T) records each result.
       on the rev limiter in 7th.
 - [ ] Frame rate stays smooth (the overlay shows fps).
 
+## M7. Sound (after uploading the two sound files, see AUDIO.md)
+
+- [ ] With both IDs pasted into AudioAssets, the Output shows no `[Redline] No sound asset ID` line.
+- [ ] Idle is a steady, low burble. Revving up, the pitch rises smoothly, with no clicks, gaps or
+      sudden steps in tone.
+- [ ] Full throttle sounds harder than coasting at the same RPM. Lifting off changes the tone at once,
+      and above about 4,000 rpm a few exhaust crackles follow.
+- [ ] Full-throttle upshifts have a short crack and a clunk. Holding the limiter in manual (M, then E
+      to a low gear) makes a bouncing sound.
+- [ ] Hard ABS braking gives a light tyre hum. A handbrake slide squeals loudly. Driving straight
+      doesn't squeal.
+- [ ] Wind and road noise grow with speed. The cockpit camera (C) muffles the engine and wind.
+- [ ] After R (respawn), the old car's sounds stop and the new car's start; nothing doubles up.
+- [ ] Compare with `assets/audio/preview/GT12_drive_preview.mp3`. Tell me what sounds wrong or fake.
+
 ## Things to watch for
 
 - The car hopping, bouncing or being launched into the air (suspension or force problems).

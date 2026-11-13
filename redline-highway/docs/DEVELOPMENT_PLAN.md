@@ -37,8 +37,9 @@ Limits of this session, stated plainly:
   says what to try and what to look for.
 - **No 3D models or textures yet.** Real car models need Blender at home. The stand-in car uses the
   same part names the real model will use, so the model can be swapped in without code changes.
-- **No audio yet.** Engine audio needs recorded or licensed sound assets. The audio design is in
-  section 6; it gets built in Phase 2 once you have sounds.
+- **Placeholder audio.** The sound system (section 6) is built, with original sounds synthesized in
+  Python as placeholders until there are recordings. Two files need uploading to Roblox before the
+  game makes sound (`docs/AUDIO.md`).
 
 When your PC is connected (Roblox Studio with its MCP server, Blender, the Obsidian vault), I can
 run Play tests, read errors, take screenshots and iterate, which is how this should be developed.
@@ -77,6 +78,10 @@ ReplicatedStorage
     TireSimulation/Tire              combined-slip "magic formula" tyre model and compounds
     Aerodynamics/Aero                drag and downforce that rise with speed
     VehicleTelemetry/Telemetry       collects numbers for the HUD and testing
+    VehicleAudio
+      EngineMix                      sound mixer: engine layers, events, tyres, wind (pure maths)
+      AudioAssets                    asset IDs of the two uploaded sound files
+      Sheets                         where each sound sits in its file (generated)
 ServerScriptService
   Server
     Main                             starts the game: lighting, track, players
@@ -90,9 +95,10 @@ StarterPlayer / StarterPlayerScripts
     InputController                  keyboard and gamepad
     CameraController                 chase, hood and cockpit cameras
     HUD                              speedometer, tachometer, gear, telemetry overlay
+    VehicleAudio                     plays the car's sounds from the mixer's output
 ```
 
-Later phases add `VehicleAudio`, `VehicleVisuals`, `VehicleCameras`, `Customization` (shared) and
+Later phases add `VehicleVisuals`, `VehicleCameras`, `Customization` (shared) and
 `Traffic`, `Races`, `Economy`, `DataService` (server), keeping the same pattern.
 
 ## 5. Vehicle simulation design
@@ -147,6 +153,13 @@ braking and top speed will be measured with the telemetry overlay and compared.
 - **Traffic:** 3D-positioned engine and tyre sounds for nearby traffic, with Doppler from relative speed.
 - **Licensing:** only recordings you make, buy with a licence, or that Roblox's library permits.
 
+**Built so far (M7):** the engine layers, events (shift crack and clunk, crackles, bump knock),
+tyre squeal, road and wind noise, gearbox whine and the cockpit equaliser. Roblox counts uploads
+against a monthly limit, so the sounds are packed into two files and each Sound plays its own region
+(`PlaybackRegion` and `LoopRegion`). The mixer is pure maths (`VehicleAudio/EngineMix`), copied in
+`tools/audio_preview.py`, which renders a drive to listen to. The current sounds are synthesized
+placeholders (`tools/synth_audio.py`). Details are in `docs/AUDIO.md`.
+
 ## 7. Traffic design (Phase 4)
 
 - **Road network:** lanes are centre lines in a lane graph (each lane knows its successors, its left
@@ -197,7 +210,8 @@ Each milestone ends with a test pass in Studio. Later phases follow your master 
 **Phase 2: the prototype car, complete**
 - M6. Blender model to the specification: exterior, interior, separated wheels and brakes, LODs, PBR
   texture sets. Gated by the kit's mesh-qa checks. Swapped in for the stand-in car.
-- M7. Engine and driving audio (section 6), with interior and exterior mixes.
+- M7. Engine and driving audio (section 6), with interior and exterior mixes. *System built with
+  placeholder sounds; needs the sounds uploaded and a listen in Studio.*
 - M8. Body movement (pitch, roll), suspension and wheel animation, brake glow, lights.
 
 **Phase 3: customisation and tuning.** Parts database with compatibility rules, tuning UI, a dyno that
