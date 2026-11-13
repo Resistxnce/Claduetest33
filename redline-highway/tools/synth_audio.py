@@ -57,7 +57,7 @@ WHINE_HZ = 1000.0
 AIR_C = 343.0  # speed of sound in air at 20 C, m/s
 TARGET_A_RMS = 0.075  # every loop is stored at this A-weighted RMS; its gain is in the sheet
 REFERENCE_DBA = 95.0  # [A] an engine measured at this level plays at gain 1
-LEVEL_COMPRESSION = 0.6  # [A] game dB per real dB: idle stays audible next to full throttle
+LEVEL_COMPRESSION = 0.5  # [A] game dB per real dB: idle stays audible next to full throttle
 IDLE_PULSE = 0.35  # [E] exhaust pulse strength when idling (light load, fuel on), full load = 1
 
 

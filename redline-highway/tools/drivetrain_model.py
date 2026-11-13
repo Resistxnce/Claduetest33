@@ -714,7 +714,7 @@ SUSPENSION_KEYS = ["springRate", "bumpDamping", "reboundDamping", "staticLength"
                    "bumpStopRate", "antiRollRate", "rollCenterHeight", "rideHeightOffset"]
 REQUIRED = {
     "": ["id", "displayName", "mass", "dimensions", "engine", "transmission", "drivetrain", "suspension", "tires",
-         "brakes", "aero", "steering", "performanceTargets", "visual"],
+         "brakes", "aero", "steering", "visual"],
     "mass": ["kerbKg", "driverKg", "frontShare", "comHeight", "inertiaBox"],
     "mass.inertiaBox": ["width", "height", "length"],
     "dimensions": ["length", "width", "height", "wheelbase", "trackFront", "trackRear", "frontOverhang"],

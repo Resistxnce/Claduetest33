@@ -11,8 +11,8 @@ return {
 	idleRpm = 800,
 	limiterRpm = 6500,
 	loops = {
-		{ name = "on_2000", start = 9.59, loopStart = 9.59, loopEnd = 10.61, stop = 10.86, rpm = 2000, load = "on", gain = 0.10673 },
-		{ name = "off_2000", start = 10.9, loopStart = 10.9, loopEnd = 11.92, stop = 12.17, rpm = 2000, load = "off", gain = 0.04659 },
+		{ name = "on_2000", start = 9.59, loopStart = 9.59, loopEnd = 10.61, stop = 10.86, rpm = 2000, load = "on", gain = 0.15497 },
+		{ name = "off_2000", start = 10.9, loopStart = 10.9, loopEnd = 11.92, stop = 12.17, rpm = 2000, load = "off", gain = 0.07767 },
 	},
 	oneShots = {
 	},

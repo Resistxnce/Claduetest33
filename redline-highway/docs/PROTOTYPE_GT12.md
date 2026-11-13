@@ -61,7 +61,10 @@ come from third-party sheets that agree with each other.
 
 `tools/drivetrain_model.py` is a line-for-line Python copy of the game's engine, clutch, gearbox,
 differential, brake, traction-control and tyre code, run at 60 frames per second. It treats the body
-as a point mass, so it checks the drivetrain, not suspension or Roblox's own physics.
+as a point mass, so it checks the drivetrain, not suspension or Roblox's own physics. It now runs any
+car (`python3 tools/drivetrain_model.py <Id>`, see `VEHICLE_CONFIG.md`). The GT12's results were
+unchanged by the turbo, automatic and all-wheel-drive additions: every value of every frame matches
+the earlier model.
 
 | Test | Factory | Point-mass fit | Game drivetrain code |
 |---|---|---|---|
@@ -71,6 +74,10 @@ as a point mass, so it checks the drivetrain, not suspension or Roblox's own phy
 | 100–0 km/h braking | not published | n/a | 28.1 m |
 | Launch | n/a | n/a | holds about 4,200 rpm, pulls about 0.94 g |
 | Idle | n/a | n/a | steady 950–985 rpm, no creep |
+| 0–60 mph | not published | n/a | 3.25 s from a standstill, 2.75 s with a one-foot rollout |
+| Quarter mile | not published | n/a | 10.65 s at 233 km/h |
+| 60–0 / 70–0 mph braking | not published | n/a | 26.2 m / 35.2 m |
+| Free rev in neutral | n/a | n/a | reaches the limiter in 0.35 s; bounces 8,740–9,200 rpm, about 4 cuts a second |
 
 Issues the model caught and that are now fixed: the launch clutch let the engine bog at about
 2,600 rpm (0–100 took 4.0 s), engine friction was subtracted twice at full throttle, and traction
@@ -85,6 +92,7 @@ Remaining gaps:
 
 ## What to measure in Studio
 
-The telemetry overlay (T) times 0–100, 0–200 and 100–0 km/h automatically and shows top speed.
+The telemetry overlay (T) times 0–60 mph, 0–100 and 0–200 km/h, the quarter mile and 100–0 km/h
+automatically and shows top speed.
 Compare those against this table, and use the per-wheel loads to check the static balance: about
 3,930 N on each front wheel and 4,430 N on each rear wheel at rest.

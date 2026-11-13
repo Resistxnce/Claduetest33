@@ -35,7 +35,7 @@ hold several cars. `assets/audio/packs.json` lists which cars go in which pack.
 | File | Contents | Upload now? |
 |---|---|---|
 | `assets/audio/GT12_Engine.flac` (24 s, 1.3 MB) | The GT12: 16 engine loops (8 engine speeds, on and off throttle) and 2 limiter loops | Yes |
-| `assets/audio/Driving_Effects.flac` (15 s, 0.9 MB) | Tyre squeal, road noise, wind, gearbox whine, tyre roar for traffic, 6 exhaust crackles, shift crack and clunk, suspension knock, and the traffic car and truck engines | Yes |
+| `assets/audio/Driving_Effects.flac` (15 s, 0.8 MB) | Tyre squeal, road noise, wind, gearbox whine, tyre roar for traffic, 6 exhaust crackles, shift crack and clunk, suspension knock, and the traffic car and truck engines | Yes |
 | `assets/audio/Engines_Pack1.flac` | The next six cars' engines, once their sound definitions are final. It holds drafts now. | Not yet: upload once when the cars are done |
 
 1. Upload the files, either from the Creator Hub (create.roblox.com, your creations, Audio) or with
@@ -59,7 +59,7 @@ hold several cars. `assets/audio/packs.json` lists which cars go in which pack.
 Audio you upload yourself can be used in your own experiences. If the game is later published under a
 group, upload the sounds to that group, or give the group permission to use them.
 
-**Packing.** A car's loops take about 25-30 s of audio (about 1.5 MB as FLAC), so one pack holds a dozen
+**Packing.** A car's loops take about 25-30 s of audio (about 1.5-1.7 MB as FLAC), so one pack holds a dozen
 cars inside the limits that `packs.json` sets (400 s and 19 MB, leaving margin under Roblox's 7 minutes
 and 20 MB). Re-uploading a changed pack costs one upload and gives it a new ID. So:
 - finish a batch of cars;
@@ -131,7 +131,8 @@ For each car it builds the engine from its definition:
      - for a supercharger, whine loops at two crank speeds (rotor lobes x drive ratio).
    - Every loop is a whole number of engine cycles (limiter loops a whole number of bounces), and all
      filtering is circular, so loops repeat without a click. The build prints a seam check: the jump at
-     the loop point divided by the loop's 99th-percentile sample step. It is below 1 for every loop.
+     the loop point divided by the loop's 99th-percentile sample step. Every loop is between 0.01 and
+     1.2, an ordinary step.
 6. **Loudness.** Every loop is stored at the same A-weighted level and carries a `gain` in its sheet
    table. The gain comes from the real car's measured levels; see [Loudness](#loudness-calibration).
 
@@ -314,11 +315,11 @@ model goes through the car's measured interior idle and full-throttle levels:
 ```
 level(rpm, load) = idle dBA + slope * log10(rpm / idle rpm) + loadRangeDb * (load - 0.15)
 slope            = (full throttle dBA - idle dBA - 0.85 * loadRangeDb) / log10(limiter / idle)
-gain             = 10 ^ (0.6 * (level - 95) / 20)
+gain             = 10 ^ (0.5 * (level - 95) / 20)
 ```
 
-- **Compression (0.6, an assumption).** Each real decibel becomes 0.6 dB in game, so idle is still
-  heard next to full throttle (a real 30 dB range would be 18 dB).
+- **Compression (0.5, an assumption).** Each real decibel becomes 0.5 dB in game, so idle is still
+  heard next to full throttle (a real 30 dB range becomes 15 dB).
 - **Reference (95 dBA).** Every car uses the same reference, so a car measured louder plays louder.
 - **`loadRangeDb` (12, an estimate).** The difference between closed and full throttle at the same rpm.
 - **Missing data.** When a car has no measured levels, the defaults (58 and 88 dBA) are estimates.
@@ -328,7 +329,72 @@ gain             = 10 ^ (0.6 * (level - 95) / 20)
 
 ## Calibration against real recordings
 
-CALIBRATION_PLACEHOLDER
+Only freely licensed recordings were downloaded, into the working scratch area. They were used only to
+measure, and they aren't in the game or the repository.
+
+| Recording | Engine | Licence | Used for |
+|---|---|---|---|
+| "2008 BMW M3 E92 s65 V8 Exhaust Sound Recordings (Raw WAV Files)" by Nate Lee, archive.org item `2008-bmw-m3-e92-s65-exhaust-sound-recordings`: `IDLE` (91 s) and a drive (11 min) | BMW S65 4.0 L NA cross-plane V8 | CC BY 4.0 | Engine orders at idle, and band balance at idle and under acceleration |
+| Wikimedia Commons: "BMW M3 (G80) Competition with Fi Exhaust", "BMW M4 Competition", "BMW M5 Competition with Fi Exhaust" (engine and exhaust sound; audio tracks of videos by FiExhaust and LA VLOGS) | BMW twin-turbo inline-6 and S63 V8, two with aftermarket exhausts | CC BY 3.0 | Qualitative only: rev blips with wind and crowd noise, too unsteady to track rpm |
+
+**Method.**
+- **Engine orders.** The engine speed of a steady stretch is found from its harmonic comb (half-order
+  spacing). Each half order's level is then read relative to the firing order, with its
+  harmonic-to-noise ratio.
+- **Band balance.** 1/3-octave levels from 50 Hz to 8 kHz, relative to the total, compared with the
+  synthesized loop at the same rpm and load, using the same engine layout (BMW S65: firing order
+  1-5-4-8-6-3-7-2, cylinders 1-4 and 5-8 on separate banks, cross-plane).
+- **What was tuned.** These became the defaults for every car:
+  - pulse sharpness (rise 4°, decay 30°, no extra softening off throttle);
+  - pulse-to-pulse variation (timing 0.8°, duration ±25%);
+  - turbulent flow noise (0.6, centred at 600 Hz);
+  - cylinder spread (6%);
+  - mechanical noise levels (combustion 0.05, valvetrain 0.008, injectors 0.006, heard through a
+    2.5 kHz engine-bay low-pass);
+  - an air-filter low-pass (2.2 kHz);
+  - the tailpipe radiation tilt (corner 500 Hz).
+
+**Results.**
+
+| Measure | Before | After |
+|---|---|---|
+| Band-level error, S65 idle 783 rpm (RMS, 100 Hz-5 kHz) | 7.6 dB | 4.6 dB |
+| Band-level error, S65 accelerating about 3,500 rpm | 6.8 dB | 4.4 dB |
+
+Engine orders at idle (dB relative to the firing order, 4):
+
+| Order | 3 | 4.5 | 5 | 5.5 | 6 | 6.5 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Recording | -26 | -28 | -15 | -14 | -19 | -19 | -21 | +3 | -23 | -23 | -20 | -18 |
+| Synthesis | -23 | -23 | -23 | -22 | -36 | -11 | -18 | -1 | -25 | -47 | -28 | -4 |
+
+**What matched.**
+- The firing order and its second harmonic dominate. Order 8 is within 4 dB.
+- The half orders sit in the same -11 to -23 dB range.
+- Orders 3, 7 and 9 are within 3 dB.
+- The broad shape: a peak at the firing frequency, a plateau from 200 Hz to 1.3 kHz, and a fall above
+  1.6 kHz.
+- The real exhaust's sound above about 500 Hz is mostly noise between the harmonics, not clean
+  harmonics. The first synthesis was far too tonal there, which is why the flow noise and
+  pulse-to-pulse variation were added.
+
+**What didn't match.**
+- **Individual orders.** Order 12 is 14 dB too strong and orders 6 and 10 are 17-24 dB too weak. That
+  is the resonance pattern of that particular exhaust, which can't be modelled without its pipe
+  lengths.
+- **Two recordings disagree.** The idle recording wants more treble than the acceleration recording.
+  The 500 Hz radiation corner splits the difference. The drive recording has wind rumble on its
+  clip-on microphone below about 300 Hz, which makes the synthesis look 8-10 dB short there.
+- **The exhaust merge.** The S65's half orders show a strongly merged exhaust (an X-pipe crossover
+  about 0.5, versus +3 to +5 dB half orders with separate banks). The definitions use 0.3-0.5 for
+  cross-plane cars with X-pipes.
+- **No V12, flat-plane or turbo calibration.**
+  - The V12 and flat-plane recordings found on Commons (Ferrari 812 Superfast, 599, F12; McLaren 765LT
+    and 720S; Shelby GT350) couldn't be downloaded: Commons' file server kept refusing this connection
+    for over an hour (HTTP 429, retry after 10 minutes).
+  - The BMW turbo clips were too noisy to measure.
+  - The GT12's V12 uses the cross-plane-calibrated defaults plus its own derived firing pattern.
+  - A V12 recording run through `--analyze` is the obvious next calibration.
 
 ## Tuning (`audio = { ... }` in the car config)
 

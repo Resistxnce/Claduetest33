@@ -13,6 +13,10 @@
 	Units: metres, kilograms, newtons, seconds and rpm unless a name says otherwise.
 
 	Positions use the car's own axes: X to the right, Y up, -Z forward (Roblox LookVector).
+
+	docs/VEHICLE_CONFIG.md describes every field, including the optional ones this naturally aspirated,
+	dual-clutch, rear-drive car doesn't use (forcedInduction, the automatic's converter and lock-up,
+	drivetrain.centreCoupling, tires.compounds, engine.speedLimitKmh).
 ]]
 
 return {
