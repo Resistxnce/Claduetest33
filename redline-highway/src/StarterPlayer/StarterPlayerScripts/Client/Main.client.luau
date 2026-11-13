@@ -10,6 +10,7 @@ local VehicleController = require(Client:WaitForChild("VehicleController"))
 local CameraController = require(Client:WaitForChild("CameraController"))
 local HUD = require(Client:WaitForChild("HUD"))
 local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
+local SelfTest = require(Client:WaitForChild("SelfTest"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
@@ -33,6 +34,7 @@ remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Mod
 		CameraController.start(model)
 		HUD.setVehicle(active.config)
 		audio = VehicleAudio.start(active, CameraController.mode)
+		SelfTest.run(active)
 	end
 end)
 

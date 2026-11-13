@@ -21,6 +21,11 @@ and stop at the first thing that fails. Then send me the exact text from Studio'
 
 ## M2. It rests, drives, steers and stops
 
+- [ ] Don't touch the controls for the first 4 seconds after the car appears. The Output window then
+      prints a `[Redline] Self-test` block that checks the frame rate, gravity, the car's mass,
+      wheel contact, wheel loads, ride height, creep, body angle and idle. Paste the whole block to
+      me, whether it passes or not.
+
 - [ ] Standing still, the car sits level and doesn't bounce, jitter or slide. In the telemetry
       overlay (press T), front wheel loads read about 3,900 N and rear loads about 4,400 N, with
       suspension travel near 0 mm.
