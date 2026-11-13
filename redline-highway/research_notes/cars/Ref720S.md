@@ -242,8 +242,9 @@ Both are **aftermarket exhausts**, so neither represents the stock sound. They a
 - [File:McLaren 720S with Novitec exhaust - engine and exhaust sound (YouTube XfgP-gX7KNg).opus](https://commons.wikimedia.org/wiki/File:McLaren_720S_with_Novitec_exhaust_-_engine_and_exhaust_sound_(YouTube_XfgP-gX7KNg).opus).
   2 min 0 s; attribution "Supercars67".
 
-Download status: see `audio/Ref720S/` and its `LICENSE_NOTES.md`. Commons was rate-limiting downloads (HTTP 429) during this
-session. A commercial option, which is not freely licensed, is the Sonniss "McLaren 720S Spider SSG 2019" sound library.
+Download status: **not downloaded**. Commons refused every request with HTTP 429 (rate limit) during this session; the URLs and
+licence notes are in `audio/Ref720S/LICENSE_NOTES.md`. A commercial option, which is not freely licensed, is the Sonniss
+"McLaren 720S Spider SSG 2019" sound library.
 
 **Starting audio settings [E]:** redline 8,200 rpm, with 8,100 rpm in 1st-2nd; idle 800 rpm; shift cut 0.05 s; crackles from
 4,000 rpm.

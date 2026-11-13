@@ -379,13 +379,14 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 				w.fxStep, w.fyStep, w.slipRatio, w.slipAngle = 0, 0, 0, 0
 				w.tire.slipAngle = 0
 			end
-			w.brakeTorque = Brakes.torque(cfg.brakes, w.front, brakePedal, handbrake, w.slipRatio, self.absEnabled)
+			w.brakeTorque = Brakes.torque(cfg.brakes, w.front, holdBrake, handbrake, w.slipRatio, self.absEnabled)
 		end
 
-		local clutchTorque = 0
+		local clutchTorque = 0 -- torque into the gearbox
+		local engineLoad = 0 -- torque taken from the engine (a slipping converter multiplies it)
 		local locked = false
-		if ratio ~= 0 and capacity > 0 then
-			local inertiaInput = 0.02 -- gearbox internals
+		if ratio ~= 0 and (capacity > 0 or automatic) then
+			local inertiaInput = if automatic then tr.turbineInertia else 0.02 -- gearbox internals
 			local loadTorque = 0
 			for _, axle in self.axles do
 				for _, w in { axle.left, axle.right } do
@@ -395,18 +396,40 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 					loadTorque += resist / ratio
 				end
 			end
-			clutchTorque = Transmission.clutchTorque(tr, engine.omega, inputOmega, engineInertia, inertiaInput, engineTorque, loadTorque, capacity, h)
-			locked = math.abs(clutchTorque) < capacity * 0.999
+			if automatic then
+				local lock
+				engineLoad, clutchTorque, lock = Transmission.automaticTorque(tr, engine.omega, turbineOmega, turbineNext, engineInertia, inertiaInput, engineTorque, loadTorque, capacity, h)
+				locked = turbineNext == nil and capacity > 0 and math.abs(lock) < capacity * 0.999
+			else
+				clutchTorque = Transmission.clutchTorque(tr, engine.omega, inputOmega, engineInertia, inertiaInput, engineTorque, loadTorque, capacity, h)
+				engineLoad = clutchTorque
+				locked = math.abs(clutchTorque) < capacity * 0.999
+			end
 		end
 
 		local wheelTorque = clutchTorque * ratio * efficiency
+		if self.coupling then
+			local front, rear = self.axles[1], self.axles[2]
+			front.torque, rear.torque = Differential.centre(self.coupling, wheelTorque,
+				(front.left.omega + front.right.omega) / 2, (rear.left.omega + rear.right.omega) / 2,
+				front.left.tire.radius, rear.left.tire.radius, front.left.tire.inertia, rear.left.tire.inertia, h)
+			frontTorqueSum += front.torque
+			driveTorqueSum += wheelTorque
+		else
+			for _, axle in self.axles do
+				axle.torque = wheelTorque * axle.share
+			end
+		end
 		for _, axle in self.axles do
-			local left, right = Differential.split(axle.diff, wheelTorque * axle.share, axle.left.omega, axle.right.omega, axle.left.tire.inertia, h)
+			local left, right = Differential.split(axle.diff, axle.torque, axle.left.omega, axle.right.omega, axle.left.tire.inertia, h)
 			axle.left.driveTorque = left
 			axle.right.driveTorque = right
 		end
 
-		engine.omega = math.clamp(engine.omega + h * (engineTorque - clutchTorque) / engineInertia, minOmega, maxOmega)
+		engine.omega = math.clamp(engine.omega + h * (engineTorque - engineLoad) / engineInertia, minOmega, maxOmega)
+		if automatic then
+			Transmission.advanceShift(tr, h)
+		end
 
 		for _, id in WHEEL_IDS do
 			local w = self.wheels[id]
@@ -454,7 +477,7 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	end
 
 	-- parking hold: with the brakes on at a near standstill, static friction holds the car
-	if speed < 0.4 and (brakePedal > 0.1 or handbrake > 0.1) then
+	if speed < 0.4 and (holdBrake > 0.1 or handbrake > 0.1) then
 		for _, id in WHEEL_IDS do
 			local w = self.wheels[id]
 			if w.contact then
@@ -470,8 +493,9 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 
 	local t = self.telemetry
 	t.rpm = Engine.rpm(engine)
-	t.gear = Transmission.gearLabel(tr)
+	t.gear = if self.parked then "P" else Transmission.gearLabel(tr)
 	t.gearNumber = tr.gear
+	t.parked = self.parked
 	t.auto = tr.auto
 	t.shifting = Transmission.isShifting(tr)
 	t.limiter = engine.limiterCut
@@ -492,14 +516,30 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	t.abs = self.absEnabled
 	t.tractionControl = self.tcEnabled
 	t.tractionActive = self.tcCut > 0.02
+	-- forced induction (the audio reads these): boost 0 to 1, gauge pressure in bar (negative under
+	-- vacuum), and "Turbo", "Supercharger" or nil
+	local fi = cfg.engine.forcedInduction
+	t.boost = engine.boost
+	t.boostBar = Engine.boostBar(engine)
+	t.forcedInduction = if fi then fi.type else nil
+	-- gearbox and drive
+	t.transmissionType = cfg.transmission.type
+	t.lockup = if automatic then tr.lockup else nil
+	t.converterSlip = if automatic and Transmission.ratio(tr) ~= 0 then 1 - turbineOmega / engine.omega else nil
+	if self.coupling then
+		t.frontTorqueShare = if math.abs(driveTorqueSum) > 1 then frontTorqueSum / driveTorqueSum else self.frontShare
+	else
+		t.frontTorqueShare = self.frontShare
+	end
 
 	return { drag = drag, downFront = downFront, downRear = downRear }
 end
 
--- Manual shifting. Selecting a paddle switches the gearbox to manual mode.
+-- Manual shifting. Selecting a paddle switches the gearbox to manual mode (and leaves park).
 function VehicleSimulation:shiftUp()
 	local tr = self.transmission
 	tr.auto = false
+	self.parked = false
 	if tr.gear == -1 and math.abs(self.lastForwardSpeed) > 2 then
 		return
 	end
@@ -509,6 +549,7 @@ end
 function VehicleSimulation:shiftDown()
 	local tr = self.transmission
 	tr.auto = false
+	self.parked = false
 	local target = tr.gear - 1
 	if target == -1 and math.abs(self.lastForwardSpeed) > 2 then
 		return -- no reverse while rolling

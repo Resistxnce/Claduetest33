@@ -1221,7 +1221,8 @@
      "licence": "CC BY 3.0",
      "attribution": "FiExhaust (YouTube)",
      "duration_s": 83,
-     "note": "aftermarket valved catback + catless downpipes; louder than stock"
+     "note": "aftermarket valved catback + catless downpipes; louder than stock",
+     "downloaded": false
     },
     {
      "file": "McLaren_720S_Novitec_YouTube_XfgP-gX7KNg.opus",
@@ -1229,13 +1230,14 @@
      "licence": "CC BY 3.0",
      "attribution": "Supercars67 (YouTube)",
      "duration_s": 120,
-     "note": "Novitec race exhaust; not stock"
+     "note": "Novitec race exhaust; not stock",
+     "downloaded": false
     }
    ],
    "unit": "",
    "tag": "P",
    "source": "COMMONS_AUDIO",
-   "note": "Both licences marked 'not yet reviewed' on Commons. Commercial alternative (not free): Sonniss 'McLaren 720S Spider SSG 2019' library"
+   "note": "NOT downloaded: Wikimedia's file server returned HTTP 429 (rate limit) on every attempt on 2026-11-13. Fetch from the Commons pages; intended local names are given in 'file' (folder audio/Ref720S/, see LICENSE_NOTES.md there). Both licences are marked 'not yet reviewed' on Commons. Commercial alternative (not free): Sonniss 'McLaren 720S Spider SSG 2019' library."
   },
   "audioConfigHints": {
    "value": {

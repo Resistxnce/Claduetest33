@@ -305,8 +305,32 @@ def overlaps(sim):
     return bad
 
 
+def speed_limits(road):
+    """Each profile's curve speed limits on a road, as TrafficService makes them."""
+    return {name: road.speed_limits(p["lateral"], CURVE_DECEL, LIMIT_STEP, p["speed"][1] / 3.6)
+            for name, p in PROFILES.items()}
+
+
+def new_sim(road, seed):
+    sim = Sim(road.length, road.lanes, seed=seed)
+    sim.set_speed_limits(speed_limits(road), LIMIT_STEP)
+    sim.road = road
+    return sim
+
+
+def lateral_use(sim):
+    """The largest share of its comfort limit any car's sideways acceleration uses right now."""
+    worst = 0.0
+    for veh in sim.vehicles:
+        k = sim.road.curvature_at(veh["s"])
+        if k != 0:
+            offset = sim.road.offset_from_lane(veh["lanePos"])
+            worst = max(worst, veh["v"] ** 2 * abs(k / (1 - k * offset)) / veh["profile"]["lateral"])
+    return worst
+
+
 def run(sim, seconds, dt=0.05, on_step=None):
-    collisions, worst_decel = [], 0.0
+    collisions, worst_decel, worst_lateral = [], 0.0, 0.0
     for _ in range(int(seconds / dt)):
         if on_step:
             on_step(sim)
@@ -315,36 +339,42 @@ def run(sim, seconds, dt=0.05, on_step=None):
         collisions += overlaps(sim)
         if sim.time > 20:  # after the starting positions have settled
             worst_decel = min(worst_decel, min(v["a"] for v in sim.vehicles))
+            worst_lateral = max(worst_lateral, lateral_use(sim))
+    sim.worst_lateral = worst_lateral
     return collisions, worst_decel
 
 
 def summary(sim, label, collisions, worst, seconds):
     speeds = [v["v"] * 3.6 for v in sim.vehicles]
-    by_lane = {lane: sum(1 for v in sim.vehicles if v["lane"] == lane) for lane in range(1, LANES + 1)}
+    by_lane = {lane: sum(1 for v in sim.vehicles if v["lane"] == lane) for lane in range(1, sim.lanes + 1)}
     lane_speed = {lane: round(sum(v["v"] * 3.6 for v in sim.vehicles if v["lane"] == lane) / max(by_lane[lane], 1))
                   for lane in by_lane}
-    density = len(sim.vehicles) / (sim.length / 1000) / LANES
+    density = len(sim.vehicles) / (sim.length / 1000) / sim.lanes
     flow = density * (sum(speeds) / len(speeds))
-    print(f"{label}: {len(sim.vehicles)} cars ({density:.0f}/km/lane), mean {sum(speeds) / len(speeds):.0f} km/h, "
+    print(f"  {label}: {len(sim.vehicles)} cars ({density:.0f}/km/lane), mean {sum(speeds) / len(speeds):.0f} km/h, "
           f"flow {flow:.0f} cars/h/lane")
-    print(f"  cars per lane (1 = left) {by_lane}, mean km/h per lane {lane_speed}")
-    print(f"  lane changes {sim.lane_changes} ({sim.lane_changes / len(sim.vehicles) / (seconds / 60):.2f} per car per minute), "
+    print(f"    cars per lane (1 = left) {by_lane}, mean km/h per lane {lane_speed}")
+    print(f"    lane changes {sim.lane_changes} ({sim.lane_changes / len(sim.vehicles) / (seconds / 60):.2f} per car per minute), "
           f"hardest braking after the first 20 s {worst:.1f} m/s^2, overlaps {len(collisions)}")
+    print(f"    sideways acceleration in curves: at most {sim.worst_lateral * 100:.0f}% of the driver's comfort limit")
     return collisions
 
 
-def main():
-    results = []
+def test_map(road):
+    """The five tests on one map. Returns a list of failures."""
+    failures = []
+    print(f"{road.id}: {road.length:,.0f} m loop, {road.lanes} lanes")
     for label, density, seed, seconds in (("light traffic", 6, 1, 600), ("heavy traffic", 22, 2, 300)):
-        sim = Sim(LAP, LANES, seed=seed)
+        sim = new_sim(road, seed)
         sim.populate(density)
         collisions, worst = run(sim, seconds)
-        results.append(summary(sim, label, collisions, worst, seconds))
-        if collisions:
-            print("  first overlaps (lane, car, car, centre distance m):", collisions[:4])
+        if summary(sim, label, collisions, worst, seconds):
+            failures.append(f"{label}: overlaps {collisions[:4]}")
+        if sim.worst_lateral > 1.1:
+            failures.append(f"{label}: sideways acceleration {sim.worst_lateral * 100:.0f}% of the comfort limit")
 
     # 3. a crashed car stopped in lane 2
-    sim = Sim(LAP, LANES, seed=3)
+    sim = new_sim(road, 3)
     sim.populate(12)
     wreck = dict(s=1000.0, lane=2.0, v=0.0, length=4.7)
     sim.obstacles.append(wreck)
@@ -354,12 +384,13 @@ def main():
     collisions, worst = run(sim, 300)
     near = [v for v in sim.vehicles if v["lane"] == 2 and sim.ahead(v["s"], wreck["s"]) < 300]
     queued = [v for v in near if v["v"] < 1]
-    print(f"stopped car in lane 2: overlaps {len(collisions)}, hardest braking {worst:.1f} m/s^2, "
+    print(f"  stopped car in lane 2: overlaps {len(collisions)}, hardest braking {worst:.1f} m/s^2, "
           f"cars stopped behind it {len(queued)}, lane changes {sim.lane_changes}")
-    results.append(collisions)
+    if collisions:
+        failures.append(f"stopped car: overlaps {collisions[:4]}")
 
     # 4. a player at 300 km/h coming up from behind in lane 1 (the fast lane)
-    sim = Sim(LAP, LANES, seed=4)
+    sim = new_sim(road, 4)
     sim.populate(10)
     player = dict(s=0.0, lane=1.0, v=300 / 3.6, length=4.66)
     sim.obstacles.append(player)
@@ -377,12 +408,13 @@ def main():
         if veh["lane"] == 1:
             sim.vehicles.remove(veh)  # an empty fast lane, so any car in it pulled out
     collisions, worst = run(sim, 120, on_step=drive)
-    print(f"player at 300 km/h in the fast lane: cars that pulled out within 150 m in front of it: {len(cut_ins)} "
+    print(f"  player at 300 km/h in the fast lane: cars that pulled out within 150 m in front of it: {len(cut_ins)} "
           f"{cut_ins[:3]}; overlaps {len(collisions)}")
-    results.append(collisions)
+    if collisions or cut_ins:
+        failures.append(f"fast player: overlaps {collisions[:4]}, cut-ins {cut_ins[:3]}")
 
     # 5. a slow player holding the fast lane at 80 km/h
-    sim = Sim(LAP, LANES, seed=5)
+    sim = new_sim(road, 5)
     sim.populate(8)
     slow = dict(s=500.0, lane=1.0, v=80 / 3.6, length=4.66)
     sim.obstacles.append(slow)
@@ -396,13 +428,24 @@ def main():
     collisions, worst = run(sim, 300, on_step=creep)
     sim.build_order()
     stuck = [v for v in sim.vehicles if v["lane"] == 1 and sim.ahead(v["s"], slow["s"]) < 200 and v["v0"] > slow["v"] + 5]
-    print(f"slow player in the fast lane: faster cars still stuck behind it {len(stuck)}, overlaps {len(collisions)}")
-    results.append(collisions)
+    print(f"  slow player in the fast lane: faster cars still stuck behind it {len(stuck)}, overlaps {len(collisions)}")
+    if collisions:
+        failures.append(f"slow player: overlaps {collisions[:4]}")
+    return failures
 
-    ok = all(not c for c in results)
-    print("PASS: no overlaps in any test" if ok else "FAIL: overlaps found")
-    return 0 if ok else 1
+
+def main(argv):
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    import road_geometry
+    ids = [a for a in argv if a in road_geometry.MAP_IDS] or list(road_geometry.MAP_IDS)
+    failures = []
+    for map_id in ids:
+        failures += [f"{map_id} {f}" for f in test_map(road_geometry.load_road(map_id))]
+    for f in failures:
+        print("  FAIL", f)
+    print("PASS: no overlaps, cut-ins or uncomfortable curves in any test" if not failures else "FAIL: see above")
+    return 0 if not failures else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

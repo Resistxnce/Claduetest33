@@ -14,9 +14,9 @@ Original file URLs:
 - <https://upload.wikimedia.org/wikipedia/commons/3/37/McLaren_720S_with_Fi_Exhaust_-_engine_and_exhaust_sound_%28YouTube_ijLY6Tl8ex0%29.opus>
 - <https://upload.wikimedia.org/wikipedia/commons/1/1a/McLaren_720S_with_Novitec_exhaust_-_engine_and_exhaust_sound_%28YouTube_XfgP-gX7KNg%29.opus>
 
-**Download status (2026-11-13).** Wikimedia's file server answered every request with HTTP 429 ("too many requests"); other
-agents were downloading at the same time. A polite retry script was left running. If the `.opus` files are not in this
-folder, fetch them from the URLs above. Nothing was downloaded from YouTube.
+**Download status (2026-11-13): not downloaded.** Wikimedia's file server answered all 10 requests with HTTP 429 ("too many requests") while other
+agents were downloading at the same time. Fetch the files from the URLs above and save them under the local names in the
+table. Nothing was downloaded from YouTube.
 
 **Using CC BY 3.0 material.** Credit the author and link the licence (<https://creativecommons.org/licenses/by/3.0/>), and
 say if the audio was changed, for example "Engine audio derived from 'McLaren 720S with Fi Exhaust' by FiExhaust,

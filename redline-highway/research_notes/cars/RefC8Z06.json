@@ -1,0 +1,2072 @@
+{
+ "id": "RefC8Z06",
+ "reference": "Chevrolet Corvette Z06 coupe (C8, MY2023 onward) - engineering reference only; the game car gets a fictional name",
+ "researchedOn": "2026-11-13",
+ "mainSpec": "Base Z06 coupe (no Z07 package), US market, 1LZ-3LZ trims share the mechanical spec",
+ "tagLegend": {
+  "F": "manufacturer figure (GM/Chevrolet), possibly read through a mirror of GM data",
+  "P": "published spec from a third party (spec database, magazine spec box, Wikipedia)",
+  "M": "measured in an instrumented test",
+  "E": "estimate; the note says how it was made",
+  "A": "assumption"
+ },
+ "beliefCheck": [
+  {
+   "belief": "LT6, 5.5 L naturally aspirated DOHC flat-plane V8, 670 hp at 8,400 rpm, redline 8,600",
+   "verdict": "Confirmed",
+   "note": "670 hp (500 kW) at 8,400 rpm and 460 lb-ft (624 Nm) at 6,300 rpm are SAE J1349 US ratings. Some secondary spec pages wrongly print '6.2 L' or 'peak power at 8,600'. Export markets rate it 475 kW (646 PS) at 8,550 rpm."
+  },
+  {
+   "belief": "Tremec 8-speed dual-clutch with a shorter final drive than the Stingray",
+   "verdict": "Confirmed",
+   "note": "Tremec TR-9080 (GM M1L). Same eight ratios as the Stingray; final drive 5.56 vs 5.17 (Stingray Z51, eLSD) or 4.89 (Stingray base, mechanical LSD)."
+  },
+  {
+   "belief": "Use base Z06 as main spec, Z07 as variant",
+   "verdict": "Adopted",
+   "note": "Base Z06 = Michelin Pilot Sport 4S ZP, Brembo iron brakes, standard aero, Magnetic Ride. Z07 = Pilot Sport Cup 2 R ZP, carbon-ceramic brakes, high-downforce aero (734 lb at 186 mph), FE7 chassis, 189 mph top speed instead of 195."
+  }
+ ],
+ "identity": {
+  "make_model": {
+   "value": "Chevrolet Corvette Z06 (C8)",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "generation": {
+   "value": "C8, eighth generation, mid-engine",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "bodyStyles": {
+   "value": [
+    "coupe with removable roof panel (targa)",
+    "hardtop convertible"
+   ],
+   "unit": "",
+   "tag": "F",
+   "source": "S02",
+   "note": "Main spec is the coupe."
+  },
+  "trims": {
+   "value": [
+    "1LZ",
+    "2LZ",
+    "3LZ"
+   ],
+   "unit": "",
+   "tag": "F",
+   "source": "S02",
+   "note": "Trims are equipment levels; mechanical spec is shared."
+  },
+  "options": {
+   "value": [
+    "Z07 Performance Package",
+    "Carbon Aero package (exposed or painted carbon)",
+    "carbon-fibre wheels (Carbon Revolution)",
+    "carbon-ceramic brakes (standard with Z07)",
+    "front-axle lift"
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S06;S16"
+  },
+  "revealed": {
+   "value": "2021-10-26",
+   "unit": "date",
+   "tag": "F",
+   "source": "S02"
+  },
+  "modelYears": {
+   "value": "2023 onward (production began in 2022)",
+   "unit": "",
+   "tag": "P",
+   "source": "S02",
+   "note": "MY2027 refresh changes not researched."
+  },
+  "assembly": {
+   "value": "Bowling Green Assembly, Kentucky, USA; LT6 engines hand-built in Bowling Green",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S07"
+  },
+  "basePriceUsd": {
+   "value": {
+    "MY2023": 105300,
+    "MY2024": 108100
+   },
+   "unit": "USD",
+   "tag": "P",
+   "source": "S02",
+   "note": "Z07 package adds about 8,995 USD (S31)."
+  },
+  "productionCounts": {
+   "value": {
+    "2023": {
+     "coupe": 3109,
+     "convertible": 3304
+    },
+    "2024": {
+     "coupe": 5327,
+     "convertible": 5248
+    },
+    "2025": {
+     "coupe": 4786,
+     "convertible": 4076
+    }
+   },
+   "unit": "cars",
+   "tag": "P",
+   "source": "S02",
+   "note": "As printed on Wikipedia; not cross-checked."
+  },
+  "marketsUS": {
+   "value": "US and Canada: 670 hp (500 kW) at 8,400 rpm, 460 lb-ft (624 Nm) at 6,300 rpm, SAE J1349",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S02"
+  },
+  "marketsExport": {
+   "value": "Europe, UK, Japan, Australia, New Zealand: 475 kW (646 PS) at 8,550 rpm; 595 Nm at 6,300 rpm",
+   "unit": "",
+   "tag": "P",
+   "source": "S20;S21;S22",
+   "note": "Japanese catalogue lists 623 Nm (63.6 kgf m) instead of 595 Nm; the two export sources disagree. Lower rating presumably reflects export emissions hardware (not confirmed)."
+  },
+  "rightHandDrive": {
+   "value": "RHD built for UK, Japan, Australia, New Zealand",
+   "unit": "",
+   "tag": "P",
+   "source": "S20;S22"
+  }
+ },
+ "engine": {
+  "code": {
+   "value": "LT6",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "projectName": {
+   "value": "Gemini (design began 2014; first proof-of-concept engine Sept 2015)",
+   "unit": "",
+   "tag": "P",
+   "source": "S01"
+  },
+  "layout": {
+   "value": "90-degree V8, longitudinal, mid-mounted ahead of the transaxle",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "crankshaft": {
+   "value": "flat-plane (180-degree) forged steel crank, four-bolt mains, crank-mounted fluid damper, no balance shafts",
+   "unit": "",
+   "tag": "P",
+   "source": "S07"
+  },
+  "displacementNominal": {
+   "value": 5.5,
+   "unit": "L",
+   "tag": "F",
+   "source": "S02"
+  },
+  "displacementCalculated": {
+   "value": 5463,
+   "unit": "cc",
+   "tag": "P",
+   "source": "S07",
+   "note": "Computed from published bore x stroke x 8 = 5,462.9 cc (333.4 cu in)."
+  },
+  "bore": {
+   "value": 104.25,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S07;S06",
+   "note": "4.104 in"
+  },
+  "stroke": {
+   "value": 80.0,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S07;S06",
+   "note": "3.150 in; bore/stroke 1.30"
+  },
+  "boreSpacing": {
+   "value": 111.76,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S02",
+   "note": "4.40 in, small-block family spacing"
+  },
+  "compressionRatio": {
+   "value": 12.5,
+   "unit": ":1",
+   "tag": "P",
+   "source": "S07;S06"
+  },
+  "combustionChamber": {
+   "value": 58.8,
+   "unit": "cc",
+   "tag": "P",
+   "source": "S07"
+  },
+  "valvetrain": {
+   "value": "DOHC per bank, 4 valves per cylinder (32), finger followers on solid lifters with robot-selected shims, nested dual valve springs",
+   "unit": "",
+   "tag": "P",
+   "source": "S07"
+  },
+  "intakeValves": {
+   "value": "42 mm (1.654 in) titanium",
+   "unit": "",
+   "tag": "P",
+   "source": "S07"
+  },
+  "exhaustValves": {
+   "value": "35 mm (1.378 in) sodium-filled",
+   "unit": "",
+   "tag": "P",
+   "source": "S07"
+  },
+  "camPhasing": {
+   "value": "electro-hydraulic VVT, about 55 deg intake and 25 deg exhaust authority; no variable lift",
+   "unit": "deg",
+   "tag": "P",
+   "source": "S07"
+  },
+  "rodsPistons": {
+   "value": "forged titanium connecting rods, forged aluminium pistons with oil squirters",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S07"
+  },
+  "fuelSystem": {
+   "value": "direct injection, max 350 bar (5,076 psi); premium fuel",
+   "unit": "",
+   "tag": "P",
+   "source": "S06;S07"
+  },
+  "intake": {
+   "value": "two moulded-nylon plenums of 5.5 L each, one 87 mm electronic throttle body per plenum; three 'communicator' valves between the plenums (two work as a pair, one on its own schedule) tune Helmholtz resonance",
+   "unit": "",
+   "tag": "P",
+   "source": "S08;S02",
+   "note": "Motor1, citing SAE, says two valves stay closed until 2,000 rpm and the third opens at 5,800 rpm (S09). GM's torque chart shows steps near 3,000-3,500 rpm and 6,000-6,300 rpm, so treat the schedule as approximate."
+  },
+  "lubrication": {
+   "value": "six-stage dry sump scavenging each crank bay; about 10 qt; 5W-50 dexos R oil",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S06;S07",
+   "note": "Corvsport lists 8.0 qt oil capacity; Wikipedia 10 qt."
+  },
+  "maxPower": {
+   "value": 500,
+   "unit": "kW",
+   "tag": "F",
+   "source": "S01;S02",
+   "note": "670 hp SAE J1349 at 8,400 rpm (US)"
+  },
+  "maxPowerRpm": {
+   "value": 8400,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S01;S02"
+  },
+  "maxTorque": {
+   "value": 624,
+   "unit": "Nm",
+   "tag": "F",
+   "source": "S01;S02",
+   "note": "460 lb-ft at 6,300 rpm (US)"
+  },
+  "maxTorqueRpm": {
+   "value": 6300,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S01;S02"
+  },
+  "specificOutput": {
+   "value": 121.8,
+   "unit": "hp/L",
+   "tag": "P",
+   "source": "S07"
+  },
+  "redline": {
+   "value": 8600,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S02;S33",
+   "note": "Tachometer redline; shown in Chevrolet's reveal teaser."
+  },
+  "revLimiter": {
+   "value": 8600,
+   "unit": "rpm",
+   "tag": "P",
+   "source": "S19",
+   "note": "Motor Authority: 8,600 rpm is the fuel shut-off point; at full throttle the gearbox completes the upshift at about 8,500 rpm."
+  },
+  "limiterHysteresis": {
+   "value": 150,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "",
+   "note": "Not published. Typical hard fuel-cut bounce for a light DOHC engine."
+  },
+  "idleRpm": {
+   "value": 900,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "",
+   "note": "Not published (gap). Warm idle estimated 850-1,000 rpm for a high-specific-output NA DOHC V8; reviewers call the idle 'ragged'. Cold-start flare estimated about 1,500 rpm."
+  },
+  "launchControlRpm": {
+   "value": {
+    "default": 4500,
+    "min": 3500,
+    "max": 5000
+   },
+   "unit": "rpm",
+   "tag": "P",
+   "source": "S23",
+   "note": "Driver-adjustable launch rpm and allowed tyre slip (Corvette Blogger, Apr 2022, from a Chevrolet video). The Stingray's TR-9080 launch holds 3,500 rpm (S10)."
+  },
+  "engineInertia": {
+   "value": 0.14,
+   "unit": "kg*m^2",
+   "tag": "E",
+   "source": "",
+   "note": "Not published. Crank, rods share, damper and dual-clutch drum for a light flat-plane V8 (the V12 prototype uses 0.20)."
+  },
+  "firingOrder": {
+   "value": "1-4-3-8-7-6-5-2",
+   "unit": "",
+   "tag": "P",
+   "source": "S12;S06",
+   "note": "Given by several firing-order references and a Corvette spec guide; not seen in a GM document."
+  },
+  "cylinderNumbering": {
+   "value": "GM convention: odd cylinders 1-3-5-7 on the LEFT bank (driver's side of a left-hand-drive car; GM 'bank 1'), numbered front to rear; even cylinders 2-4-6-8 on the RIGHT bank. In the C8 the engine's front (accessory drive) faces forward toward the cabin, so cylinder 1 is the left-bank cylinder nearest the cabin and 7/8 sit next to the transaxle.",
+   "unit": "",
+   "tag": "A",
+   "source": "S12",
+   "note": "GM small-block convention; applying it to the mid-mounted LT6 is an assumption consistent with GM diagnostics (bank 1 = odd). One firing-order site states the viewing direction inconsistently."
+  },
+  "bankSequence": {
+   "value": [
+    "1 L",
+    "4 R",
+    "3 L",
+    "8 R",
+    "7 L",
+    "6 R",
+    "5 L",
+    "2 R"
+   ],
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Derived from the firing order and GM numbering: strictly alternating left-right, one firing every 90 deg of crank rotation."
+  },
+  "perBankFiring": {
+   "value": {
+    "left": "1-3-7-5 (positions 1-2-4-3 from the front)",
+    "right": "4-8-6-2 (positions 2-4-3-1, the same 1-2-4-3 pattern)",
+    "intervalDeg": 180
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Each bank behaves like an inline-four firing every 180 deg, so each bank's exhaust gets evenly spaced pulses. A cross-plane V8 gives each bank uneven 90/180/270 deg gaps (the burble)."
+  },
+  "crankThrows": {
+   "value": "Four throws, each carrying one left and one right rod (1+2, 3+4, 5+6, 7+8). Throws 1 and 4 in phase; throws 2 and 3 at 180 deg. Checked: with a 90-deg V this gives exactly the 1-4-3-8-7-6-5-2 sequence at 90-deg intervals.",
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Derived; GM did not publish throw phasing."
+  },
+  "firingFrequency": {
+   "value": {
+    "formula": "rpm / 60 x 4 (whole engine, order 4); per bank rpm / 60 x 2 (order 2)",
+    "at900rpm": 60,
+    "at4500rpm": 300,
+    "at8400rpm": 560,
+    "at8600rpm": 573
+   },
+   "unit": "Hz",
+   "tag": "E",
+   "source": "",
+   "note": "Per-bank frequency is half the whole-engine value."
+  },
+  "torqueCurveFullLoad": {
+   "basis": "crank, SAE J1349 net, US engine",
+   "tag": "F",
+   "source": "S01",
+   "note": "Read from GM's 'US LT6 SAE Torque and Power' chart by pixel digitisation of the torque trace; the chart's power trace, recomputed from torque, agrees within 1-2 hp everywhere. Chart starts at about 1,800 rpm and ends at 8,600. Chart peaks read about 1% under the ratings (456 lb-ft vs 460; 666 hp vs 670): multiply by 1.006 to match the ratings within 0.5%. Blue torque trace is hidden behind the power trace near 5,200-5,300 rpm (interpolated).",
+   "points": [
+    {
+     "rpm": 1800,
+     "torqueNm": 394.7,
+     "torqueLbft": 291.1,
+     "powerKw": 74.4,
+     "powerHp": 99.8
+    },
+    {
+     "rpm": 2000,
+     "torqueNm": 398.6,
+     "torqueLbft": 294.0,
+     "powerKw": 83.5,
+     "powerHp": 112.0
+    },
+    {
+     "rpm": 2500,
+     "torqueNm": 411.9,
+     "torqueLbft": 303.8,
+     "powerKw": 107.8,
+     "powerHp": 144.6
+    },
+    {
+     "rpm": 3000,
+     "torqueNm": 406.6,
+     "torqueLbft": 299.9,
+     "powerKw": 127.7,
+     "powerHp": 171.3
+    },
+    {
+     "rpm": 3500,
+     "torqueNm": 570.5,
+     "torqueLbft": 420.8,
+     "powerKw": 209.1,
+     "powerHp": 280.4
+    },
+    {
+     "rpm": 4000,
+     "torqueNm": 591.7,
+     "torqueLbft": 436.4,
+     "powerKw": 247.8,
+     "powerHp": 332.4
+    },
+    {
+     "rpm": 4500,
+     "torqueNm": 600.9,
+     "torqueLbft": 443.2,
+     "powerKw": 283.2,
+     "powerHp": 379.7
+    },
+    {
+     "rpm": 5000,
+     "torqueNm": 602.3,
+     "torqueLbft": 444.2,
+     "powerKw": 315.3,
+     "powerHp": 422.9
+    },
+    {
+     "rpm": 5500,
+     "torqueNm": 604.8,
+     "torqueLbft": 446.1,
+     "powerKw": 348.4,
+     "powerHp": 467.2
+    },
+    {
+     "rpm": 6000,
+     "torqueNm": 607.5,
+     "torqueLbft": 448.1,
+     "powerKw": 381.7,
+     "powerHp": 511.9
+    },
+    {
+     "rpm": 6300,
+     "torqueNm": 618.1,
+     "torqueLbft": 455.9,
+     "powerKw": 407.8,
+     "powerHp": 546.9
+    },
+    {
+     "rpm": 6500,
+     "torqueNm": 610.1,
+     "torqueLbft": 450.0,
+     "powerKw": 415.3,
+     "powerHp": 556.9
+    },
+    {
+     "rpm": 7000,
+     "torqueNm": 598.2,
+     "torqueLbft": 441.2,
+     "powerKw": 438.5,
+     "powerHp": 588.0
+    },
+    {
+     "rpm": 7500,
+     "torqueNm": 590.3,
+     "torqueLbft": 435.4,
+     "powerKw": 463.6,
+     "powerHp": 621.8
+    },
+    {
+     "rpm": 8000,
+     "torqueNm": 578.4,
+     "torqueLbft": 426.6,
+     "powerKw": 484.6,
+     "powerHp": 649.8
+    },
+    {
+     "rpm": 8400,
+     "torqueNm": 565.2,
+     "torqueLbft": 416.9,
+     "powerKw": 497.2,
+     "powerHp": 666.8
+    },
+    {
+     "rpm": 8500,
+     "torqueNm": 555.9,
+     "torqueLbft": 410.0,
+     "powerKw": 494.8,
+     "powerHp": 663.5
+    },
+    {
+     "rpm": 8600,
+     "torqueNm": 546.7,
+     "torqueLbft": 403.2,
+     "powerKw": 492.3,
+     "powerHp": 660.2
+    }
+   ],
+   "shapeFeatures": [
+    {
+     "rpm": 2600,
+     "torqueLbft": 303.8,
+     "what": "low-rpm hump"
+    },
+    {
+     "rpm": 2900,
+     "torqueLbft": 294.0,
+     "what": "dip before the intake resonance step"
+    },
+    {
+     "rpm": 3800,
+     "torqueLbft": 442.2,
+     "what": "first resonance peak"
+    },
+    {
+     "rpm": 4200,
+     "torqueLbft": 427.6,
+     "what": "mid dip"
+    },
+    {
+     "rpm": 4600,
+     "torqueLbft": 448.1,
+     "what": "hump"
+    },
+    {
+     "rpm": 6350,
+     "torqueLbft": 455.9,
+     "what": "chart peak (rated 460 lb-ft at 6,300)"
+    }
+   ],
+   "belowChartEstimate": {
+    "value": [
+     {
+      "rpm": 1000,
+      "torqueNm": 340
+     },
+     {
+      "rpm": 1500,
+      "torqueNm": 385
+     }
+    ],
+    "unit": "Nm",
+    "tag": "E",
+    "source": "",
+    "note": "Extrapolated below the chart's 1,800 rpm start; the 1,800-2,500 rpm slope is only about 2.5 Nm per 100 rpm."
+   },
+   "wheelDyno": {
+    "value": {
+     "peakWhp": 600.36,
+     "atRpm": 8340,
+     "peakWheelTorqueLbft": 406.55,
+     "torqueAtRpm": 6730
+    },
+    "unit": "hp / lb-ft at the wheels",
+    "tag": "M",
+    "source": "S25",
+    "note": "Hennessey stock-car chassis dyno, Oct 2023; other stock runs 597-611 whp (Speed Phenom 610 whp / 419 lb-ft). Implies about 90% driveline efficiency on the dyno."
+   }
+  }
+ },
+ "transmission": {
+  "model": {
+   "value": "Tremec TR-9080 8-speed dual-clutch transaxle (GM RPO M1L)",
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S10"
+  },
+  "construction": {
+   "value": "two concentric wet clutches (outer: 5 plates, odd gears; inner: 6 plates, even gears), five triple-cone synchronisers, transaxle behind the engine",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  "gearRatios": {
+   "value": [
+    2.91,
+    1.76,
+    1.22,
+    0.88,
+    0.65,
+    0.51,
+    0.4,
+    0.33
+   ],
+   "unit": ":1",
+   "tag": "P",
+   "source": "S04;S05;S11",
+   "note": "Same set as the Stingray. Cross-checked: 2.91/0.33 = 8.8 spread (SAE article, S10) and the owner's-manual gear speed limits (S18) match these ratios within 3-4%."
+  },
+  "reverseRatio": {
+   "value": 2.63,
+   "unit": ":1",
+   "tag": "P",
+   "source": "S04;S05;S11"
+  },
+  "finalDrive": {
+   "value": 5.56,
+   "unit": ":1",
+   "tag": "F",
+   "source": "S02;S04",
+   "note": "Stingray: 5.17 with Z51/eLSD, 4.89 base mechanical LSD (S10)."
+  },
+  "finalDriveBuildUp": {
+   "value": "about 1.566 transfer gear x 3.55 ring and pinion",
+   "unit": "",
+   "tag": "E",
+   "source": "S11",
+   "note": "Tremec says all versions share a 3.55 ring and pinion and vary the transfer gear; 5.56/3.55 = 1.566. Not confirmed for the Z06. Ring and pinion tooth counts not published (3.55 could be 71/20 or 39/11)."
+  },
+  "overallRatios": {
+   "value": [
+    16.18,
+    9.786,
+    6.783,
+    4.893,
+    3.614,
+    2.836,
+    2.224,
+    1.835
+   ],
+   "unit": ":1",
+   "tag": "E",
+   "source": "",
+   "note": "Gear x 5.56. Reverse overall 14.62."
+  },
+  "speedAt8600rpm": {
+   "value": {
+    "1": 69,
+    "2": 114,
+    "3": 165,
+    "4": 229,
+    "5": 310,
+    "6": 394,
+    "7": 503,
+    "8": 610
+   },
+   "unit": "km/h",
+   "tag": "E",
+   "source": "",
+   "note": "Rear rolling radius 0.345 m. Gears 6-8 are above the drag-limited top speed (top speed is reached in 6th at about 6,850 rpm). In mph: 43, 71, 102, 142, 192."
+  },
+  "ownersManualShiftLimits": {
+   "value": {
+    "1stMaxMph": 41,
+    "2ndRangeMph": [
+     9,
+     69
+    ],
+    "5thMinMph": 29,
+    "6to5DownshiftMaxMph": 188
+   },
+   "unit": "mph",
+   "tag": "P",
+   "source": "S18",
+   "note": "As reported from the 2023 owner's manual (page 202); not seen directly."
+  },
+  "rpmAt70mph8th": {
+   "value": 1590,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "",
+   "note": "From ratios and 0.345 m rolling radius; about 1,930 rpm in 7th."
+  },
+  "shiftTime": {
+   "value": 0.1,
+   "unit": "s",
+   "tag": "P",
+   "source": "S10",
+   "note": "TR-9080 (Stingray) upshift clutch overlap about 100 ms with no torque interruption. Z06-specific figure not published."
+  },
+  "inputTorqueRating": {
+   "value": 800,
+   "unit": "Nm",
+   "tag": "P",
+   "source": "S10",
+   "note": "Original TR-9080 rating up to 7,500 rpm input; how the Z06 unit was adapted for 8,600 rpm is not published (gap)."
+  },
+  "efficiency": {
+   "value": 0.9,
+   "unit": "",
+   "tag": "E",
+   "source": "S25",
+   "note": "Crank-to-wheel from the stock wheel dyno (600-611 whp vs 670 hp)."
+  }
+ },
+ "drivetrain": {
+  "layout": {
+   "value": "mid-engine, rear-wheel drive",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "differential": {
+   "value": "electronic limited-slip differential (eLSD), standard on every Z06",
+   "unit": "",
+   "tag": "F",
+   "source": "S02",
+   "note": "Hydraulically clamped wet multi-plate clutch inside the transaxle (P/E); lock rates not published."
+  },
+  "diffModelEstimate": {
+   "value": {
+    "preloadNm": 100,
+    "powerLock": 0.45,
+    "coastLock": 0.3
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Clutch-type approximation for the game, in the prototype's format; eLSDs are fully variable, so tune in testing."
+  },
+  "tractionControl": {
+   "value": "Performance Traction Management with several modes, plus launch control",
+   "unit": "",
+   "tag": "A",
+   "source": "",
+   "note": "PTM mode names not researched."
+  }
+ },
+ "mass": {
+  "gmDryWeightZ07CarbonWheels": {
+   "value": 1558,
+   "unit": "kg",
+   "tag": "P",
+   "source": "S04;S05;S22",
+   "note": "3,434 lb dry, coupe with Z07 and carbon wheels, as copied from GM's sheet; Driven NZ prints 1,561 kg. Corvsport's 2025 guide instead prints 3,500 lb dry (configuration unclear)."
+  },
+  "curbWeightMeasuredCD_Z07coupe": {
+   "value": 1663,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S13",
+   "note": "3,666 lb, Car and Driver, Nov 2022, Z07 coupe."
+  },
+  "curbWeightMeasuredCD_convertible": {
+   "value": 1723,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S13",
+   "note": "3,799 lb."
+  },
+  "motorTrendCoupeVsConvertible": {
+   "value": -40,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S16",
+   "note": "Coupe 88 lb lighter than the convertible."
+  },
+  "curbWeightJapan3LZ": {
+   "value": 1720,
+   "unit": "kg",
+   "tag": "P",
+   "source": "S20",
+   "note": "Japanese catalogue 'vehicle weight' (curb, no driver)."
+  },
+  "curbWeightBaseCoupe": {
+   "value": 1680,
+   "unit": "kg",
+   "tag": "E",
+   "source": "S13",
+   "note": "No GM curb figure found for the base car. From the C/D Z07 car: plus iron brakes (about +10 kg vs carbon-ceramic), minus Z07 aero (about -5 kg), plus forged aluminium wheels if the test car had carbon wheels (about +19 kg; not known). Range 1,665-1,695 kg."
+  },
+  "simulatedMass": {
+   "value": 1755,
+   "unit": "kg",
+   "tag": "E",
+   "source": "",
+   "note": "Base curb 1,680 kg + 75 kg driver, as the prototype does."
+  },
+  "weightDistributionFront": {
+   "value": 0.4,
+   "unit": "share",
+   "tag": "P",
+   "source": "S26",
+   "note": "About 40/60; Motor Authority says 60% over the rear axle; Corvette Magazine says 40/60. Stingray official: 39.4/60.6 (S05). No measured Z06 split found."
+  },
+  "comHeight": {
+   "value": 0.44,
+   "unit": "m",
+   "tag": "E",
+   "source": "",
+   "note": "Low mid-engine coupe with dry sump; typical 0.42-0.46 m."
+  },
+  "inertiaBox": {
+   "value": {
+    "width": 1.85,
+    "height": 0.75,
+    "length": 3.9
+   },
+   "unit": "m",
+   "tag": "E",
+   "source": "",
+   "note": "Mass box for yaw inertia, in the prototype's format."
+  }
+ },
+ "dimensions": {
+  "length": {
+   "value": 4689,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05;S06",
+   "note": "184.6 in; Japanese catalogue 4,685 mm. 4,722 mm (185.9 in) with carbon ground effects / Z07 splitter."
+  },
+  "width": {
+   "value": 2024,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05;S06",
+   "note": "79.7 in without mirrors; Japanese catalogue 2,025 mm. Stingray 1,933 mm (76.1 in): the Z06 is about 91 mm wider."
+  },
+  "height": {
+   "value": 1234,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05;S06",
+   "note": "48.6 in; Japanese catalogue 1,225 mm."
+  },
+  "wheelbase": {
+   "value": 2723,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S02;S04;S05",
+   "note": "107.2 in; Japanese catalogue 2,725 mm."
+  },
+  "trackFront": {
+   "value": 1684,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05;S06",
+   "note": "66.3 in (Stingray 64.9 in / 1,648 mm)."
+  },
+  "trackRear": {
+   "value": 1679,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05;S06",
+   "note": "66.1 in (Stingray 62.4 in / 1,585 mm)."
+  },
+  "groundClearance": {
+   "value": 100,
+   "unit": "mm",
+   "tag": "E",
+   "source": "",
+   "note": "Not published (gap). Typical for the C8 at the splitter; optional front lift raises the nose roughly 50 mm (A)."
+  },
+  "frontOverhang": {
+   "value": 960,
+   "unit": "mm",
+   "tag": "E",
+   "source": "S29a",
+   "note": "Total overhang 4,689 - 2,723 = 1,966 mm split 49/51 front/rear as measured on the side photo."
+  },
+  "rearOverhang": {
+   "value": 1006,
+   "unit": "mm",
+   "tag": "E",
+   "source": "S29a"
+  },
+  "frontalArea": {
+   "value": 2.1,
+   "unit": "m^2",
+   "tag": "E",
+   "source": "",
+   "note": "Width x height x 0.84 fill factor (2.024 x 1.234 x 0.84), plus mirrors."
+  },
+  "fuelTank": {
+   "value": 70,
+   "unit": "L",
+   "tag": "P",
+   "source": "S04;S06;S20",
+   "note": "18.5 US gal."
+  },
+  "cargo": {
+   "value": 357,
+   "unit": "L",
+   "tag": "P",
+   "source": "S04;S06",
+   "note": "12.6 cu ft (front and rear trunks)."
+  }
+ },
+ "tyresWheels": {
+  "frontSize": {
+   "value": "275/30ZR20",
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S06;S20"
+  },
+  "rearSize": {
+   "value": "345/25ZR21",
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S06;S20"
+  },
+  "oeTyreBase": {
+   "value": "Michelin Pilot Sport 4S ZP (run-flat)",
+   "unit": "",
+   "tag": "P",
+   "source": "S06;S16"
+  },
+  "oeTyreZ07": {
+   "value": "Michelin Pilot Sport Cup 2 R ZP",
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S16"
+  },
+  "wheelsFront": {
+   "value": "20 x 10 in",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06"
+  },
+  "wheelsRear": {
+   "value": "21 x 13 in",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06"
+  },
+  "wheelMaterial": {
+   "value": "forged aluminium standard; optional Carbon Revolution carbon-fibre wheels save 41 lb (18.6 kg) unsprung in total",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S06",
+   "note": "Motor Trend: about 10 lb per corner."
+  },
+  "boltPattern": {
+   "value": "5 x 120 mm",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06"
+  },
+  "tyreDiameterFront": {
+   "value": 673,
+   "unit": "mm",
+   "tag": "E",
+   "source": "",
+   "note": "Computed from size."
+  },
+  "tyreDiameterRear": {
+   "value": 706,
+   "unit": "mm",
+   "tag": "E",
+   "source": "",
+   "note": "Computed from size."
+  },
+  "rollingRadius": {
+   "value": {
+    "front": 0.33,
+    "rear": 0.345
+   },
+   "unit": "m",
+   "tag": "E",
+   "source": "",
+   "note": "About 0.98 of free radius."
+  },
+  "wheelTyreInertia": {
+   "value": {
+    "front": 1.5,
+    "rear": 2.1
+   },
+   "unit": "kg*m^2",
+   "tag": "E",
+   "source": "",
+   "note": "Forged aluminium wheel plus tyre; carbon wheels about 10% less."
+  },
+  "gripModelBase": {
+   "value": {
+    "peakLongitudinal": 1.4,
+    "peakLateral": 1.18
+   },
+   "unit": "mu",
+   "tag": "E",
+   "source": "S13;S16",
+   "note": "PS4S road tyre; scaled so the car can reach about 1.10-1.12 g on a skidpad (convertible tests)."
+  },
+  "gripModelZ07": {
+   "value": {
+    "peakLongitudinal": 1.5,
+    "peakLateral": 1.25
+   },
+   "unit": "mu",
+   "tag": "E",
+   "source": "S13;S16",
+   "note": "Cup 2 R; tests show 1.16 g on the skidpad (C/D 300 ft, MT 200 ft)."
+  }
+ },
+ "brakes": {
+  "baseSystem": {
+   "value": "Brembo iron discs, 6-piston monobloc front calipers, 4-piston monobloc rear calipers; eBoost electro-hydraulic brake booster",
+   "unit": "",
+   "tag": "P",
+   "source": "S05;S06"
+  },
+  "baseDiscFront": {
+   "value": "370 x 34 mm",
+   "unit": "mm",
+   "tag": "P",
+   "source": "S05;S06",
+   "note": "14.6 x 1.3 in. Corvsport's 2025 table labels these carbon-ceramic and corvettestory prints wrong mm values; the inch values agree across sources."
+  },
+  "baseDiscRear": {
+   "value": "380 x 34 mm",
+   "unit": "mm",
+   "tag": "P",
+   "source": "S05;S06",
+   "note": "15.0 x 1.3 in. The rear disc is larger than the front on the base car."
+  },
+  "carbonCeramicFront": {
+   "value": "398 x 38 mm",
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05",
+   "note": "15.7 x 1.5 in; standard with Z07."
+  },
+  "carbonCeramicRear": {
+   "value": "390 x 34 mm",
+   "unit": "mm",
+   "tag": "P",
+   "source": "S04;S05",
+   "note": "15.4 x 1.3 in."
+  },
+  "measured_CD_Z07coupe": {
+   "value": {
+    "70to0ft": 139,
+    "70to0m": 42.4,
+    "100to0ft": 274,
+    "100to0m": 83.5,
+    "avgDecel70g": 1.18,
+    "avgDecel100g": 1.22
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "S13",
+   "note": "Car and Driver, Nov 2022, carbon-ceramic brakes, Cup 2 R tyres."
+  },
+  "measured_CD_convertible": {
+   "value": {
+    "70to0ft": 144,
+    "70to0m": 43.9,
+    "100to0ft": 282,
+    "100to0m": 86.0
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "S13",
+   "note": "Package not confirmed."
+  },
+  "measured_MT_Z07coupe": {
+   "value": {
+    "60to0ft": 95,
+    "60to0m": 29.0,
+    "avgDecelG": 1.27
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "S16",
+   "note": "Motor Trend, Nov 2022. MT's convertible (Pilot Sport 4S ZP) stopped in about 99 ft by a derived reading."
+  },
+  "gameTorqueEstimate": {
+   "value": {
+    "frontPerWheelNm": 3000,
+    "rearPerWheelNm": 2000,
+    "frontBias": 0.6
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Enough to lock the wheels at about 1.3 g with dynamic load transfer (CoM 0.44 m); ABS does the rest."
+  }
+ },
+ "aero": {
+  "dragCoefficient": {
+   "value": null,
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Not published (gap). GM only says the Z06 makes 6% more downforce than the C7 ZR1 at 8% less drag (configuration unclear)."
+  },
+  "dragAreaBase": {
+   "value": 0.92,
+   "unit": "m^2",
+   "tag": "E",
+   "source": "S17",
+   "note": "Fitted: 195 mph reached in 6th at about 6,840 rpm (577 hp crank on GM's curve) x 0.90 driveline efficiency, rolling resistance 0.013, air 1.204 kg/m^3, 1,755 kg. Implies Cd about 0.44 on 2.10 m^2 (low confidence)."
+  },
+  "dragAreaZ07": {
+   "value": 0.99,
+   "unit": "m^2",
+   "tag": "E",
+   "source": "S17",
+   "note": "Same fit to 189 mph in 6th (about 6,630 rpm)."
+  },
+  "downforceBase": {
+   "value": {
+    "lb": 365,
+    "N": 1624,
+    "atKmh": 300,
+    "atMph": 186
+   },
+   "unit": "",
+   "tag": "P",
+   "source": "S19;S02",
+   "note": "Standard splitter and spoiler with Gurney/wicker. Motor1 quotes 362 lb for a slightly different wicker/Gurney setup."
+  },
+  "downforceZ07": {
+   "value": {
+    "lb": 734,
+    "N": 3265,
+    "atKmh": 300,
+    "atMph": 186
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "S19;S02",
+   "note": "Chevrolet figure as reported by Motor Authority, Motor1 and others."
+  },
+  "liftAreaBase": {
+   "value": 0.39,
+   "unit": "m^2",
+   "tag": "E",
+   "source": "",
+   "note": "ClA = 2 x 1,624 N / (1.204 x 83.3^2)."
+  },
+  "liftAreaZ07": {
+   "value": 0.78,
+   "unit": "m^2",
+   "tag": "E",
+   "source": ""
+  },
+  "aeroBalanceFront": {
+   "value": 0.4,
+   "unit": "share",
+   "tag": "E",
+   "source": "",
+   "note": "Front/rear split not published; set near the 40/60 weight split."
+  },
+  "partsBase": {
+   "value": "front splitter, stall Gurneys under the splitter, rear spoiler with removable wicker",
+   "unit": "",
+   "tag": "P",
+   "source": "S02"
+  },
+  "partsZ07": {
+   "value": "larger splitter, front dive planes, underbody strakes, tall pedestal rear wing; stall Gurneys removed",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S06"
+  }
+ },
+ "suspensionSteering": {
+  "front": {
+   "value": "short/long-arm double wishbone, coil-over, 46 mm monotube dampers",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06",
+   "note": "Coil-over arrangement assumed from the C8 platform (A)."
+  },
+  "rear": {
+   "value": "short/long-arm double wishbone, coil-over, 46 mm monotube dampers",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06"
+  },
+  "dampers": {
+   "value": "Magnetic Selective Ride Control 4.0, standard on Z06",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "z07Chassis": {
+   "value": "FE7 calibration: stiffer springs, retuned magnetic dampers (and bars)",
+   "unit": "",
+   "tag": "P",
+   "source": "S02;S06"
+  },
+  "frontLift": {
+   "value": "optional front-axle lift with GPS memory, roughly +50 mm",
+   "unit": "mm",
+   "tag": "A",
+   "source": "",
+   "note": "Height not confirmed."
+  },
+  "rideFrequencies": {
+   "value": {
+    "baseFrontHz": 1.9,
+    "baseRearHz": 2.1,
+    "z07FrontHz": 2.2,
+    "z07RearHz": 2.4
+   },
+   "unit": "Hz",
+   "tag": "E",
+   "source": "",
+   "note": "Typical for magnetic-damper supercars; tune in testing."
+  },
+  "steeringType": {
+   "value": "variable-ratio electric rack and pinion",
+   "unit": "",
+   "tag": "P",
+   "source": "S04;S06"
+  },
+  "steeringRatio": {
+   "value": 15.7,
+   "unit": ":1",
+   "tag": "P",
+   "source": "S04;S06",
+   "note": "Base ratio; variable."
+  },
+  "lockToLock": {
+   "value": 2.6,
+   "unit": "turns",
+   "tag": "E",
+   "source": "",
+   "note": "Not published (gap). From the turning circle: mean road-wheel lock about 34 deg x 15.7 gives about 3.0 turns at constant ratio; the variable rack quickens off-centre, so about 2.6."
+  },
+  "turningCircle": {
+   "value": 11.6,
+   "unit": "m",
+   "tag": "P",
+   "source": "S06",
+   "note": "38 ft. Corvsport's metric conversion (11.1 m) is wrong. Stingray: 38 ft, 36.4 ft with Magnetic Ride (S05)."
+  },
+  "maxRoadWheelAngle": {
+   "value": {
+    "outer": 29,
+    "inner": 40,
+    "mean": 34
+   },
+   "unit": "deg",
+   "tag": "E",
+   "source": "",
+   "note": "From an 11.6 m kerb-to-kerb circle, 2,723 mm wheelbase, 1,684 mm front track."
+  }
+ },
+ "performance": {
+  "factory": {
+   "zeroTo60mph": {
+    "value": 2.6,
+    "unit": "s",
+    "tag": "F",
+    "source": "S02",
+    "note": "With Z07 package; Chevrolet."
+   },
+   "quarterMile": {
+    "value": 10.6,
+    "unit": "s",
+    "tag": "F",
+    "source": "S04;S05",
+    "note": "GM preliminary; some listings add 'at 131 mph'."
+   },
+   "topSpeedBase": {
+    "value": 314,
+    "unit": "km/h",
+    "tag": "F",
+    "source": "S17",
+    "note": "195 mph, Tadge Juechter (Corvette executive chief engineer)."
+   },
+   "topSpeedZ07": {
+    "value": 304,
+    "unit": "km/h",
+    "tag": "F",
+    "source": "S17",
+    "note": "189 mph, Josh Holder (Corvette chief engineer); downforce costs top speed."
+   },
+   "zeroTo100kmhExport": {
+    "value": 3.0,
+    "unit": "s",
+    "tag": "P",
+    "source": "S22",
+    "note": "Listed in the NZ review spec box; low confidence."
+   },
+   "lateralG": {
+    "value": 1.22,
+    "unit": "g",
+    "tag": "F",
+    "source": "S02",
+    "note": "Chevrolet claim in track configuration (Z07)."
+   },
+   "nurburgring": {
+    "value": "7:11.826",
+    "unit": "min:s",
+    "tag": "P",
+    "source": "S02",
+    "note": "Cited by Wikipedia from Car and Driver; date and configuration not checked."
+   }
+  },
+  "magazineTests": [
+   {
+    "source": "S13",
+    "outlet": "Car and Driver",
+    "date": "2022-11 (published Oct 26, 2022)",
+    "car": "2023 Z06 coupe, Z07 package",
+    "tag": "M",
+    "curbWeightLb": 3666,
+    "rollout": "1 ft",
+    "zeroTo60s": 2.6,
+    "zeroTo100mphS": 5.9,
+    "zeroTo150mphS": 15.2,
+    "quarterMile": "10.5 s @ 131 mph",
+    "rolling5to60s": 3.1,
+    "topGear30to50s": 2.0,
+    "topGear50to70s": 2.2,
+    "braking70to0ft": 139,
+    "braking100to0ft": 274,
+    "skidpad300ftG": 1.16,
+    "interiorSoundFullThrottleDbA": 94,
+    "note": "Numbers via a forum repost of the C/D test box and C/D text syndicated on Yahoo; original page not fetchable."
+   },
+   {
+    "source": "S13",
+    "outlet": "Car and Driver",
+    "date": "2022-2023",
+    "car": "2023 Z06 convertible (package not confirmed)",
+    "tag": "M",
+    "curbWeightLb": 3799,
+    "rollout": "1 ft",
+    "zeroTo60s": 2.7,
+    "zeroTo100mphS": 6.1,
+    "zeroTo150mphS": 16.3,
+    "quarterMile": "10.7 s @ 129 mph",
+    "rolling5to60s": 3.1,
+    "topGear30to50s": 2.0,
+    "topGear50to70s": 2.2,
+    "braking70to0ft": 144,
+    "braking100to0ft": 282,
+    "skidpad300ftG": 1.12,
+    "interiorSoundFullThrottleDbA": 96
+   },
+   {
+    "source": "S16",
+    "outlet": "Motor Trend (Frank Markus)",
+    "date": "2022-11-18",
+    "car": "2023 Z06 coupe, Z07 package, carbon wheels",
+    "tag": "M",
+    "braking60to0ft": 95,
+    "skidpad200ftG": 1.16,
+    "figureEight": "21.85 s @ 0.99 g avg",
+    "note": "Then a record for MT. Coupe ran about 0.2 s slower and 3.4 mph slower through the quarter than MT's Pilot Sport 4S convertible (more drag). MT 0-60 and quarter-mile times not obtained (gap)."
+   },
+   {
+    "source": "S16",
+    "outlet": "Motor Trend",
+    "date": "2022-11",
+    "car": "2023 Z06 convertible, Pilot Sport 4S ZP",
+    "tag": "M",
+    "skidpad200ftG": 1.1,
+    "figureEight": "22.70 s @ 0.93 g avg"
+   },
+   {
+    "source": "S06",
+    "outlet": "Car and Driver (as cited by Corvsport)",
+    "date": "2023",
+    "car": "2023 Z06",
+    "tag": "M",
+    "zeroTo150To0s": 22.5
+   },
+   {
+    "source": "S25",
+    "outlet": "Hennessey Performance (chassis dyno)",
+    "date": "2023-10",
+    "car": "stock Z06",
+    "tag": "M",
+    "wheelPower": "600.36 hp @ 8,340 rpm",
+    "wheelTorque": "406.55 lb-ft @ 6,730 rpm"
+   }
+  ]
+ },
+ "sound": {
+  "summary": "Flat-plane crank: each bank fires every 180 deg (an inline-four's even pulse train), banks alternate every 90 deg, so the exhaust is a clean high-pitched shriek with little low-order burble. Dominant pitch is firing frequency (order 4): 60 Hz at a 900 rpm idle, 300 Hz at 4,500 rpm, 573 Hz at the 8,600 rpm limiter. Strong induction sound from twin 87 mm throttle bodies right behind the cabin.",
+  "exhaustHeaders": {
+   "value": "stainless steel 4-2-1 headers per bank, chosen with the flat-plane layout for high-rpm scavenging",
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S07"
+  },
+  "headerPairingEstimate": {
+   "value": "left bank: primaries 1+7 and 3+5 merge; right bank: 2+8 and 4+6 merge (cylinders 360 deg apart share a secondary), so each secondary gets one pulse per revolution and each bank's collector one every 180 deg",
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Standard 4-2-1 practice for a 1-2-4-3 bank firing pattern; GM did not publish the pairing."
+  },
+  "bankCollection": {
+   "value": "Banks stay separate through their own 4-2-1 collectors. Whether the two banks join (X- or H-pipe) before the mufflers is not published.",
+   "unit": "",
+   "tag": "E",
+   "source": "S24",
+   "note": "Aftermarket cat-back systems advertise adding an X-pipe to tie the banks together, which suggests the factory system does not have one (unconfirmed)."
+  },
+  "catalysts": {
+   "value": "not published; assumed one catalyst per bank downstream of the header collectors",
+   "unit": "",
+   "tag": "A",
+   "source": "",
+   "note": "Gap."
+  },
+  "mufflersAndValves": {
+   "value": "valved active exhaust; the exhaust valves move in 2-degree steps rather than open/shut, giving four sound modes: Weather (quietest), Tour, Sport, Track (all valves open). Intake manifold valves also change the sound.",
+   "unit": "",
+   "tag": "F",
+   "source": "S24",
+   "note": "From Chevrolet's 'Corvette Academy' video as reported by Motor1."
+  },
+  "tips": {
+   "value": "centre exit, four round tips in a single horizontal row inside one bezel in the rear diffuser",
+   "unit": "",
+   "tag": "P",
+   "source": "S24;S29b",
+   "note": "Layout read from a CC BY 2.0 rear photo. Chevrolet says the bezels are shaped to reflect sound up toward the cockpit; The Drive mentions reverse-trumpet shapes to raise cabin exhaust noise. Motor1 says the tips are not offered outside the US (unclear)."
+  },
+  "intakeSound": {
+   "value": "Twin 87 mm throttle bodies feed the split plenum directly behind the cabin; reviewers single out the induction noise.",
+   "unit": "",
+   "tag": "P",
+   "source": "S08;S27"
+  },
+  "measuredLevels": {
+   "interiorFullThrottle_CD_coupe": {
+    "value": 94,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S14",
+    "note": "Car and Driver, Nov 2022: the targa coupe measured 94 dBA at wide-open throttle."
+   },
+   "interiorFullThrottle_CD_convertible": {
+    "value": 96,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S14"
+   },
+   "interiorIdle": {
+    "value": 58,
+    "unit": "dBA",
+    "tag": "E",
+    "source": "",
+    "note": "C/D idle figure not obtained (gap). Estimate 55-62 dBA for a loud valved V8 behind the seats."
+   },
+   "interior70mph": {
+    "value": 74,
+    "unit": "dBA",
+    "tag": "E",
+    "source": "",
+    "note": "C/D 70-mph figure not obtained (gap). Estimate 72 dBA on Pilot Sport 4S, 75 dBA on Cup 2 R (C/D's long-term car notes heavy Cup 2 R road noise)."
+   },
+   "ownerMeasuredStock": {
+    "value": {
+     "interiorDbA": 92,
+     "exteriorDbA": 102,
+     "interiorDbCaverage": 110
+    },
+    "unit": "dB",
+    "tag": "M",
+    "source": "S28",
+    "note": "Owner post on Corvette Club UK; method and distance unknown; low confidence."
+   },
+   "stationaryPassByStandard": {
+    "value": null,
+    "unit": "dB",
+    "tag": "E",
+    "source": "",
+    "note": "No published stationary or pass-by test found (gap)."
+   }
+  },
+  "limiterBehaviour": {
+   "value": "Hard fuel cut at 8,600 rpm. At full throttle the gearbox completes upshifts at about 8,500 rpm, so in automatic mode the limiter is rarely heard; in manual mode expect a fast fuel-cut bounce of about 150 rpm.",
+   "unit": "",
+   "tag": "E",
+   "source": "S19",
+   "note": "The 8,600 fuel cut and 8,500 shift point are reported (P); the bounce character is an estimate."
+  },
+  "overrunCharacter": {
+   "value": "Rev-matched blips on every downshift ('Whumm, whumm, whumm!!!' - Motor Authority). Pops and crackles on lift-off are not described by any source; expect a clean, light crackle at most in Sport/Track.",
+   "unit": "",
+   "tag": "E",
+   "source": "S19",
+   "note": "Gap: no source documents overrun crackle."
+  },
+  "shiftSound": {
+   "value": "DCT upshifts with about 100 ms overlap, no torque gap; a brief note dip rather than a gunshot ignition cut",
+   "unit": "",
+   "tag": "E",
+   "source": "S10"
+  },
+  "reviewerQuotes": [
+   {
+    "quote": "Wide open, it sounds like a Ferrari 458 Italia that hit puberty.",
+    "source": "S15",
+    "who": "Car and Driver, Z06 convertible test (2023)"
+   },
+   {
+    "quote": "The intake sound reminds us of the sounds of our youth and draws in our adult selves like a siren song.",
+    "source": "S27",
+    "who": "KC Colwell, Car and Driver (as quoted in a UK review roundup)"
+   },
+   {
+    "quote": "like all these flat-plane-crank V8s it can sound rather ordinary when it's not in the zone",
+    "source": "S27",
+    "who": "evo"
+   },
+   {
+    "quote": "an incredible, wailing soundtrack",
+    "source": "S22",
+    "who": "David Linklater, Driven (NZ), Feb 2025"
+   },
+   {
+    "quote": "the flat-plane crank V8 doesn't sound that great at low speed",
+    "source": "S22",
+    "who": "David Linklater, Driven (NZ), Feb 2025"
+   },
+   {
+    "quote": "perfectly timed pulses of exhaust gasses",
+    "source": "S27",
+    "who": "Rob Stumpf, Popular Science, Oct 2021 (contrasting the 'typical rumbly V8 sound signature')"
+   },
+   {
+    "quote": "has its own unique tone, especially as it reaches its 8,600 rpm redline",
+    "source": "S32",
+    "who": "The Drive (Laguna Seca onboard)"
+   }
+  ],
+  "referenceVideos": [
+   {
+    "what": "Chevrolet 'Corvette Academy' explainer on the Z06 exhaust valves and modes (3:38)",
+    "url": "https://youtu.be/MoCSoUsbPnU",
+    "source": "S24"
+   },
+   {
+    "what": "Chevrolet official reveal teaser, tachometer to 8,600 rpm",
+    "url": "https://www.youtube.com/watch?v=0I2EiacT0qQ",
+    "source": "S33"
+   },
+   {
+    "what": "Hennessey stock Z06 chassis-dyno pulls (full throttle to the limiter, exterior mic)",
+    "url": "https://www.youtube.com/watch?v=wjT01oF9P94",
+    "source": "S25"
+   },
+   {
+    "what": "Onboard lap at Laguna Seca (embedded by The Drive)",
+    "url": "https://www.youtube.com/watch?v=_MQjow-dJZE",
+    "source": "S32"
+   },
+   {
+    "what": "Start-up, long idle, blips and pull-away of a Z07 coupe (Doowork Productions)",
+    "url": "https://www.youtube.com/watch?v=_ptTKhdNgXw",
+    "source": "S34"
+   },
+   {
+    "what": "Chevrolet B-roll at Pitt Raceway: pull-aways and track passes (Planet Car News upload)",
+    "url": "https://www.youtube.com/watch?v=A4MrwpXmKbE",
+    "source": "S35"
+   },
+   {
+    "what": "SavageGeese long review with driving sound (cited by Wikipedia)",
+    "url": "https://www.youtube.com/watch?v=hJP6oXfZkFo",
+    "source": "S02"
+   }
+  ],
+  "freelyLicensedRecordings": {
+   "downloaded": false,
+   "why": "Wikimedia returned HTTP 429 for every original-file download from this shared network address (thumbnails worked). URLs and licences are recorded so they can be fetched by hand; see audio/RefC8Z06/LICENCES.txt.",
+   "lt6Recordings": "None found on Wikimedia Commons. The Commons 'Chevrolet Corvette Z06' audio file is a 2011 C6 Z06 (LS7, cross-plane) - useful only as a contrast.",
+   "candidates": [
+    {
+     "file": "Shelby GT350 - engine and exhaust sound (YouTube tZyiN61fTHI).opus",
+     "engine": "Ford Voodoo 5.2 L NA flat-plane V8 (closest analogue: big-bore American NA flat-plane, 8,250 rpm)",
+     "length": "8 min 53 s drive",
+     "licence": "CC BY 3.0 (Commons licence review pending)",
+     "author": "Triple A Dogs (YouTube)",
+     "page": "https://commons.wikimedia.org/wiki/File:Shelby_GT350_-_engine_and_exhaust_sound_(YouTube_tZyiN61fTHI).opus",
+     "direct": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Shelby_GT350_-_engine_and_exhaust_sound_%28YouTube_tZyiN61fTHI%29.opus"
+    },
+    {
+     "file": "Ferrari 458 Italia.ogg",
+     "engine": "Ferrari F136 4.5 L NA flat-plane V8",
+     "length": "11.6 s pull-away, Goodwood 2010",
+     "licence": "CC BY-SA 3.0 (own work, no review needed)",
+     "author": "Edvvc",
+     "page": "https://commons.wikimedia.org/wiki/File:Ferrari_458_Italia.ogg",
+     "direct": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Ferrari_458_Italia.ogg"
+    },
+    {
+     "file": "Ferrari F430 Spider - engine and exhaust sound (YouTube GpMZWVY6Sio).opus",
+     "engine": "Ferrari F136 E 4.3 L NA flat-plane V8",
+     "length": "27.5 s",
+     "licence": "CC BY 3.0 (Commons licence review pending)",
+     "author": "Fuzy F (YouTube)",
+     "page": "https://commons.wikimedia.org/wiki/File:Ferrari_F430_Spider_-_engine_and_exhaust_sound_(YouTube_GpMZWVY6Sio).opus",
+     "direct": "https://upload.wikimedia.org/wikipedia/commons/6/62/Ferrari_F430_Spider_-_engine_and_exhaust_sound_%28YouTube_GpMZWVY6Sio%29.opus"
+    },
+    {
+     "file": "Ferrari 458 Speciale - engine and exhaust sound (YouTube nltPXKAN6BI).opus",
+     "engine": "Ferrari F136 FL 4.5 L NA flat-plane V8, aftermarket 'F1' exhaust (not stock)",
+     "length": "37.7 s",
+     "licence": "CC BY 3.0 (Commons licence review pending)",
+     "author": "TvdL Films (YouTube)",
+     "page": "https://commons.wikimedia.org/wiki/File:Ferrari_458_Speciale_-_engine_and_exhaust_sound_(YouTube_nltPXKAN6BI).opus",
+     "direct": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Ferrari_458_Speciale_-_engine_and_exhaust_sound_%28YouTube_nltPXKAN6BI%29.opus"
+    }
+   ],
+   "licenceNotes": "CC BY needs attribution (author, title, licence, link). CC BY-SA also requires anything made from it to be shared under BY-SA, which is awkward inside a Roblox game; use it as a listening reference only. 'Licence review pending' means Commons has not yet confirmed the YouTube CC licence. Commons notes YouTube's CC licence changed from 3.0 to 4.0 on 1 Aug 2025, not retroactively. None of these is an LT6."
+  }
+ },
+ "visualBlockout": {
+  "bodyStyle": {
+   "value": "two-seat mid-engine coupe with removable roof panel; cab-forward cockpit, long rear deck over the engine",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "z06Differences": {
+   "value": "rear fenders and body about 91 mm wider than the Stingray; deeper front fascia with larger intakes; larger side intakes beginning in the door; centre quad exhaust; ducktail spoiler (base) or tall pedestal wing (Z07)",
+   "unit": "",
+   "tag": "P",
+   "source": "S05;S29a;S29b"
+  },
+  "photosUsed": [
+   {
+    "id": "S29a",
+    "what": "white Z06 coupe, near-side profile",
+    "licence": "CC BY-SA 4.0",
+    "author": "Xnatedawgx",
+    "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Z06_C8,_white,_Golden_Super_Cruise_2026-07-04.jpg"
+   },
+   {
+    "id": "S29c",
+    "what": "white Z06 with the roof open, side profile (cross-check; file title says coupe)",
+    "licence": "CC0",
+    "author": "Charles from Port Chester, New York",
+    "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Z06_Coup%C3%A9_(C8,_2023)_(54802404220).jpg"
+   },
+   {
+    "id": "S29b",
+    "what": "orange Z06 with Z07 wing, rear three-quarter (exhaust tips)",
+    "licence": "CC BY 2.0",
+    "author": "John Bauld",
+    "url": "https://commons.wikimedia.org/wiki/File:Corvette_Z06_(52695148134).jpg"
+   }
+  ],
+  "method": "Side photo measured in pixels; scale from the 2,723 mm wheelbase between wheel centres; overhangs scaled to the published 4,689 mm length because the photo's perspective shrinks the ends. Accuracy about +-3-5% of length.",
+  "proportionsFromFront": {
+   "value": {
+    "nose": 0.0,
+    "frontAxle": 0.205,
+    "windscreenBase": 0.27,
+    "windscreenTopRoofFront": 0.41,
+    "roofPeak": 0.46,
+    "roofRearEnd": 0.57,
+    "sideIntakeStartEnd": [
+     0.51,
+     0.66
+    ],
+    "rearAxle": 0.785,
+    "tail": 1.0
+   },
+   "unit": "fraction of overall length",
+   "tag": "E",
+   "source": "S29a"
+  },
+  "heights": {
+   "value": {
+    "roofPeak": 1.234,
+    "windscreenTop": 1.2,
+    "windscreenBaseCowl": 0.8,
+    "beltlineAtDoor": 0.81,
+    "frontFenderTopOverWheel": 0.71,
+    "noseLeadingEdge": 0.45,
+    "splitterLip": 0.1,
+    "rearSpoilerLipBase": 1.05,
+    "z07WingTop": 1.2
+   },
+   "unit": "m",
+   "tag": "E",
+   "source": "S29a",
+   "note": "Roof peak is the published height; others from the photo (+-5%) except the splitter lip (typical value) and the Z07 wing (estimated)."
+  },
+  "shapes": {
+   "value": {
+    "nose": "low, sharp wedge with a pointed centre; wide splitter; Z06 fascia has large outboard intakes; short bonnet rising steeply to the cowl",
+    "cabin": "cab-forward; steeply raked windscreen; short flat roof; flying-buttress sail panels running back to the deck",
+    "rear": "small upright rear window between the buttresses over the engine; long, nearly flat engine deck; high, square-cut tail with thin horizontal lamps and an integrated ducktail; big diffuser with centre quad tips",
+    "sides": "deep scoop from the door into a large side intake ahead of the rear wheel; strong rear haunches"
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "S29a;S29b"
+  }
+ },
+ "variants": {
+  "Z07": {
+   "tyres": {
+    "value": "Michelin Pilot Sport Cup 2 R ZP, same sizes",
+    "unit": "",
+    "tag": "F",
+    "source": "S02;S16"
+   },
+   "brakes": {
+    "value": "carbon-ceramic, 398 x 38 mm front, 390 x 34 mm rear",
+    "unit": "mm",
+    "tag": "P",
+    "source": "S04;S05"
+   },
+   "aero": {
+    "value": "734 lb (3,265 N) at 186 mph; larger splitter, dive planes, strakes, pedestal wing",
+    "unit": "",
+    "tag": "F",
+    "source": "S19;S02"
+   },
+   "chassis": {
+    "value": "FE7 suspension calibration",
+    "unit": "",
+    "tag": "P",
+    "source": "S02"
+   },
+   "topSpeed": {
+    "value": 304,
+    "unit": "km/h",
+    "tag": "F",
+    "source": "S17",
+    "note": "189 mph"
+   },
+   "wheels": {
+    "value": "often fitted with carbon-fibre wheels (about -10 lb per corner)",
+    "unit": "",
+    "tag": "P",
+    "source": "S16"
+   },
+   "dragArea": {
+    "value": 0.99,
+    "unit": "m^2",
+    "tag": "E",
+    "source": "S17"
+   },
+   "price": {
+    "value": 8995,
+    "unit": "USD",
+    "tag": "P",
+    "source": "S31"
+   }
+  },
+  "convertible": {
+   "massDelta": {
+    "value": 40,
+    "unit": "kg",
+    "tag": "M",
+    "source": "S16",
+    "note": "+88 lb vs coupe (MT); C/D cars differed by 133 lb but with different equipment."
+   },
+   "interiorFullThrottle": {
+    "value": 96,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S14"
+   }
+  },
+  "exportSpec": {
+   "power": {
+    "value": 475,
+    "unit": "kW",
+    "tag": "P",
+    "source": "S20;S21;S22",
+    "note": "646 PS at 8,550 rpm"
+   },
+   "torque": {
+    "value": 595,
+    "unit": "Nm",
+    "tag": "P",
+    "source": "S21;S22",
+    "note": "at 6,300 rpm; Japanese catalogue says 623 Nm"
+   }
+  }
+ },
+ "gameNotes": {
+  "suggestedTargets": {
+   "value": {
+    "zeroTo100kmh": 2.8,
+    "quarterMile": 10.6,
+    "topSpeedKmh": 314
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "S02;S13;S17",
+   "note": "0-100 km/h is about 0.15-0.2 s more than 0-60 mph (2.6 s); keep 314 km/h for the base car."
+  },
+  "topSpeedGear": {
+   "value": "6th at about 6,850 rpm (drag-limited); 5th runs out at about 310 km/h at 8,600",
+   "unit": "",
+   "tag": "E",
+   "source": ""
+  }
+ },
+ "sources": [
+  {
+   "id": "S01",
+   "title": "Chevrolet slide 'US LT6 SAE Torque and Power' (Feb 2022 LT6 media briefing), via Corvette Blogger",
+   "url": "https://www.corvetteblogger.com/2022/02/18/pic-first-look-at-the-torque-and-power-of-the-2023-corvette-z06s-lt6-v8-engine/",
+   "note": "Chart image: https://www.corvetteblogger.com/images/content/2022/021722_7.jpg"
+  },
+  {
+   "id": "S02",
+   "title": "Wikipedia, Chevrolet Corvette (C8) - Z06 section (cites the GM press release of 2021-10-26)",
+   "url": "https://en.wikipedia.org/wiki/Chevrolet_Corvette_(C8)",
+   "note": ""
+  },
+  {
+   "id": "S03",
+   "title": "GM / Chevrolet press release '2023 Corvette Z06' (HTTP 403 to automated reading; used only via S02)",
+   "url": "https://news.gm.com/home.detail.html/Pages/news/us/en/2021/oct/1026-corvette-z06.html",
+   "note": "media.gm.com spec pages also returned 403."
+  },
+  {
+   "id": "S04",
+   "title": "Corvsport, 2023 Corvette Z06 Specifications (GM-sourced spec table; contains some copy errors)",
+   "url": "https://www.corvsport.com/2023-corvette-z06-specifications/",
+   "note": ""
+  },
+  {
+   "id": "S05",
+   "title": "Corvettestory, 2024 Corvette specs and options (Z06 vs Stingray)",
+   "url": "https://corvettestory.com/specs/2024-Corvette-specs-options.php",
+   "note": "Some mm conversions wrong."
+  },
+  {
+   "id": "S06",
+   "title": "Corvsport, 2025 Corvette Z06 in-depth guide",
+   "url": "https://www.corvsport.com/2025-corvette-z06-in-depth-guide/",
+   "note": ""
+  },
+  {
+   "id": "S07",
+   "title": "The Drive, 'Corvette Z06's LT6 V8: Everything You Ever Wanted to Know' (interview with GM's Josh Holder)",
+   "url": "https://www.thedrive.com/news/42901/2023-corvette-z06s-lt6-v8-everything-you-ever-wanted-to-know",
+   "note": ""
+  },
+  {
+   "id": "S08",
+   "title": "LSX Magazine, LS and LT intake manifold design (LT6 plenums and communicator valves)",
+   "url": "https://www.lsxmag.com/?p=25093",
+   "note": ""
+  },
+  {
+   "id": "S09",
+   "title": "Motor1, 'Corvette Z06 DOHC V8 Uses A Trick Intake' (citing SAE)",
+   "url": "https://www.motor1.com/news/566963/chevy-corvette-z06-dohc-intake/",
+   "note": ""
+  },
+  {
+   "id": "S10",
+   "title": "SAE Mobility Engineering, 'Inside Tremec's Corvette Dual-Clutch Transmission'",
+   "url": "https://www.mobilityengineeringtech.com/component/content/article/40895-sae-ma-00017",
+   "note": ""
+  },
+  {
+   "id": "S11",
+   "title": "Tremec TR-9080 data (ratios, 3.55 common ring and pinion) as summarised by web search; Tremec sheet itself not opened",
+   "url": "https://www.autoevolution.com/news/a-look-at-the-corvette-c8-s-tremec-tr-9080-dct-transmission-and-how-it-works-152380.html",
+   "note": "Secondary; ratios also on S04/S05."
+  },
+  {
+   "id": "S12",
+   "title": "LT6 firing order: rerev.com and aa1car.com firing-order references (search summary)",
+   "url": "https://rerev.com/firing-orders/chevrolet/5-5l-lt6/",
+   "note": "Also https://www.aa1car.com/library/chevy_firing_orders.htm"
+  },
+  {
+   "id": "S13",
+   "title": "Car and Driver test box (Nov 2022 Z06 coupe; Z06 convertible) as reposted on Canadian Corvette Forums; original C/D page not fetchable",
+   "url": "https://canadiancorvetteforums.com/threads/car-and-driver-review-of-the-c8-z06-october-26-2022-best-corvette-ever.60646/latest",
+   "note": "Original: https://www.caranddriver.com/reviews/a41411338/2023-chevrolet-corvette-z06-by-the-numbers/"
+  },
+  {
+   "id": "S14",
+   "title": "Car and Driver, 'Tested: 2023 Corvette Z06 Is an American Ferrari and Then Some' (Yahoo syndication; 94 vs 96 dBA text via search snippet)",
+   "url": "https://autos.yahoo.com/tested-2023-corvette-z06-american-040000360.html",
+   "note": ""
+  },
+  {
+   "id": "S15",
+   "title": "Car and Driver, 'Tested: 2023 Chevrolet Corvette Z06 Convertible' (Yahoo syndication; quote via search)",
+   "url": "https://autos.yahoo.com/tested-2023-chevrolet-corvette-z06-110000549.html",
+   "note": ""
+  },
+  {
+   "id": "S16",
+   "title": "Motor Trend first test 'HyperVette' (Frank Markus, 2022-11-18), reposted by Tremec",
+   "url": "https://tremec.com/?p=261",
+   "note": ""
+  },
+  {
+   "id": "S17",
+   "title": "Motor Authority, Z06 top speed (Juechter 195 mph; Holder 189 mph with Z07) - via search summary",
+   "url": "https://www.motorauthority.com/news/1137037_2023-chevrolet-corvette-z06-top-speed",
+   "note": "Also musclecarsandtrucks.com top-speed article."
+  },
+  {
+   "id": "S18",
+   "title": "Corvette Blogger, 2023 owner's manual shift-speed table (via search summary)",
+   "url": "https://www.corvetteblogger.com/2022/05/17/2023-corvette-owners-manual-appears-to-confirm-that-the-z06-will-be-a-200-mph-super-car/",
+   "note": ""
+  },
+  {
+   "id": "S19",
+   "title": "Motor Authority review (downforce, fuel cut 8,600, downshift sound) and Motor1 first drive (downforce) - via search summaries",
+   "url": "https://www.motorauthority.com/news/1137351_review-2023-chevrolet-corvette-z06-heaps-exotic-sound-and-fury-on-an-exotic-design",
+   "note": "Also https://www.motor1.com/reviews/613965/2023-chevrolet-corvette-z06-first-drive/"
+  },
+  {
+   "id": "S20",
+   "title": "Japanese spec catalogue 221616.com, Corvette Z06 Coupe 3LZ (Dec 2024 on)",
+   "url": "https://221616.com/catalog/chevrolet/chevroletcorvette/202001_299912/10155730/",
+   "note": ""
+  },
+  {
+   "id": "S21",
+   "title": "Chevrolet Europe, Corvette Z06 page (646 PS at 8,550 rpm) - via search summary",
+   "url": "https://www.chevroleteurope.com/eu-en/corvette/z06",
+   "note": ""
+  },
+  {
+   "id": "S22",
+   "title": "Driven (NZ), 'Chevrolet Corvette Z06 review: flat chat', David Linklater, 2025-02-21",
+   "url": "https://www.drivencarguide.co.nz/reviews/chevrolet-corvette-z06-review-flat-chat/",
+   "note": ""
+  },
+  {
+   "id": "S23",
+   "title": "Corvette Blogger, Z06 customisable launch control rpm (Apr 2022) - via search summary",
+   "url": "https://www.corvetteblogger.com/2022/04/29/video-2023-corvette-z06-allows-drivers-to-customize-launch-control-rpm",
+   "note": ""
+  },
+  {
+   "id": "S24",
+   "title": "Motor1, 'Corvette Z06's Exhaust Note Explained In Short Video' (Chevrolet Corvette Academy video)",
+   "url": "https://www.motor1.com/news/593811/2023-corvette-z06-exhaust-note-video/",
+   "note": "Aftermarket X-pipe claims: https://fabspeed.com/fabspeed-chevrolet-corvette-c8-z06-valvetronic-cat-back-exhaust-system-2023"
+  },
+  {
+   "id": "S25",
+   "title": "Corvette Blogger / Motor1, Hennessey stock Z06 dyno (Oct 2023)",
+   "url": "https://www.corvetteblogger.com/2023/10/18/video-watch-hennessey-dyno-its-stock-c8-corvette-z06-before-the-mods-begin/",
+   "note": "Also https://www.motor1.com/news/692511/chevrolet-corvette-z06-dyno-results-hennessey/"
+  },
+  {
+   "id": "S26",
+   "title": "Weight split: Motor Authority review (60% rear) and Corvette Magazine (40/60) - via search summary",
+   "url": "https://www2.motorauthority.com/news/1137351_2023-chevrolet-corvette-z06-test-drive-review",
+   "note": "https://www.corvette-mag.com/issues/174/articles/driven-2024-z06"
+  },
+  {
+   "id": "S27",
+   "title": "Reviewer sound descriptions: Popular Science (Rob Stumpf); evo; KC Colwell quote as relayed in a UK review - via search summaries",
+   "url": "https://www.popsci.com/technology/chevrolet-corvette-z06-review/",
+   "note": "evo: https://www.evo.co.uk/corvette/z06"
+  },
+  {
+   "id": "S28",
+   "title": "Corvette Club UK forum, 'Just how loud is a C8 Z06 exhaust' (owner measurement)",
+   "url": "https://www.corvetteclub.org.uk/threads/just-how-loud-is-a-c8-z06-exhaust.4339/",
+   "note": ""
+  },
+  {
+   "id": "S29a",
+   "title": "Wikimedia Commons photo, Xnatedawgx, CC BY-SA 4.0",
+   "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Z06_C8,_white,_Golden_Super_Cruise_2026-07-04.jpg",
+   "note": ""
+  },
+  {
+   "id": "S29b",
+   "title": "Wikimedia Commons photo, John Bauld, CC BY 2.0",
+   "url": "https://commons.wikimedia.org/wiki/File:Corvette_Z06_(52695148134).jpg",
+   "note": ""
+  },
+  {
+   "id": "S29c",
+   "title": "Wikimedia Commons photo, Charles from Port Chester, CC0",
+   "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Z06_Coup%C3%A9_(C8,_2023)_(54802404220).jpg",
+   "note": ""
+  },
+  {
+   "id": "S30",
+   "title": "Wikimedia Commons audio search (flat-plane V8 recordings)",
+   "url": "https://commons.wikimedia.org/wiki/Category:Sounds_of_automobiles",
+   "note": ""
+  },
+  {
+   "id": "S31",
+   "title": "Corvette Blogger, Z06 at Laguna Seca (Z07 price)",
+   "url": "https://www.corvetteblogger.com/2022/08/31/video-more-2023-corvette-z06-on-track-action-from-laguna-seca/",
+   "note": ""
+  },
+  {
+   "id": "S32",
+   "title": "The Drive, 'Ride Inside a 2023 Chevy Corvette Z06 as It Rips Around Laguna Seca'",
+   "url": "https://www.thedrive.com/news/ride-inside-a-2023-chevy-corvette-z06-as-it-rips-around-laguna-seca",
+   "note": ""
+  },
+  {
+   "id": "S33",
+   "title": "Corvette Blogger, Chevrolet Z06 reveal teaser (8,600 rpm tach)",
+   "url": "https://www.corvetteblogger.com/2021/10/20/video-chevy-teases-the-2023-corvette-z06-reveal-tune-in/",
+   "note": ""
+  },
+  {
+   "id": "S34",
+   "title": "Corvette Blogger, idle sound of a Z07 coupe (Doowork Productions video)",
+   "url": "https://www.corvetteblogger.com/2022/08/09/spied-nice-idle-sound-from-2023-corvette-z06-with-z07-in-amplify-orange/",
+   "note": ""
+  },
+  {
+   "id": "S35",
+   "title": "Corvette Blogger, Chevrolet B-roll at Pitt Raceway",
+   "url": "https://www.corvetteblogger.com/2022/10/04/video-b-roll-footage-of-the-2023-corvette-z06-at-pitt-raceway/",
+   "note": ""
+  }
+ ],
+ "gaps": [
+  "GM press kit and media.gm.com spec pages returned HTTP 403; GM figures were taken from Wikipedia and spec-site copies of GM's sheet (some with copy errors, noted).",
+  "Car and Driver interior sound at idle and at a 70-mph cruise not obtained (only full throttle: 94 dBA coupe, 96 convertible). Estimates given.",
+  "No exterior, stationary or pass-by dB figure from a reliable source; one owner measurement only.",
+  "Drag coefficient and frontal area not published; CdA fitted to top speed (0.92 base, 0.99 Z07) - low confidence, it absorbs driveline-loss and air-density errors.",
+  "Front/rear downforce split not published.",
+  "No GM curb weight for the base Z06 coupe; only GM dry weight (Z07 + carbon wheels) and C/D's measured Z07 coupe. Measured weight distribution for the Z06 not found (40/60 approximate).",
+  "Ground clearance, ride height and front-lift height not published.",
+  "Steering lock-to-lock turns not published; estimated 2.6.",
+  "Idle rpm not published; estimated 900.",
+  "Exhaust details not published: catalyst count and position, whether the banks cross over, muffler internals, header primary lengths and pairing.",
+  "Intake communicator-valve schedule only partly published (2,000 and 5,800 rpm per Motor1) and does not obviously match the torque-curve steps.",
+  "Overrun pops/crackles and limiter sound behaviour not described by any source found.",
+  "Z06-specific DCT shift time and the TR-9080 changes for 8,600 rpm not published.",
+  "Ring-and-pinion tooth counts (for gearbox whine) not published.",
+  "Motor Trend's 0-60 and quarter-mile figures for the Z06 not obtained.",
+  "Export torque conflict: 595 Nm (Europe, NZ) vs 623 Nm (Japanese catalogue).",
+  "No freely licensed LT6 recording exists on Wikimedia Commons; flat-plane analogue recordings could not be downloaded (HTTP 429 rate limit) and are listed with URLs.",
+  "The shared web-search budget ran out before C/D sound levels, weight split and GM curb weight could be searched further.",
+  "MY2027 changes not researched."
+ ]
+}
