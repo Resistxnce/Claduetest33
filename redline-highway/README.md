@@ -66,7 +66,8 @@ handbrake, Y for the camera.
 | `build/RedlineHighway.rbxlx` | Ready-to-open place file, generated from `src/` |
 | `default.project.json` | Rojo project |
 | `tools/build_place.py` | Rebuilds the place file from `src/` (Python 3, no other tools needed) |
-| `tools/drivetrain_model.py` | Python copy of the drivetrain code for quick straight-line checks |
+| `docs/VEHICLE_CONFIG.md` | Every vehicle configuration field: units, meaning, typical values |
+| `tools/drivetrain_model.py` | Python copy of the drivetrain; checks and test-drives any car (`<Id>`, `--all`, `--curve`) |
 | `tools/luau_check.py` | Checks every script for syntax errors, typos and Roblox API mistakes (see below) |
 | `tools/synth_audio.py` | Makes the placeholder sounds and their region tables (needs numpy and ffmpeg) |
 | `tools/audio_preview.py` | Renders the preview drive with a Python copy of the game's sound mixer |

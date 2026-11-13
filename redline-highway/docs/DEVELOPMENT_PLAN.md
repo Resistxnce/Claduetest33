@@ -120,7 +120,8 @@ braking). A rev limiter cuts fuel with hysteresis. The clutch is a stiff, torque
 which handles launches, stalls and shifts in one model. The gearbox is a 7-speed dual-clutch with a
 60 ms shift and a brief torque dip. The rear differential is a clutch-type limited-slip with preload
 and separate power and coast locking. Wheel spin, clutch and engine speed are integrated in 8
-sub-steps per frame.
+sub-steps per frame. Configurations can instead use a torque-converter automatic (lock-up clutch,
+up to 10 gears), turbo or supercharger boost, and on-demand all-wheel drive; see `VEHICLE_CONFIG.md`.
 
 **Brakes:** per-axle maximum torque with front-rear bias, optional ABS that holds slip near the
 tyre's peak, and a rear handbrake.

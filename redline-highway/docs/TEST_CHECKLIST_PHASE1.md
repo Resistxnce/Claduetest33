@@ -37,6 +37,14 @@ and stop at the first thing that fails. Then send me the exact text from Studio'
 - [ ] Space (handbrake) locks the rear wheels.
 - [ ] R puts the car back on the nearest lane.
 
+## Cars with automatic gearboxes (press G to pick one)
+
+- [ ] The car spawns showing "P" on the dashboard and doesn't roll.
+- [ ] W pulls away smoothly. Let go of everything at low speed: it creeps at about 5-7 km/h, like a
+      real automatic.
+- [ ] After pulling away, the telemetry overlay (T) shows the torque converter's lock-up reaching 100%.
+- [ ] On turbo cars, the boost line in the overlay rises as you accelerate and drops when you lift.
+
 ## M3. Gearbox and HUD
 
 - [ ] Automatic mode shifts up near 8,750 rpm at full throttle and down as you slow.
