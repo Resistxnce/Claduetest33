@@ -315,7 +315,7 @@ of `tools/synth_audio.py`. Units: metres, Kelvin, rpm, crank degrees, Hz, dB.
 | `forcedInduction`, supercharger | `{"type": "Supercharger", kind: "roots", rotorLobes, driveRatio, pulsesPerRev (default 2 x lobes), whineRpm: [low, high]}` |
 | `limiter` | `type`: `"fuelCut"`, `"ignitionCut"` (afterfire pops, `popChance`) or `"softCut"`.<br>`free` and `load`: `{bounceHz, dropRpm, cutShare}` for free revving and in gear.<br>`cutLevel`: pulse strength of a cut cylinder. |
 | `loops` | `rpmPoints` (default: idle to limiter, about 1.33x apart), `seconds` (1.0), `limiterSeconds` (1.25), `offThrottle` and `limiter` (false to skip, as traffic does). |
-| `loudness` | `interior: {idleDbA, fullThrottleDbA, cruiseDbA, source}` from magazine tests, `exterior: {stationaryDbA, atRpm, source}`, `loadRangeDb`. |
+| `loudness` | `interior: {idleDbA, fullThrottleDbA, cruiseDbA, source}` from magazine tests, `exterior: {stationaryDbA, atRpm, source}`, `loadRangeDb`. The gains use the interior idle and full-throttle levels. The cruise and exterior figures are kept for reference: cruise mixes in road and wind noise, and exterior figures aren't available for every car. |
 
 ## Loudness calibration
 

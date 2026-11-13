@@ -195,7 +195,8 @@ function VehicleAudio:update(dt: number)
 	input.gear = t.gearNumber
 	input.shifting = t.shifting
 	input.limiter = t.limiter
-	input.boost = t.boost or 0
+	-- boost 0-1 (t.boostBar holds the gauge pressure; the layers only need the share)
+	input.boost = if t.forcedInduction ~= nil then t.boost or 0 else 0
 	input.speed = t.speedKmh / 3.6
 
 	local slip, slide, bump, shaft, driven = 0, 0, 0, 0, 0

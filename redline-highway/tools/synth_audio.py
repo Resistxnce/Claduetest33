@@ -288,8 +288,7 @@ TURBO = {
     "whistleHz": [2500, 8500],  # whistle pitch from low to full boost
     "whistleLevel": 0.10,
     "whooshLevel": 0.08,  # broadband turbine and compressor noise in the main loops
-    "blowOff": {"type": "recirculating", "level": 0.5, "variants": 3},
-    "wastegateFlutter": 0.0,
+    "blowOff": {"type": "recirculating", "level": 0.5, "variants": 3},  # type "flutter" = surge flutter
 }
 SUPERCHARGER = {
     "kind": "roots",  # twin-rotor (Roots/TVS) or "centrifugal"

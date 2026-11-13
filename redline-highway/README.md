@@ -29,9 +29,10 @@ Baseplate, delete its Baseplate and SpawnLocation first, because they overlap th
 Then:
 1. Select **Lighting** and set **Technology** to **Future** (scripts can't set it).
 2. Press **Play**.
-3. For sound, upload the two files in `assets/audio` and paste their IDs into
+3. For sound, upload the three files in `assets/audio` (`GT12_Engine.flac`, `Driving_Effects.flac`
+   and `Engines_Pack1.flac`, which holds all six newer cars' engines) and paste their IDs into
    **ReplicatedStorage > VehicleSystem > VehicleAudio > AudioAssets** (see `docs/AUDIO.md`). Without
-   them the game runs silently. To hear the sounds first, play `assets/audio/preview/GT12_drive_preview.mp3`.
+   them the game runs silently. To hear the sounds first, play the previews in `assets/audio/preview/`.
 
 ## Controls
 
@@ -69,8 +70,8 @@ handbrake, Y for the camera.
 | `docs/VEHICLE_CONFIG.md` | Every vehicle configuration field: units, meaning, typical values |
 | `tools/drivetrain_model.py` | Python copy of the drivetrain; checks and test-drives any car (`<Id>`, `--all`, `--curve`) |
 | `tools/luau_check.py` | Checks every script for syntax errors, typos and Roblox API mistakes (see below) |
-| `tools/synth_audio.py` | Makes the placeholder sounds and their region tables (needs numpy and ffmpeg) |
-| `tools/audio_preview.py` | Renders the preview drive with a Python copy of the game's sound mixer |
+| `tools/synth_audio.py` | Builds each car's engine sound from its definition in `assets/audio/engines` into packed files (needs numpy and ffmpeg) |
+| `tools/audio_preview.py` | Renders a car's drive, a tunnel pass and a traffic drive-by with a Python copy of the game's sound mixer |
 | `tools/traffic_model.py` | Python copy of the traffic simulation with collision and behaviour tests |
 | `tools/close_pass_model.py` | Python copy of the close-pass scoring with tests |
 | `tools/road_geometry.py` | Python copy of the road geometry with tests (closure, continuity, round trips, curve speeds) |

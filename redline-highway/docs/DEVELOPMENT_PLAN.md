@@ -161,6 +161,12 @@ against a monthly limit, so the sounds are packed into two files and each Sound 
 `tools/audio_preview.py`, which renders a drive to listen to. The current sounds are synthesized
 placeholders (`tools/synth_audio.py`). Details are in `docs/AUDIO.md`.
 
+Since then, each engine is synthesized from its own definition (firing order, bank numbering, crank
+type, exhaust routing, turbo or supercharger), with limiter loops that stutter like a real fuel cut,
+turbo whistle and blow-off, supercharger whine, tunnel reverb and echo near TunnelZone parts, and
+positional traffic sound with distance fade, air absorption and Doppler. The synthesis was
+calibrated against a freely licensed recording of a real V8 (spectral error about 4.5 dB).
+
 ## 7. Traffic design (Phase 4)
 
 - **Road network:** lanes are centre lines in a lane graph (each lane knows its successors, its left
@@ -189,8 +195,7 @@ placeholders (`tools/synth_audio.py`). Details are in `docs/AUDIO.md`.
 - Still to come:
   - general road networks (lane graph, merges, exits);
   - traffic cars that react physically when hit;
-  - spawning and despawning around players instead of a fixed loop;
-  - engine sound and Doppler for traffic.
+  - spawning and despawning around players instead of a fixed loop.
 
 ## 8. Prototype: Valenza GT12
 
