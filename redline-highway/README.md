@@ -1,0 +1,58 @@
+# Redline Highway
+
+*Working title.* An original high-speed highway driving and racing game for Roblox. This folder holds
+**Phase 1**: the shared vehicle physics framework, the first prototype car (the Valenza GT12, built to
+the Ferrari 812 Superfast's public engineering figures), a proving-ground test track, cameras and a
+dashboard with telemetry.
+
+**Status:** written and checked outside Roblox, **not yet run in Roblox Studio.** The place file was
+generated and checked for structure, and the drivetrain maths was tested in a Python copy (see
+`docs/PROTOTYPE_GT12.md`). Expect a round of fixes on the first Play test; `docs/TEST_CHECKLIST_PHASE1.md`
+says what to check.
+
+## Open it on your PC
+
+Get this folder onto your computer first. On GitHub, open the `claude/sharp-feynman-t035au` branch of
+this repository and use **Code > Download ZIP**, or clone the repository and check out that branch.
+
+**Option A: place file (simplest).** In Roblox Studio, use **File > Open from File** and pick
+`redline-highway/build/RedlineHighway.rbxlx`.
+
+**Option B: Rojo.** In this folder, run `rojo serve` and connect from the Rojo plugin in Studio, or run
+`rojo build -o RedlineHighway.rbxlx` to make a place file.
+
+Then:
+1. Select **Lighting** and set **Technology** to **Future** (scripts can't set it).
+2. Press **Play**.
+
+## Controls
+
+| Key | Action |
+|---|---|
+| W / S | accelerate / brake (hold S when stopped to reverse) |
+| A / D | steer |
+| Space | handbrake |
+| E / Q | shift up / down (switches to manual) |
+| M | automatic / manual gearbox |
+| B / V | ABS / traction control on or off |
+| C | camera: chase, hood, cockpit |
+| R | put the car back on the track |
+| T / H | telemetry overlay / controls list |
+
+Gamepads work too: triggers for the pedals, left stick to steer, bumpers to shift, X for the
+handbrake, Y for the camera.
+
+## Files
+
+| Path | What it is |
+|---|---|
+| `docs/DEVELOPMENT_PLAN.md` | The technical plan: Roblox limits, architecture, physics design, phases, milestones |
+| `docs/PROTOTYPE_GT12.md` | The prototype's specification: sources, estimates and validation |
+| `docs/TEST_CHECKLIST_PHASE1.md` | What to test in Studio and what to report |
+| `src/` | All scripts, laid out by Studio service (see the plan for what each does) |
+| `build/RedlineHighway.rbxlx` | Ready-to-open place file, generated from `src/` |
+| `default.project.json` | Rojo project |
+| `tools/build_place.py` | Rebuilds the place file from `src/` (Python 3, no other tools needed) |
+| `tools/drivetrain_model.py` | Python copy of the drivetrain code for quick straight-line checks |
+
+After editing anything in `src/`, run `python3 tools/build_place.py` to refresh the place file.
