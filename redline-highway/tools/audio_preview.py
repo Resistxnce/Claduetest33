@@ -25,6 +25,7 @@ import numpy as np
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import drivetrain_model as dm  # noqa: E402
+from luau_table import load as luau_table  # noqa: E402
 
 FS = 44100
 FRAME = 1 / 60
@@ -33,75 +34,6 @@ SHEETS = ROOT / "src" / "ReplicatedStorage" / "VehicleSystem" / "VehicleAudio" /
 CONFIG = ROOT / "src" / "ReplicatedStorage" / "VehicleSystem" / "VehicleConfigurations" / "Prototype812.luau"
 OUT_DIR = AUDIO_DIR / "preview"
 EFFECT_LOOPS = ["squeal", "road", "wind", "whine"]
-
-
-# --------------------------------------------------------------------------------------------
-# Reading Luau data tables (the config's audio table and the generated sheets)
-# --------------------------------------------------------------------------------------------
-
-TOKEN = re.compile(r'\s*(?:(--[^\n]*)|([{}=,;])|("(?:[^"\\]|\\.)*")|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([A-Za-z_]\w*))')
-
-
-def parse_table(text):
-    tokens = []
-    pos = 0
-    while pos < len(text):
-        m = TOKEN.match(text, pos)
-        if not m or m.end() == pos:
-            if text[pos:].strip() == "":
-                break
-            raise ValueError(f"can't read Luau table near {text[pos:pos + 30]!r}")
-        pos = m.end()
-        comment, sym, string, number, name = m.groups()
-        if comment:
-            continue
-        if sym:
-            tokens.append(("sym", sym))
-        elif string:
-            tokens.append(("val", string[1:-1]))
-        elif number:
-            tokens.append(("val", float(number)))
-        elif name in ("true", "false"):
-            tokens.append(("val", name == "true"))
-        else:
-            tokens.append(("name", name))
-    i = 0
-
-    def value():
-        nonlocal i
-        kind, v = tokens[i]
-        if kind == "sym" and v == "{":
-            i += 1
-            items, fields = [], {}
-            while tokens[i] != ("sym", "}"):
-                if tokens[i][0] == "name" and tokens[i + 1] == ("sym", "="):
-                    key = tokens[i][1]
-                    i += 2
-                    fields[key] = value()
-                else:
-                    items.append(value())
-                if tokens[i][0] == "sym" and tokens[i][1] in ",;":
-                    i += 1
-            i += 1
-            return fields if fields else items
-        i += 1
-        return v
-
-    return value()
-
-
-def luau_table(path, key=None):
-    text = path.read_text()
-    if key:
-        start = re.search(rf"\b{key}\s*=\s*\{{", text).end() - 1
-    else:
-        start = re.search(r"^return\s*\{", text, re.M).end() - 1
-    depth = 0
-    for j in range(start, len(text)):
-        depth += {"{": 1, "}": -1}.get(text[j], 0)
-        if depth == 0:
-            return parse_table(text[start:j + 1])
-    raise ValueError("unbalanced braces")
 
 
 # --------------------------------------------------------------------------------------------
