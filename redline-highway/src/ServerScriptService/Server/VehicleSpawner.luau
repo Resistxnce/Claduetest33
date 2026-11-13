@@ -26,6 +26,7 @@ local vehiclesFolder: Folder
 local vehicles: { [Player]: Model } = {}
 local slots: { [Player]: number } = {}
 local lastRespawn: { [Player]: number } = {}
+local masslessConnections: { [Player]: RBXScriptConnection } = {}
 
 local function loadConfig()
 	return require(VehicleSystem.VehicleConfigurations[DEFAULT_VEHICLE])
@@ -67,12 +68,34 @@ function VehicleSpawner.spawn(player: Player, cframe: CFrame)
 
 	local seat = model:FindFirstChild("DriverSeat") :: Seat
 	seat:Sit(humanoid)
-	-- the driver's mass is already in the configuration, so the avatar itself adds none
+	-- On a respawn the humanoid may still count as seated in the old, destroyed seat, and Sit can be
+	-- refused. Check shortly after and try again.
+	task.spawn(function()
+		for _ = 1, 3 do
+			task.wait(0.25)
+			if vehicles[player] ~= model or seat.Occupant == humanoid or humanoid.Health <= 0 then
+				return
+			end
+			humanoid.Sit = false
+			task.wait()
+			seat:Sit(humanoid)
+		end
+	end)
+	-- the driver's mass is already in the configuration, so the avatar itself adds none,
+	-- including accessories and body parts that finish loading later
 	for _, part in character:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.Massless = true
 		end
 	end
+	if masslessConnections[player] then
+		masslessConnections[player]:Disconnect()
+	end
+	masslessConnections[player] = character.DescendantAdded:Connect(function(part)
+		if part:IsA("BasePart") then
+			part.Massless = true
+		end
+	end)
 
 	local ok, err = pcall(function()
 		model.PrimaryPart:SetNetworkOwner(player)
@@ -101,8 +124,14 @@ function VehicleSpawner.respawn(player: Player)
 end
 
 local function onCharacterAdded(player: Player, character: Model)
-	character:WaitForChild("Humanoid")
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	character:WaitForChild("HumanoidRootPart")
+	-- a reset or death takes the car away with the driver; a new one comes with the next character
+	humanoid.Died:Once(function()
+		if player.Character == character then
+			VehicleSpawner.remove(player)
+		end
+	end)
 	task.wait(0.5)
 	if player.Parent and player.Character == character then
 		VehicleSpawner.spawn(player, TrackBuilder.gridCFrame(slots[player], loadConfig().mass.comHeight))
@@ -136,6 +165,10 @@ function VehicleSpawner.init(remoteFolder: Folder)
 		VehicleSpawner.remove(player)
 		slots[player] = nil
 		lastRespawn[player] = nil
+		if masslessConnections[player] then
+			masslessConnections[player]:Disconnect()
+			masslessConnections[player] = nil
+		end
 	end)
 end
 

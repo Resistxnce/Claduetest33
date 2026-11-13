@@ -46,7 +46,11 @@ local function setHeadHidden(hidden: boolean)
 end
 
 local function update(dt: number)
-	if not root or not root.Parent then
+	if not root then
+		return
+	end
+	if not root.Parent then
+		CameraController.stop() -- the car is gone (reset, death or respawn): hand the camera back
 		return
 	end
 	local camera = Workspace.CurrentCamera
@@ -74,6 +78,9 @@ local function update(dt: number)
 		camera.CFrame = if mount then mount.WorldCFrame else cf
 		camera.FieldOfView = settings.cockpitFov + settings.speedFovGain * 0.4 * speedShare
 	end
+
+	-- With a Scriptable camera, Roblox doesn't move Focus; lighting detail is centred on it.
+	camera.Focus = CFrame.new(cf.Position)
 
 	if settings.shake and speedKmh > 120 then
 		local amount = math.rad(0.05) * math.clamp((speedKmh - 120) / 200, 0, 1)

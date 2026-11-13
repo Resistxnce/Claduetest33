@@ -2,7 +2,9 @@
 	Client entry point: wires input to the active car, camera and HUD.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local Client = script.Parent
 local InputController = require(Client:WaitForChild("InputController"))
@@ -20,7 +22,30 @@ HUD.init()
 local active = nil
 local audio = nil
 
-remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Model)
+-- If the place streams instances in, the car can arrive after the event that announces it, and the
+-- event then carries nil. Find our own car by its owner attribute instead.
+local function findOwnCar(timeout: number): Model?
+	local folder = Workspace:WaitForChild("Vehicles", timeout)
+	local deadline = os.clock() + timeout
+	while folder and os.clock() < deadline do
+		for _, child in folder:GetChildren() do
+			if child:IsA("Model") and child:GetAttribute("OwnerUserId") == Players.LocalPlayer.UserId then
+				return child
+			end
+		end
+		task.wait(0.2)
+	end
+	return nil
+end
+
+remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Model?)
+	if not model then
+		model = findOwnCar(10)
+		if not model then
+			warn("[Redline] The car didn't arrive on this computer; press R to try again")
+			return
+		end
+	end
 	if audio then
 		audio:stop()
 		audio = nil

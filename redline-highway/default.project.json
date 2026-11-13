@@ -15,7 +15,8 @@
     },
     "Workspace": {
       "$properties": {
-        "Gravity": 35.0357
+        "Gravity": 35.0357,
+        "StreamingEnabled": false
       }
     }
   }

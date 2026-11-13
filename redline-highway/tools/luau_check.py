@@ -978,8 +978,10 @@ class Parser:
             self.next()
             right = self.expr(BINARY[key][1])
             vtype = None
-            if key in ("and", "or"):
-                vtype = right.vtype if key == "or" and left.vtype is None else (left.vtype or right.vtype)
+            if key == "and":
+                vtype = right.vtype  # 'a and b' is b whenever a is set
+            elif key == "or":
+                vtype = left.vtype or right.vtype
             left = Expr("other", op.line, vtype=vtype)
         return left
 

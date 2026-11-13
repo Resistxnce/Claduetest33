@@ -20,7 +20,8 @@ this repository and use **Code > Download ZIP**, or clone the repository and che
 `redline-highway/build/RedlineHighway.rbxlx`.
 
 **Option B: Rojo.** In this folder, run `rojo serve` and connect from the Rojo plugin in Studio, or run
-`rojo build -o RedlineHighway.rbxlx` to make a place file.
+`rojo build -o RedlineHighway.rbxlx` to make a place file. If you sync into a template place such as
+Baseplate, delete its Baseplate and SpawnLocation first, because they overlap the track.
 
 Then:
 1. Select **Lighting** and set **Technology** to **Future** (scripts can't set it).

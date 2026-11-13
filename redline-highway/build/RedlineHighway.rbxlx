@@ -3,6 +3,7 @@
 <Properties>
 <string name="Name">Workspace</string>
 <float name="Gravity">35.0357</float>
+<bool name="StreamingEnabled">false</bool>
 </Properties>
 </Item>
 <Item class="ReplicatedStorage" referent="RBX00000002">
@@ -2483,6 +2484,7 @@ local vehiclesFolder: Folder
 local vehicles: { [Player]: Model } = {}
 local slots: { [Player]: number } = {}
 local lastRespawn: { [Player]: number } = {}
+local masslessConnections: { [Player]: RBXScriptConnection } = {}
 
 local function loadConfig()
 	return require(VehicleSystem.VehicleConfigurations[DEFAULT_VEHICLE])
@@ -2524,12 +2526,34 @@ function VehicleSpawner.spawn(player: Player, cframe: CFrame)
 
 	local seat = model:FindFirstChild("DriverSeat") :: Seat
 	seat:Sit(humanoid)
-	-- the driver's mass is already in the configuration, so the avatar itself adds none
+	-- On a respawn the humanoid may still count as seated in the old, destroyed seat, and Sit can be
+	-- refused. Check shortly after and try again.
+	task.spawn(function()
+		for _ = 1, 3 do
+			task.wait(0.25)
+			if vehicles[player] ~= model or seat.Occupant == humanoid or humanoid.Health <= 0 then
+				return
+			end
+			humanoid.Sit = false
+			task.wait()
+			seat:Sit(humanoid)
+		end
+	end)
+	-- the driver's mass is already in the configuration, so the avatar itself adds none,
+	-- including accessories and body parts that finish loading later
 	for _, part in character:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.Massless = true
 		end
 	end
+	if masslessConnections[player] then
+		masslessConnections[player]:Disconnect()
+	end
+	masslessConnections[player] = character.DescendantAdded:Connect(function(part)
+		if part:IsA("BasePart") then
+			part.Massless = true
+		end
+	end)
 
 	local ok, err = pcall(function()
 		model.PrimaryPart:SetNetworkOwner(player)
@@ -2558,8 +2582,14 @@ function VehicleSpawner.respawn(player: Player)
 end
 
 local function onCharacterAdded(player: Player, character: Model)
-	character:WaitForChild("Humanoid")
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	character:WaitForChild("HumanoidRootPart")
+	-- a reset or death takes the car away with the driver; a new one comes with the next character
+	humanoid.Died:Once(function()
+		if player.Character == character then
+			VehicleSpawner.remove(player)
+		end
+	end)
 	task.wait(0.5)
 	if player.Parent and player.Character == character then
 		VehicleSpawner.spawn(player, TrackBuilder.gridCFrame(slots[player], loadConfig().mass.comHeight))
@@ -2593,6 +2623,10 @@ function VehicleSpawner.init(remoteFolder: Folder)
 		VehicleSpawner.remove(player)
 		slots[player] = nil
 		lastRespawn[player] = nil
+		if masslessConnections[player] then
+			masslessConnections[player]:Disconnect()
+			masslessConnections[player] = nil
+		end
 	end)
 end
 
@@ -2665,7 +2699,11 @@ local function setHeadHidden(hidden: boolean)
 end
 
 local function update(dt: number)
-	if not root or not root.Parent then
+	if not root then
+		return
+	end
+	if not root.Parent then
+		CameraController.stop() -- the car is gone (reset, death or respawn): hand the camera back
 		return
 	end
 	local camera = Workspace.CurrentCamera
@@ -2693,6 +2731,9 @@ local function update(dt: number)
 		camera.CFrame = if mount then mount.WorldCFrame else cf
 		camera.FieldOfView = settings.cockpitFov + settings.speedFovGain * 0.4 * speedShare
 	end
+
+	-- With a Scriptable camera, Roblox doesn't move Focus; lighting detail is centred on it.
+	camera.Focus = CFrame.new(cf.Position)
 
 	if settings.shake and speedKmh > 120 then
 		local amount = math.rad(0.05) * math.clamp((speedKmh - 120) / 200, 0, 1)
@@ -3108,7 +3149,9 @@ return InputController
 	Client entry point: wires input to the active car, camera and HUD.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local Client = script.Parent
 local InputController = require(Client:WaitForChild("InputController"))
@@ -3126,7 +3169,30 @@ HUD.init()
 local active = nil
 local audio = nil
 
-remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Model)
+-- If the place streams instances in, the car can arrive after the event that announces it, and the
+-- event then carries nil. Find our own car by its owner attribute instead.
+local function findOwnCar(timeout: number): Model?
+	local folder = Workspace:WaitForChild("Vehicles", timeout)
+	local deadline = os.clock() + timeout
+	while folder and os.clock() < deadline do
+		for _, child in folder:GetChildren() do
+			if child:IsA("Model") and child:GetAttribute("OwnerUserId") == Players.LocalPlayer.UserId then
+				return child
+			end
+		end
+		task.wait(0.2)
+	end
+	return nil
+end
+
+remotes:WaitForChild("VehicleSpawned").OnClientEvent:Connect(function(model: Model?)
+	if not model then
+		model = findOwnCar(10)
+		if not model then
+			warn("[Redline] The car didn't arrive on this computer; press R to try again")
+			return
+		end
+	end
 	if audio then
 		audio:stop()
 		audio = nil

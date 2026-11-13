@@ -72,7 +72,8 @@ def main():
         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
         'xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">'
     )
-    writer.open_item("Workspace", "Workspace", [f'<float name="Gravity">{GRAVITY:.4f}</float>'])
+    writer.open_item("Workspace", "Workspace", [f'<float name="Gravity">{GRAVITY:.4f}</float>',
+                                                '<bool name="StreamingEnabled">false</bool>'])
     writer.close_item()
     for service in ("ReplicatedStorage", "ServerScriptService"):
         writer.open_item(service, service)
