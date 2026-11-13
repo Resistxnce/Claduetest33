@@ -286,7 +286,7 @@ return {
 		-- cabin engine sound under load (research estimate), +3 dB, which is +1.5 dB at the game's 0.5 level
 		-- compression, so engine = 1.19. The equaliser lifts the low orders the speakers add and cuts the
 		-- treble the cabin keeps out.
-		interior = { engine = 1.19, wind = 0.55, road = 1.6, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
+		interior = { engine = 1.19, wind = 0.6, road = 2.0, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
 	},
 
 	-- [F] Factory figures (zeroTo60Mph, zeroTo100, zeroTo200, topSpeedKmh) and [M] magazine figures. US
