@@ -174,6 +174,23 @@ placeholders (`tools/synth_audio.py`). Details are in `docs/AUDIO.md`.
   about 20 Hz, smoothed on clients). A traffic car switches to full physics only when hit. Spawning
   happens out of sight, in valid gaps, with density scaled to player count and server load.
 
+**Built so far (first version, on the proving-ground loop):**
+- `TrafficSystem/TrafficSimulation` runs IDM and MOBIL on the server, 20 times a second, with four
+  driver profiles (cautious, normal, aggressive, truck). Players' cars count as vehicles the traffic
+  must follow and not cut off.
+- Each player gets the traffic within 1.2 km, 10 times a second, packed into 12 bytes per car.
+  `TrafficRenderer` draws it on their computer with pooled stand-in cars, moved smoothly in one
+  `BulkMoveTo` call per frame.
+- `tools/traffic_model.py` is a Python copy of the simulation. In 10 simulated minutes of light
+  traffic and 5 of heavy, it has no collisions. Heavy traffic flows at about 1,740 cars per hour per
+  lane, which is realistic. Traffic keeps right, merges around a stopped car, never pulls out within
+  150 m in front of a player doing 300 km/h, and passes a slow player on the right.
+- Still to come:
+  - general road networks (lane graph, merges, exits);
+  - traffic cars that react physically when hit;
+  - spawning and despawning around players instead of a fixed loop;
+  - engine sound and Doppler for traffic.
+
 ## 8. Prototype: Valenza GT12
 
 An original car with fictional branding, built to the Ferrari 812 Superfast's public figures. Its
@@ -218,7 +235,7 @@ Each milestone ends with a test pass in Studio. Later phases follow your master 
 draws the real torque curve, saved builds. Each modification changes simulation parameters, never a
 made-up "speed stat".
 
-**Phase 4: traffic** (section 7). **Phase 5: environment:** highways with merges, exits, tunnels,
+**Phase 4: traffic** (section 7). *First version built on the proving ground.* **Phase 5: environment:** highways with merges, exits, tunnels,
 bridges and day/night. **Phase 6: gameplay:** races, close-pass scoring, money, progression, garage,
 dealership, leaderboards. **Phase 7: multiplayer hardening:** server validation, saving with
 `DataStoreService`, rate limits, anti-exploit checks, load testing. **Phase 8: more cars**, each with its

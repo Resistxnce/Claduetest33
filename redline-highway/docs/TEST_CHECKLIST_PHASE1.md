@@ -75,6 +75,20 @@ Use the 2.2 km main straight. The telemetry overlay (T) records each result.
 - [ ] After R (respawn), the old car's sounds stop and the new car's start; nothing doubles up.
 - [ ] Compare with `assets/audio/preview/GT12_drive_preview.mp3`. Tell me what sounds wrong or fake.
 
+## Traffic (Phase 4, first version)
+
+- [ ] Output shows `[Redline] Traffic: ... cars on 8.5 km of 4-lane road`.
+- [ ] Stand-in cars and trucks drive round the oval. Most keep to the right-hand lanes and faster ones
+      use the left; trucks stay in the two right-hand lanes.
+- [ ] They move smoothly, with no stutter or jumps, even when you drive alongside at their speed.
+- [ ] They change lanes smoothly over about 3 seconds, and pass slower cars.
+- [ ] Parked on the grid, traffic in your lane slows and moves over to get past you. Nobody drives
+      through you.
+- [ ] Driving fast in the left lane, cars ahead don't pull out right in front of you, and some move
+      over to let you by.
+- [ ] Hitting a traffic car stops your car hard. Traffic cars don't get knocked around yet.
+- [ ] The frame rate stays smooth with traffic around.
+
 ## Things to watch for
 
 - The car hopping, bouncing or being launched into the air (suspension or force problems).

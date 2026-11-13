@@ -13,11 +13,13 @@ local CameraController = require(Client:WaitForChild("CameraController"))
 local HUD = require(Client:WaitForChild("HUD"))
 local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
 local SelfTest = require(Client:WaitForChild("SelfTest"))
+local TrafficRenderer = require(Client:WaitForChild("TrafficRenderer"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 InputController.init()
 HUD.init()
+TrafficRenderer.init(remotes)
 
 local active = nil
 local audio = nil

@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
 local TrackBuilder = require(script.Parent.TrackBuilder)
 local VehicleSpawner = require(script.Parent.VehicleSpawner)
+local TrafficService = require(script.Parent.TrafficService)
 
 -- 9.81 m/s^2 at 0.28 m per stud. Character jumps feel lower than default Roblox; cars feel right.
 Workspace.Gravity = Units.REALISTIC_GRAVITY
@@ -51,3 +52,4 @@ TrackBuilder.build()
 print(string.format("[Redline] Proving ground built in %.2f s (lap %.0f m)", os.clock() - started, TrackBuilder.LAP_LENGTH))
 
 VehicleSpawner.init(remotes)
+TrafficService.init(remotes)

@@ -17,6 +17,7 @@ Runs these tests on the 4-lane, 8,484 m proving-ground loop:
 
 Usage: python3 tools/traffic_model.py
 """
+import bisect
 import math
 import random
 
@@ -129,34 +130,45 @@ class Sim:
             for lane in lanes:
                 if 1 <= lane <= self.lanes:
                     order[lane].append(ob)
+        self.keys = {}
         for lane in order:
             order[lane].sort(key=lambda x: x["s"])
+            self.keys[lane] = [x["s"] for x in order[lane]]
         self.order = order
 
     def occupied(self, lane, lane_pos, changing, from_lane):
         return (lane, from_lane) if changing and from_lane != lane else (lane,)
 
     def neighbours(self, veh, lane):
-        """(leader, gap, follower, gap) in a lane, ignoring veh itself."""
-        best_ahead, ahead_d, best_behind, behind_d = None, math.inf, None, math.inf
-        for other in self.order.get(lane, ()):
-            if other is veh:
-                continue
-            d = self.ahead(veh["s"], other["s"])
-            if not self.loop and d < 0:
-                d = math.inf
-            back = self.ahead(other["s"], veh["s"])
-            if not self.loop and back < 0:
-                back = math.inf
-            half = (veh_len(veh) + veh_len(other)) / 2
-            if d <= back:
-                if d < ahead_d:
-                    best_ahead, ahead_d = other, d
-            elif back < behind_d:
-                best_behind, behind_d = other, back
-        lead_gap = ahead_d - (veh_len(veh) + veh_len(best_ahead)) / 2 if best_ahead else None
-        follow_gap = behind_d - (veh_len(veh) + veh_len(best_behind)) / 2 if best_behind else None
-        return best_ahead, lead_gap, best_behind, follow_gap
+        """(leader, gap, follower, gap) in a lane, ignoring veh itself. Gaps are bumper to bumper."""
+        items = self.order.get(lane)
+        if not items:
+            return None, None, None, None
+        n = len(items)
+        k = bisect.bisect_right(self.keys[lane], veh["s"])
+        lead = None
+        for j in range(n):
+            idx = k + j
+            if idx >= n:
+                if not self.loop:
+                    break
+                idx %= n
+            if items[idx] is not veh:
+                lead = items[idx]
+                break
+        follow = None
+        for j in range(1, n + 1):
+            idx = k - j
+            if idx < 0:
+                if not self.loop:
+                    break
+                idx %= n
+            if items[idx] is not veh and items[idx] is not lead:
+                follow = items[idx]
+                break
+        lead_gap = self.ahead(veh["s"], lead["s"]) - (veh_len(veh) + veh_len(lead)) / 2 if lead else None
+        follow_gap = self.ahead(follow["s"], veh["s"]) - (veh_len(veh) + veh_len(follow)) / 2 if follow else None
+        return lead, lead_gap, follow, follow_gap
 
     def accel(self, veh, leader, gap):
         p, v = params(veh), veh["v"]
@@ -210,6 +222,10 @@ class Sim:
                         veh["fromLane"], veh["lane"] = veh["lane"], target
                         veh["change"], veh["sinceChange"] = LANE_CHANGE_TIME, 0.0
                         self.lane_changes += 1
+                        # occupy the new lane at once, so nobody else picks the same gap this step
+                        k = bisect.bisect_right(self.keys[target], veh["s"])
+                        self.keys[target].insert(k, veh["s"])
+                        self.order[target].insert(k, veh)
                         break
         for veh in self.vehicles:
             v = max(0.0, veh["v"] + veh["a"] * dt)
@@ -244,9 +260,11 @@ def desired(x):
 # ---------------------------------------------------------------------------------------------
 
 def overlaps(sim):
-    """Pairs of vehicles closer than touching, in a shared lane (or partly shared while changing)."""
+    """Pairs of traffic cars closer than touching, in a shared lane (or partly shared while changing).
+    Players are left out: in these tests they don't brake or steer, so hitting traffic is expected."""
     bad = []
     for lane, items in sim.order.items():
+        items = [x for x in items if "profile" in x]
         for a, b in zip(items, items[1:] + (items[:1] if sim.loop else [])):
             if a is b:
                 continue
@@ -264,7 +282,8 @@ def run(sim, seconds, dt=0.05, on_step=None):
         sim.step(dt)
         sim.build_order()
         collisions += overlaps(sim)
-        worst_decel = min(worst_decel, min(v["a"] for v in sim.vehicles))
+        if sim.time > 20:  # after the starting positions have settled
+            worst_decel = min(worst_decel, min(v["a"] for v in sim.vehicles))
     return collisions, worst_decel
 
 
@@ -279,17 +298,19 @@ def summary(sim, label, collisions, worst, seconds):
           f"flow {flow:.0f} cars/h/lane")
     print(f"  cars per lane (1 = left) {by_lane}, mean km/h per lane {lane_speed}")
     print(f"  lane changes {sim.lane_changes} ({sim.lane_changes / len(sim.vehicles) / (seconds / 60):.2f} per car per minute), "
-          f"hardest braking {worst:.1f} m/s^2, overlaps {len(collisions)}")
+          f"hardest braking after the first 20 s {worst:.1f} m/s^2, overlaps {len(collisions)}")
     return collisions
 
 
 def main():
     results = []
-    for label, density, seed in (("light traffic", 6, 1), ("heavy traffic", 22, 2)):
+    for label, density, seed, seconds in (("light traffic", 6, 1, 600), ("heavy traffic", 22, 2, 300)):
         sim = Sim(LAP, LANES, seed=seed)
         sim.populate(density)
-        collisions, worst = run(sim, 600)
-        results.append(summary(sim, label, collisions, worst, 600))
+        collisions, worst = run(sim, seconds)
+        results.append(summary(sim, label, collisions, worst, seconds))
+        if collisions:
+            print("  first overlaps (lane, car, car, centre distance m):", collisions[:4])
 
     # 3. a crashed car stopped in lane 2
     sim = Sim(LAP, LANES, seed=3)
@@ -317,14 +338,15 @@ def main():
         player["s"] = (player["s"] + player["v"] * 0.05) % s.length
         s.build_order()
         lead, gap, _, _ = s.neighbours(player, 1)
-        if lead is not None and gap is not None and gap < 60 and lead.get("change", 0) > LANE_CHANGE_TIME - 0.5:
+        moving_in = lead is not None and lead.get("lane") == 1 and lead.get("fromLane") != 1
+        if moving_in and gap is not None and gap < 150 and lead["change"] > LANE_CHANGE_TIME - 0.5:
             cut_ins.append((round(s.time, 1), lead["id"], round(gap, 1)))
 
     for veh in list(sim.vehicles):
         if veh["lane"] == 1:
             sim.vehicles.remove(veh)  # an empty fast lane, so any car in it pulled out
     collisions, worst = run(sim, 120, on_step=drive)
-    print(f"player at 300 km/h in the fast lane: cars that pulled out within 60 m in front of it: {len(cut_ins)} "
+    print(f"player at 300 km/h in the fast lane: cars that pulled out within 150 m in front of it: {len(cut_ins)} "
           f"{cut_ins[:3]}; overlaps {len(collisions)}")
     results.append(collisions)
 

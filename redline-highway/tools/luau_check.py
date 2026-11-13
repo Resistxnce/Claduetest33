@@ -88,6 +88,9 @@ LIBRARIES = {
              "replace rrotate rshift",
     "debug": "dumpcodesize info profilebegin profileend resetmemorycategory setmemorycategory "
              "traceback",
+    "buffer": "copy create fill fromstring len readbits readf32 readf64 readi16 readi32 readi8 readstring "
+              "readu16 readu32 readu8 tostring writebits writef32 writef64 writei16 writei32 writei8 "
+              "writestring writeu16 writeu32 writeu8",
     "Vector3": "new zero one xAxis yAxis zAxis FromNormalId FromAxis",
     "Vector2": "new zero one xAxis yAxis",
     "CFrame": "new lookAt lookAlong fromMatrix fromAxisAngle fromEulerAngles fromEulerAnglesXYZ "

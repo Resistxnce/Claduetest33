@@ -3,8 +3,9 @@
 *Working title.* An original high-speed highway driving and racing game for Roblox. This folder holds
 **Phase 1**: the shared vehicle physics framework, the first prototype car (the Valenza GT12, built to
 the Ferrari 812 Superfast's public engineering figures), a proving-ground test track, cameras and a
-dashboard with telemetry. It also has the start of **Phase 2**: the car's sound system with
-placeholder sounds (see `docs/AUDIO.md`).
+dashboard with telemetry. It also has the start of **Phase 2**, the car's sound system with
+placeholder sounds (see `docs/AUDIO.md`), and the start of **Phase 4**, highway traffic that follows,
+passes and makes room using two standard traffic research models (IDM and MOBIL).
 
 **Status:** written and checked outside Roblox, **not yet run in Roblox Studio.** The place file was
 generated and checked for structure, and the drivetrain maths was tested in a Python copy (see
@@ -64,6 +65,7 @@ handbrake, Y for the camera.
 | `tools/luau_check.py` | Checks every script for syntax errors, typos and Roblox API mistakes (see below) |
 | `tools/synth_audio.py` | Makes the placeholder sounds and their region tables (needs numpy and ffmpeg) |
 | `tools/audio_preview.py` | Renders the preview drive with a Python copy of the game's sound mixer |
+| `tools/traffic_model.py` | Python copy of the traffic simulation with collision and behaviour tests |
 
 After editing anything in `src/`, run `python3 tools/build_place.py` to refresh the place file.
 

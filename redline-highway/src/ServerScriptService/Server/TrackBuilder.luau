@@ -13,15 +13,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
+local RoadGeometry = require(ReplicatedStorage:WaitForChild("TrafficSystem"):WaitForChild("RoadGeometry"))
 
 local M = Units.METERS_PER_STUD
 
 local TrackBuilder = {}
 
-local STRAIGHT = 2200
-local RADIUS = 650
-local LANES = 4
-local LANE_WIDTH = 3.75
+-- the loop's shape is shared with the traffic system (TrafficSystem/RoadGeometry)
+local STRAIGHT = RoadGeometry.STRAIGHT
+local RADIUS = RoadGeometry.RADIUS
+local LANES = RoadGeometry.LANES
+local LANE_WIDTH = RoadGeometry.LANE_WIDTH
 local SHOULDER = 3.0
 local ROAD_WIDTH = LANES * LANE_WIDTH + 2 * SHOULDER -- 21 m
 local ROAD_THICKNESS = 1.0
@@ -34,8 +36,8 @@ local EDGE_PIECE = 14
 local BARRIER_HEIGHT, BARRIER_WIDTH = 0.9, 0.5
 local POLE_SPACING = 60
 local START_S = 120 -- start line, metres along the main straight
-local ARC = math.pi * RADIUS
-local LAP = 2 * STRAIGHT + 2 * ARC
+local ARC = RoadGeometry.ARC
+local LAP = RoadGeometry.LAP
 
 TrackBuilder.LAP_LENGTH = LAP
 TrackBuilder.LANES = LANES
@@ -57,28 +59,9 @@ local function studs(v: Vector3): Vector3
 end
 
 -- Centre of the road at distance s (metres) around the lap: position (metres) and direction.
-function TrackBuilder.centerline(s: number): (Vector3, Vector3)
-	s = s % LAP
-	if s < STRAIGHT then
-		return Vector3.new(-STRAIGHT / 2 + s, 0, -RADIUS), Vector3.xAxis
-	end
-	s -= STRAIGHT
-	if s < ARC then
-		local phi = -math.pi / 2 + s / RADIUS
-		return Vector3.new(STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)), Vector3.new(-math.sin(phi), 0, math.cos(phi))
-	end
-	s -= ARC
-	if s < STRAIGHT then
-		return Vector3.new(STRAIGHT / 2 - s, 0, RADIUS), -Vector3.xAxis
-	end
-	s -= STRAIGHT
-	local phi = math.pi / 2 + s / RADIUS
-	return Vector3.new(-STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)), Vector3.new(-math.sin(phi), 0, math.cos(phi))
-end
+TrackBuilder.centerline = RoadGeometry.centerline
 
-local function rightOf(direction: Vector3): Vector3
-	return direction:Cross(Vector3.yAxis)
-end
+local rightOf = RoadGeometry.rightOf
 
 local function newPart(parent: Instance, name: string, sizeMeters: Vector3, cframe: CFrame, color: Color3, material: Enum.Material, collide: boolean, query: boolean): Part
 	local part = Instance.new("Part")

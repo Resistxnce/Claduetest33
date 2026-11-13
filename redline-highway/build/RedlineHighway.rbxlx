@@ -12,13 +12,495 @@
 </Properties>
 <Item class="Folder" referent="RBX00000003">
 <Properties>
+<string name="Name">TrafficSystem</string>
+</Properties>
+<Item class="ModuleScript" referent="RBX00000004">
+<Properties>
+<string name="Name">DriverProfiles</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	Traffic driver profiles and the shared traffic settings.
+
+	Each traffic car gets a profile, then its own desired speed within the profile's range, so no
+	two cars drive alike. Values follow typical highway calibrations of the Intelligent Driver Model
+	and MOBIL (Treiber and Kesting, "Traffic Flow Dynamics", 2013) and are tuned in testing.
+
+	  speed       desired speed range, km/h
+	  gap         desired time gap to the car ahead, s
+	  minGap      gap kept when stopped, m
+	  accel       comfortable acceleration, m/s^2
+	  decel       comfortable braking, m/s^2
+	  politeness  MOBIL politeness: how much the gains and losses of others count, 0 to 1
+	  threshold   MOBIL threshold: how much better a lane must be before changing, m/s^2
+	  length, width   body size, m
+	  laneMin     leftmost lane the profile may use (trucks stay in the right lanes)
+	  share       how common the profile is
+]]
+
+local DriverProfiles = {}
+
+DriverProfiles.profiles = {
+	cautious = { speed = { 95, 110 }, gap = 1.8, minGap = 2.5, accel = 1.0, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 4.6, width = 1.8, laneMin = 1, share = 0.25 },
+	normal = { speed = { 110, 130 }, gap = 1.4, minGap = 2.0, accel = 1.4, decel = 2.0, politeness = 0.3, threshold = 0.2, length = 4.7, width = 1.85, laneMin = 1, share = 0.45 },
+	aggressive = { speed = { 130, 155 }, gap = 0.9, minGap = 1.5, accel = 2.0, decel = 2.5, politeness = 0.1, threshold = 0.1, length = 4.6, width = 1.85, laneMin = 1, share = 0.15 },
+	truck = { speed = { 80, 90 }, gap = 1.8, minGap = 3.0, accel = 0.6, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 14.0, width = 2.5, laneMin = 3, share = 0.15 },
+}
+-- fixed order, so random choices are repeatable for a given seed
+DriverProfiles.order = { "cautious", "normal", "aggressive", "truck" }
+
+DriverProfiles.MAX_DECEL = 9.0 -- m/s^2, the hardest any car can brake
+DriverProfiles.KEEP_RIGHT_BIAS = 0.25 -- m/s^2 added to the incentive for moving right
+DriverProfiles.SAFE_DECEL = 4.0 -- m/s^2, the most a new follower may have to brake for a lane change
+DriverProfiles.LANE_CHANGE_TIME = 3.0 -- seconds to move across one lane
+DriverProfiles.DECISION_INTERVAL = { 1.0, 2.0 } -- seconds between a driver's lane-change decisions
+DriverProfiles.MIN_TIME_IN_LANE = 4.0 -- seconds after a lane change before the next one
+-- how traffic expects a player's car to brake, used in the lane-change safety check
+DriverProfiles.PLAYER = { gap = 1.0, minGap = 2.0, accel = 3.0, decel = 6.0 }
+
+return DriverProfiles
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000005">
+<Properties>
+<string name="Name">IDM</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	Intelligent Driver Model (Treiber, Hennecke and Helbing, 2000): a car-following model that gives
+	a driver's acceleration from their speed, the gap to the car ahead and how fast they are closing
+	on it. It keeps a safe time gap, brakes smoothly and doesn't crash in normal traffic.
+]]
+
+local DriverProfiles = require(script.Parent.DriverProfiles)
+
+local IDM = {}
+
+--[[
+	p: profile (accel, decel, gap, minGap). v: speed (m/s). v0: desired speed (m/s).
+	gap: bumper-to-bumper distance to the leader (m), or nil on a free road.
+	dv: closing speed, v minus the leader's speed (m/s).
+	Returns acceleration in m/s^2, never below -MAX_DECEL.
+]]
+function IDM.acceleration(p, v: number, v0: number, gap: number?, dv: number): number
+	local free = if v0 > 0 then 1 - (v / v0) ^ 4 else -1
+	if gap == nil then
+		return math.max(p.accel * free, -DriverProfiles.MAX_DECEL)
+	end
+	local desiredGap = p.minGap + math.max(0, v * p.gap + v * dv / (2 * math.sqrt(p.accel * p.decel)))
+	local ratio = desiredGap / math.max(gap, 0.1)
+	return math.max(p.accel * (free - ratio * ratio), -DriverProfiles.MAX_DECEL)
+end
+
+return IDM
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000006">
+<Properties>
+<string name="Name">RoadGeometry</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	RoadGeometry: the proving-ground loop's shape, shared by the server (track building, traffic)
+	and clients (drawing traffic). Distances are in metres; s is the distance around the loop from
+	the start of the main straight, and offsets are sideways from the centre line, positive to the
+	driver's right. Lanes are numbered from the left: lane 1 is the fast lane.
+
+	The loop is two straights joined by two semicircles, and every lane runs the same way round.
+]]
+
+local RoadGeometry = {}
+
+local STRAIGHT = 2200
+local RADIUS = 650
+local LANES = 4
+local LANE_WIDTH = 3.75
+local ARC = math.pi * RADIUS
+local LAP = 2 * STRAIGHT + 2 * ARC
+
+RoadGeometry.STRAIGHT = STRAIGHT
+RoadGeometry.RADIUS = RADIUS
+RoadGeometry.LANES = LANES
+RoadGeometry.LANE_WIDTH = LANE_WIDTH
+RoadGeometry.ARC = ARC
+RoadGeometry.LAP = LAP
+
+-- Centre of the road at distance s: position (m) and direction of travel.
+function RoadGeometry.centerline(s: number): (Vector3, Vector3)
+	s = s % LAP
+	if s < STRAIGHT then
+		return Vector3.new(-STRAIGHT / 2 + s, 0, -RADIUS), Vector3.xAxis
+	end
+	s -= STRAIGHT
+	if s < ARC then
+		local phi = -math.pi / 2 + s / RADIUS
+		return Vector3.new(STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)),
+			Vector3.new(-math.sin(phi), 0, math.cos(phi))
+	end
+	s -= ARC
+	if s < STRAIGHT then
+		return Vector3.new(STRAIGHT / 2 - s, 0, RADIUS), -Vector3.xAxis
+	end
+	s -= STRAIGHT
+	local phi = math.pi / 2 + s / RADIUS
+	return Vector3.new(-STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)),
+		Vector3.new(-math.sin(phi), 0, math.cos(phi))
+end
+
+function RoadGeometry.rightOf(direction: Vector3): Vector3
+	return direction:Cross(Vector3.yAxis)
+end
+
+-- The reverse of centerline: distance along the loop and sideways offset of a position (m).
+-- Exact for this loop's straights and semicircles.
+function RoadGeometry.project(position: Vector3): (number, number)
+	local x, z = position.X, position.Z
+	local half = STRAIGHT / 2
+	if x >= -half and x <= half then
+		if z < 0 then
+			return x + half, z + RADIUS
+		end
+		return STRAIGHT + ARC + (half - x), RADIUS - z
+	end
+	if x > half then
+		local dx = x - half
+		local phi = math.atan2(z, dx)
+		return STRAIGHT + (phi + math.pi / 2) * RADIUS, RADIUS - math.sqrt(dx * dx + z * z)
+	end
+	local dx = x + half
+	local phi = math.atan2(z, dx)
+	if phi < 0 then
+		phi += 2 * math.pi
+	end
+	return 2 * STRAIGHT + ARC + (phi - math.pi / 2) * RADIUS, RADIUS - math.sqrt(dx * dx + z * z)
+end
+
+-- Lane position (1 = centre of the fast lane) from a sideways offset, and back.
+function RoadGeometry.laneFromOffset(offset: number): number
+	return offset / LANE_WIDTH + (LANES + 1) / 2
+end
+
+function RoadGeometry.offsetFromLane(lanePos: number): number
+	return (lanePos - (LANES + 1) / 2) * LANE_WIDTH
+end
+
+-- Position (m) and direction at distance s and lane position lanePos, at height above the road.
+function RoadGeometry.pointAt(s: number, lanePos: number, height: number): (Vector3, Vector3)
+	local p, direction = RoadGeometry.centerline(s)
+	return p + RoadGeometry.rightOf(direction) * RoadGeometry.offsetFromLane(lanePos) + Vector3.new(0, height, 0), direction
+end
+
+return RoadGeometry
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000007">
+<Properties>
+<string name="Name">TrafficSimulation</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	TrafficSimulation: traffic on a multi-lane road, in road coordinates. Pure maths with no Roblox
+	objects; tools/traffic_model.py is a line-for-line Python copy with tests (no collisions in light
+	and heavy traffic, realistic flow, keeping right, safe lane changes around fast, slow and stopped
+	players). Keep the two in step.
+
+	Positions: s is the distance along the road (m); lanes are numbered from the left, 1 = fast lane;
+	lanePos is the lateral position in lanes (2.5 = halfway between lanes 2 and 3).
+	Car following: IDM. Lane changes: MOBIL with a keep-right bias and a safety limit on how hard the
+	new follower would have to brake. Players' cars are "obstacles": the simulation doesn't move them,
+	but traffic follows them, yields to them and won't pull out in front of them unsafely.
+]]
+
+local DriverProfiles = require(script.Parent.DriverProfiles)
+local IDM = require(script.Parent.IDM)
+
+local PROFILES = DriverProfiles.profiles
+local LANE_CHANGE_TIME = DriverProfiles.LANE_CHANGE_TIME
+local MIN_TIME_IN_LANE = DriverProfiles.MIN_TIME_IN_LANE
+local DECISION = DriverProfiles.DECISION_INTERVAL
+
+local TrafficSimulation = {}
+TrafficSimulation.__index = TrafficSimulation
+
+local function vehicleLength(x): number
+	return if x.profile then x.profile.length else (x.length or 4.7)
+end
+
+local function params(x)
+	return x.profile or DriverProfiles.PLAYER
+end
+
+local function desiredSpeed(x): number
+	return x.v0 or math.max(x.v, 1)
+end
+
+-- index of the first key greater than s (1-based; #keys + 1 if none)
+local function upperBound(keys: { number }, s: number): number
+	local lo, hi = 1, #keys + 1
+	while lo < hi do
+		local mid = (lo + hi) // 2
+		if keys[mid] <= s then
+			lo = mid + 1
+		else
+			hi = mid
+		end
+	end
+	return lo
+end
+
+--[[
+	length: road length (m). lanes: lane count. loop: true if the road joins itself (a ring).
+	seed: random seed (optional).
+]]
+function TrafficSimulation.new(length: number, lanes: number, loop: boolean, seed: number?)
+	local self = setmetatable({}, TrafficSimulation)
+	self.length = length
+	self.lanes = lanes
+	self.loop = loop
+	self.vehicles = {}
+	self.obstacles = {} -- players: { s, lane (lanePos), v, length }
+	self.random = Random.new(seed or 1)
+	self.time = 0
+	self.nextId = 1
+	self.laneChanges = 0
+	self.order = {}
+	self.keys = {}
+	return self
+end
+
+function TrafficSimulation:pickProfile(): string
+	local r, total = self.random:NextNumber(), 0
+	for _, name in DriverProfiles.order do
+		total += PROFILES[name].share
+		if r <= total then
+			return name
+		end
+	end
+	return "normal"
+end
+
+function TrafficSimulation:add(s: number, lane: number, profileName: string, v: number?)
+	local p = PROFILES[profileName]
+	local v0 = self.random:NextNumber(p.speed[1], p.speed[2]) / 3.6
+	local vehicle = {
+		id = self.nextId,
+		s = s % self.length,
+		v = if v == nil then v0 * 0.85 else v,
+		a = 0,
+		lane = lane,
+		lanePos = lane,
+		fromLane = lane,
+		change = 0,
+		profile = p,
+		profileName = profileName,
+		v0 = v0,
+		decision = self.random:NextNumber(DECISION[1], DECISION[2]),
+		sinceChange = MIN_TIME_IN_LANE,
+	}
+	self.nextId += 1
+	table.insert(self.vehicles, vehicle)
+	return vehicle
+end
+
+-- Fill the road with perKmPerLane cars per kilometre in every lane.
+function TrafficSimulation:populate(perKmPerLane: number)
+	for lane = 1, self.lanes do
+		local count = math.floor(perKmPerLane * self.length / 1000)
+		local spacing = self.length / math.max(count, 1)
+		for k = 0, count - 1 do
+			local name = self:pickProfile()
+			if PROFILES[name].laneMin > lane then
+				name = "normal"
+			end
+			self:add(k * spacing + self.random:NextNumber(0, spacing * 0.4), lane, name)
+		end
+	end
+end
+
+function TrafficSimulation:ahead(sFrom: number, sTo: number): number
+	local d = sTo - sFrom
+	if self.loop then
+		d %= self.length
+	end
+	return d
+end
+
+-- Per lane, everything occupying it (cars and players), sorted by position.
+function TrafficSimulation:buildOrder()
+	local order = {}
+	for lane = 1, self.lanes do
+		order[lane] = {}
+	end
+	for _, v in self.vehicles do
+		table.insert(order[v.lane], v)
+		if v.change > 0 and v.fromLane ~= v.lane then
+			table.insert(order[v.fromLane], v) -- a car changing lanes blocks both
+		end
+	end
+	for _, ob in self.obstacles do
+		local base = math.floor(ob.lane + 0.5)
+		local frac = ob.lane - base
+		local extra = if frac > 0.2 then base + 1 elseif frac < -0.2 then base - 1 else nil
+		for _, lane in { base, extra } do
+			if lane and lane >= 1 and lane <= self.lanes then
+				table.insert(order[lane], ob)
+			end
+		end
+	end
+	local keys = {}
+	for lane = 1, self.lanes do
+		table.sort(order[lane], function(a, b)
+			return a.s < b.s
+		end)
+		local k = {}
+		for i, x in order[lane] do
+			k[i] = x.s
+		end
+		keys[lane] = k
+	end
+	self.order = order
+	self.keys = keys
+end
+
+-- Leader, gap to it, follower, gap to it, in a lane, ignoring x itself. Gaps are bumper to bumper.
+function TrafficSimulation:neighbours(x, lane: number)
+	local items = self.order[lane]
+	if not items or #items == 0 then
+		return nil, nil, nil, nil
+	end
+	local n = #items
+	local k = upperBound(self.keys[lane], x.s) -- first item ahead of x
+	local lead = nil
+	for j = 0, n - 1 do
+		local idx = k + j
+		if idx > n then
+			if not self.loop then
+				break
+			end
+			idx = (idx - 1) % n + 1
+		end
+		if items[idx] ~= x then
+			lead = items[idx]
+			break
+		end
+	end
+	local follow = nil
+	for j = 1, n do
+		local idx = k - j
+		if idx < 1 then
+			if not self.loop then
+				break
+			end
+			idx = (idx - 1) % n + 1
+		end
+		if items[idx] ~= x and items[idx] ~= lead then
+			follow = items[idx]
+			break
+		end
+	end
+	local leadGap = if lead then self:ahead(x.s, lead.s) - (vehicleLength(x) + vehicleLength(lead)) / 2 else nil
+	local followGap = if follow then self:ahead(follow.s, x.s) - (vehicleLength(x) + vehicleLength(follow)) / 2 else nil
+	return lead, leadGap, follow, followGap
+end
+
+function TrafficSimulation:accel(x, leader, gap: number?): number
+	local v = x.v
+	return IDM.acceleration(params(x), v, desiredSpeed(x), gap, if leader then v - leader.v else 0)
+end
+
+-- MOBIL: should car v move to lane target?
+function TrafficSimulation:wantsChange(v, target: number): boolean
+	local p = v.profile
+	if target < math.max(1, p.laneMin) or target > self.lanes then
+		return false
+	end
+	local leadOld, gapOld, followOld, gapFollowOld = self:neighbours(v, v.lane)
+	local leadNew, gapNew, followNew, gapFollowNew = self:neighbours(v, target)
+	if gapNew ~= nil and gapNew < p.minGap then
+		return false
+	end
+	if gapFollowNew ~= nil and gapFollowNew < params(followNew).minGap then
+		return false
+	end
+	local aC = self:accel(v, leadOld, gapOld)
+	local aCNew = self:accel(v, leadNew, gapNew)
+	local aN, aNNew = 0, 0
+	if followNew then
+		local gapN = if gapNew ~= nil then gapFollowNew + gapNew + vehicleLength(v) else nil
+		aN = self:accel(followNew, leadNew, gapN)
+		aNNew = self:accel(followNew, v, gapFollowNew)
+		if aNNew < -DriverProfiles.SAFE_DECEL then
+			return false
+		end
+	end
+	local aO, aONew = 0, 0
+	if followOld and followOld.profile then
+		local gapO = if gapOld ~= nil then gapFollowOld + gapOld + vehicleLength(v) else nil
+		aO = self:accel(followOld, v, gapFollowOld)
+		aONew = self:accel(followOld, leadOld, gapO)
+	end
+	local incentive = aCNew - aC + p.politeness * ((aNNew - aN) + (aONew - aO))
+	local bias = if target > v.lane then DriverProfiles.KEEP_RIGHT_BIAS else -DriverProfiles.KEEP_RIGHT_BIAS
+	return incentive + bias > p.threshold
+end
+
+function TrafficSimulation:step(dt: number)
+	self:buildOrder()
+	for _, v in self.vehicles do
+		local lead, gap = self:neighbours(v, v.lane)
+		local a = self:accel(v, lead, gap)
+		if v.change > 0 and v.fromLane ~= v.lane then
+			local lead2, gap2 = self:neighbours(v, v.fromLane)
+			a = math.min(a, self:accel(v, lead2, gap2))
+		end
+		v.a = a
+		v.decision -= dt
+		v.sinceChange += dt
+		if v.decision <= 0 and v.change <= 0 and v.sinceChange >= MIN_TIME_IN_LANE then
+			v.decision = self.random:NextNumber(DECISION[1], DECISION[2])
+			for _, target in { v.lane - 1, v.lane + 1 } do
+				if self:wantsChange(v, target) then
+					v.fromLane, v.lane = v.lane, target
+					v.change, v.sinceChange = LANE_CHANGE_TIME, 0
+					self.laneChanges += 1
+					-- occupy the new lane at once, so nobody else picks the same gap this step
+					local k = upperBound(self.keys[target], v.s)
+					table.insert(self.keys[target], k, v.s)
+					table.insert(self.order[target], k, v)
+					break
+				end
+			end
+		end
+	end
+	for _, v in self.vehicles do
+		local speed = math.max(0, v.v + v.a * dt)
+		local s = v.s + (v.v + speed) / 2 * dt
+		v.s = if self.loop then s % self.length else s
+		v.v = speed
+		if v.change > 0 then
+			v.change = math.max(0, v.change - dt)
+			local t = 1 - v.change / LANE_CHANGE_TIME
+			local smooth = t * t * (3 - 2 * t)
+			v.lanePos = v.fromLane + (v.lane - v.fromLane) * smooth
+			if v.change == 0 then
+				v.fromLane = v.lane
+			end
+		else
+			v.lanePos = v.lane
+		end
+	end
+	self.time += dt
+end
+
+return TrafficSimulation
+]]></ProtectedString>
+</Properties>
+</Item>
+</Item>
+<Item class="Folder" referent="RBX00000008">
+<Properties>
 <string name="Name">VehicleSystem</string>
 </Properties>
-<Item class="Folder" referent="RBX00000004">
+<Item class="Folder" referent="RBX00000009">
 <Properties>
 <string name="Name">Aerodynamics</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000005">
+<Item class="ModuleScript" referent="RBX0000000A">
 <Properties>
 <string name="Name">Aero</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -42,11 +524,11 @@ return Aero
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000006">
+<Item class="Folder" referent="RBX0000000B">
 <Properties>
 <string name="Name">CorePhysics</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000007">
+<Item class="ModuleScript" referent="RBX0000000C">
 <Properties>
 <string name="Name">Brakes</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -83,7 +565,7 @@ return Brakes
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000008">
+<Item class="ModuleScript" referent="RBX0000000D">
 <Properties>
 <string name="Name">Steering</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -136,7 +618,7 @@ return Steering
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000009">
+<Item class="ModuleScript" referent="RBX0000000E">
 <Properties>
 <string name="Name">VehicleSimulation</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -611,11 +1093,11 @@ return VehicleSimulation
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000000A">
+<Item class="Folder" referent="RBX0000000F">
 <Properties>
 <string name="Name">DifferentialSystem</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000000B">
+<Item class="ModuleScript" referent="RBX00000010">
 <Properties>
 <string name="Name">Differential</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -667,11 +1149,11 @@ return Differential
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000000C">
+<Item class="Folder" referent="RBX00000011">
 <Properties>
 <string name="Name">EngineSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000000D">
+<Item class="ModuleScript" referent="RBX00000012">
 <Properties>
 <string name="Name">Engine</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -744,11 +1226,11 @@ return Engine
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000000E">
+<Item class="Folder" referent="RBX00000013">
 <Properties>
 <string name="Name">SuspensionSystem</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000000F">
+<Item class="ModuleScript" referent="RBX00000014">
 <Properties>
 <string name="Name">Suspension</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -819,11 +1301,11 @@ return Suspension
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000010">
+<Item class="Folder" referent="RBX00000015">
 <Properties>
 <string name="Name">TireSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000011">
+<Item class="ModuleScript" referent="RBX00000016">
 <Properties>
 <string name="Name">Compounds</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -893,7 +1375,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000012">
+<Item class="ModuleScript" referent="RBX00000017">
 <Properties>
 <string name="Name">Tire</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -985,11 +1467,11 @@ return Tire
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX00000013">
+<Item class="Folder" referent="RBX00000018">
 <Properties>
 <string name="Name">TransmissionSimulation</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000014">
+<Item class="ModuleScript" referent="RBX00000019">
 <Properties>
 <string name="Name">Transmission</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1133,7 +1615,7 @@ return Transmission
 </Properties>
 </Item>
 </Item>
-<Item class="ModuleScript" referent="RBX00000015">
+<Item class="ModuleScript" referent="RBX0000001A">
 <Properties>
 <string name="Name">Units</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1186,11 +1668,11 @@ return Units
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="Folder" referent="RBX00000016">
+<Item class="Folder" referent="RBX0000001B">
 <Properties>
 <string name="Name">VehicleAudio</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000017">
+<Item class="ModuleScript" referent="RBX0000001C">
 <Properties>
 <string name="Name">AudioAssets</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1208,7 +1690,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000018">
+<Item class="ModuleScript" referent="RBX0000001D">
 <Properties>
 <string name="Name">EngineMix</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1446,11 +1928,11 @@ return EngineMix
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="Folder" referent="RBX00000019">
+<Item class="Folder" referent="RBX0000001E">
 <Properties>
 <string name="Name">Sheets</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000001A">
+<Item class="ModuleScript" referent="RBX0000001F">
 <Properties>
 <string name="Name">Driving_Effects</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1482,7 +1964,7 @@ return {
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000001B">
+<Item class="ModuleScript" referent="RBX00000020">
 <Properties>
 <string name="Name">GT12_Engine</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1519,11 +2001,11 @@ return {
 </Item>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000001C">
+<Item class="Folder" referent="RBX00000021">
 <Properties>
 <string name="Name">VehicleConfigurations</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000001D">
+<Item class="ModuleScript" referent="RBX00000022">
 <Properties>
 <string name="Name">Prototype812</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1737,11 +2219,11 @@ return {
 </Properties>
 </Item>
 </Item>
-<Item class="Folder" referent="RBX0000001E">
+<Item class="Folder" referent="RBX00000023">
 <Properties>
 <string name="Name">VehicleTelemetry</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX0000001F">
+<Item class="ModuleScript" referent="RBX00000024">
 <Properties>
 <string name="Name">Telemetry</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1807,15 +2289,15 @@ return Telemetry
 </Item>
 </Item>
 </Item>
-<Item class="ServerScriptService" referent="RBX00000020">
+<Item class="ServerScriptService" referent="RBX00000025">
 <Properties>
 <string name="Name">ServerScriptService</string>
 </Properties>
-<Item class="Folder" referent="RBX00000021">
+<Item class="Folder" referent="RBX00000026">
 <Properties>
 <string name="Name">Server</string>
 </Properties>
-<Item class="Script" referent="RBX00000022">
+<Item class="Script" referent="RBX00000027">
 <Properties>
 <string name="Name">Main</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1830,6 +2312,7 @@ local Workspace = game:GetService("Workspace")
 local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
 local TrackBuilder = require(script.Parent.TrackBuilder)
 local VehicleSpawner = require(script.Parent.VehicleSpawner)
+local TrafficService = require(script.Parent.TrafficService)
 
 -- 9.81 m/s^2 at 0.28 m per stud. Character jumps feel lower than default Roblox; cars feel right.
 Workspace.Gravity = Units.REALISTIC_GRAVITY
@@ -1871,10 +2354,11 @@ TrackBuilder.build()
 print(string.format("[Redline] Proving ground built in %.2f s (lap %.0f m)", os.clock() - started, TrackBuilder.LAP_LENGTH))
 
 VehicleSpawner.init(remotes)
+TrafficService.init(remotes)
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000023">
+<Item class="ModuleScript" referent="RBX00000028">
 <Properties>
 <string name="Name">TrackBuilder</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -1892,15 +2376,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
+local RoadGeometry = require(ReplicatedStorage:WaitForChild("TrafficSystem"):WaitForChild("RoadGeometry"))
 
 local M = Units.METERS_PER_STUD
 
 local TrackBuilder = {}
 
-local STRAIGHT = 2200
-local RADIUS = 650
-local LANES = 4
-local LANE_WIDTH = 3.75
+-- the loop's shape is shared with the traffic system (TrafficSystem/RoadGeometry)
+local STRAIGHT = RoadGeometry.STRAIGHT
+local RADIUS = RoadGeometry.RADIUS
+local LANES = RoadGeometry.LANES
+local LANE_WIDTH = RoadGeometry.LANE_WIDTH
 local SHOULDER = 3.0
 local ROAD_WIDTH = LANES * LANE_WIDTH + 2 * SHOULDER -- 21 m
 local ROAD_THICKNESS = 1.0
@@ -1913,8 +2399,8 @@ local EDGE_PIECE = 14
 local BARRIER_HEIGHT, BARRIER_WIDTH = 0.9, 0.5
 local POLE_SPACING = 60
 local START_S = 120 -- start line, metres along the main straight
-local ARC = math.pi * RADIUS
-local LAP = 2 * STRAIGHT + 2 * ARC
+local ARC = RoadGeometry.ARC
+local LAP = RoadGeometry.LAP
 
 TrackBuilder.LAP_LENGTH = LAP
 TrackBuilder.LANES = LANES
@@ -1936,28 +2422,9 @@ local function studs(v: Vector3): Vector3
 end
 
 -- Centre of the road at distance s (metres) around the lap: position (metres) and direction.
-function TrackBuilder.centerline(s: number): (Vector3, Vector3)
-	s = s % LAP
-	if s < STRAIGHT then
-		return Vector3.new(-STRAIGHT / 2 + s, 0, -RADIUS), Vector3.xAxis
-	end
-	s -= STRAIGHT
-	if s < ARC then
-		local phi = -math.pi / 2 + s / RADIUS
-		return Vector3.new(STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)), Vector3.new(-math.sin(phi), 0, math.cos(phi))
-	end
-	s -= ARC
-	if s < STRAIGHT then
-		return Vector3.new(STRAIGHT / 2 - s, 0, RADIUS), -Vector3.xAxis
-	end
-	s -= STRAIGHT
-	local phi = math.pi / 2 + s / RADIUS
-	return Vector3.new(-STRAIGHT / 2 + RADIUS * math.cos(phi), 0, RADIUS * math.sin(phi)), Vector3.new(-math.sin(phi), 0, math.cos(phi))
-end
+TrackBuilder.centerline = RoadGeometry.centerline
 
-local function rightOf(direction: Vector3): Vector3
-	return direction:Cross(Vector3.yAxis)
-end
+local rightOf = RoadGeometry.rightOf
 
 local function newPart(parent: Instance, name: string, sizeMeters: Vector3, cframe: CFrame, color: Color3, material: Enum.Material, collide: boolean, query: boolean): Part
 	local part = Instance.new("Part")
@@ -2203,7 +2670,160 @@ return TrackBuilder
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000024">
+<Item class="ModuleScript" referent="RBX00000029">
+<Properties>
+<string name="Name">TrafficService</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	TrafficService: runs highway traffic on the server and streams it to players.
+
+	The simulation (TrafficSystem/TrafficSimulation: IDM car following, MOBIL lane changes) runs 20
+	times a second on the server, which owns it. Each player's car is fed in as an obstacle, so
+	traffic follows it, yields to it and won't pull out in front of it unsafely. Ten times a second,
+	each player is sent the traffic within SEND_RANGE of their car, packed into a buffer, and their
+	client draws it (TrafficRenderer). Traffic cars aren't physical objects on the server.
+
+	Snapshot layout (little-endian), sent with Workspace:GetServerTimeNow() at the time of the step:
+	  per car, 12 bytes: id u16, s f32 (m), lanePos u16 (lanes * 1000), speed u16 (cm/s),
+	  profile u8 (index in DriverProfiles.order), unused u8
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local TrafficSystem = ReplicatedStorage:WaitForChild("TrafficSystem")
+local TrafficSimulation = require(TrafficSystem:WaitForChild("TrafficSimulation"))
+local RoadGeometry = require(TrafficSystem:WaitForChild("RoadGeometry"))
+local DriverProfiles = require(TrafficSystem:WaitForChild("DriverProfiles"))
+local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
+
+local STEP = 1 / 20 -- simulation step, s
+local SEND_INTERVAL = 0.1 -- s between snapshots
+local SEND_RANGE = 1200 -- m ahead of and behind each player
+local DENSITY = 5 -- cars per km per lane: light traffic for the proving ground
+local GRID_CLEARANCE = 200 -- m kept clear of traffic around the start grid when the server starts
+local GRID_S = 112 -- m, where the start grid is (TrackBuilder.gridCFrame)
+local OFF_ROAD = RoadGeometry.LANES * RoadGeometry.LANE_WIDTH / 2 + 4 -- m from the centre line
+local RECORD_BYTES = 12
+
+local TrafficService = {}
+
+local sim
+local remote: RemoteEvent
+local accumulator, sendTimer, stepTime = 0, 0, 0
+local profileIndex = {}
+for i, name in DriverProfiles.order do
+	profileIndex[name] = i
+end
+
+-- Players' cars become obstacles in road coordinates.
+local function updateObstacles()
+	table.clear(sim.obstacles)
+	local folder = Workspace:FindFirstChild("Vehicles")
+	if not folder then
+		return
+	end
+	for _, model in folder:GetChildren() do
+		local root = model:IsA("Model") and model.PrimaryPart
+		if root then
+			local position = root.Position * Units.METERS_PER_STUD
+			local s, offset = RoadGeometry.project(position)
+			if math.abs(offset) <= OFF_ROAD then
+				local _, direction = RoadGeometry.centerline(s)
+				local velocity = root.AssemblyLinearVelocity * Units.METERS_PER_STUD
+				table.insert(sim.obstacles, {
+					s = s,
+					lane = RoadGeometry.laneFromOffset(offset),
+					v = math.max(0, velocity:Dot(direction)),
+					length = 4.7,
+					owner = model:GetAttribute("OwnerUserId"),
+				})
+			end
+		end
+	end
+end
+
+local function pack(centre: number): buffer
+	local nearby = {}
+	for _, v in sim.vehicles do
+		local d = math.min(sim:ahead(centre, v.s), sim:ahead(v.s, centre))
+		if d <= SEND_RANGE then
+			table.insert(nearby, v)
+		end
+	end
+	local b = buffer.create(#nearby * RECORD_BYTES)
+	for i, v in nearby do
+		local o = (i - 1) * RECORD_BYTES
+		buffer.writeu16(b, o, v.id % 65536)
+		buffer.writef32(b, o + 2, v.s)
+		buffer.writeu16(b, o + 6, math.clamp(math.floor(v.lanePos * 1000 + 0.5), 0, 65535))
+		buffer.writeu16(b, o + 8, math.clamp(math.floor(v.v * 100 + 0.5), 0, 65535))
+		buffer.writeu8(b, o + 10, profileIndex[v.profileName] or 2)
+		buffer.writeu8(b, o + 11, 0)
+	end
+	return b
+end
+
+local function send()
+	for _, player in Players:GetPlayers() do
+		local centre = nil
+		for _, ob in sim.obstacles do
+			if ob.owner == player.UserId then
+				centre = ob.s
+			end
+		end
+		if centre == nil then
+			-- not on the road: send what's near the character, if any
+			local character = player.Character
+			local rootPart = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if rootPart then
+				centre = RoadGeometry.project(rootPart.Position * Units.METERS_PER_STUD)
+			end
+		end
+		if centre then
+			remote:FireClient(player, stepTime, pack(centre))
+		end
+	end
+end
+
+function TrafficService.init(remotes: Folder)
+	remote = Instance.new("RemoteEvent")
+	remote.Name = "TrafficState"
+	remote.Parent = remotes
+
+	sim = TrafficSimulation.new(RoadGeometry.LAP, RoadGeometry.LANES, true, 812)
+	sim:populate(DENSITY)
+	for i = #sim.vehicles, 1, -1 do
+		local v = sim.vehicles[i]
+		if math.min(sim:ahead(GRID_S, v.s), sim:ahead(v.s, GRID_S)) < GRID_CLEARANCE then
+			table.remove(sim.vehicles, i)
+		end
+	end
+
+	RunService.Heartbeat:Connect(function(dt)
+		accumulator = math.min(accumulator + dt, 0.25)
+		while accumulator >= STEP do
+			accumulator -= STEP
+			updateObstacles()
+			sim:step(STEP)
+			stepTime = Workspace:GetServerTimeNow()
+		end
+		sendTimer += dt
+		if sendTimer >= SEND_INTERVAL then
+			sendTimer = 0
+			send()
+		end
+	end)
+	print(string.format("[Redline] Traffic: %d cars on %.1f km of %d-lane road", #sim.vehicles,
+		RoadGeometry.LAP / 1000, RoadGeometry.LANES))
+end
+
+return TrafficService
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX0000002A">
 <Properties>
 <string name="Name">VehicleModelBuilder</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2453,7 +3073,7 @@ return VehicleModelBuilder
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX00000025">
+<Item class="ModuleScript" referent="RBX0000002B">
 <Properties>
 <string name="Name">VehicleSpawner</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2636,19 +3256,19 @@ return VehicleSpawner
 </Item>
 </Item>
 </Item>
-<Item class="StarterPlayer" referent="RBX00000026">
+<Item class="StarterPlayer" referent="RBX0000002C">
 <Properties>
 <string name="Name">StarterPlayer</string>
 </Properties>
-<Item class="StarterPlayerScripts" referent="RBX00000027">
+<Item class="StarterPlayerScripts" referent="RBX0000002D">
 <Properties>
 <string name="Name">StarterPlayerScripts</string>
 </Properties>
-<Item class="Folder" referent="RBX00000028">
+<Item class="Folder" referent="RBX0000002E">
 <Properties>
 <string name="Name">Client</string>
 </Properties>
-<Item class="ModuleScript" referent="RBX00000029">
+<Item class="ModuleScript" referent="RBX0000002F">
 <Properties>
 <string name="Name">CameraController</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2774,7 +3394,7 @@ return CameraController
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002A">
+<Item class="ModuleScript" referent="RBX00000030">
 <Properties>
 <string name="Name">HUD</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -2992,7 +3612,7 @@ return HUD
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002B">
+<Item class="ModuleScript" referent="RBX00000031">
 <Properties>
 <string name="Name">InputController</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3142,7 +3762,7 @@ return InputController
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="LocalScript" referent="RBX0000002C">
+<Item class="LocalScript" referent="RBX00000032">
 <Properties>
 <string name="Name">Main</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3160,11 +3780,13 @@ local CameraController = require(Client:WaitForChild("CameraController"))
 local HUD = require(Client:WaitForChild("HUD"))
 local VehicleAudio = require(Client:WaitForChild("VehicleAudio"))
 local SelfTest = require(Client:WaitForChild("SelfTest"))
+local TrafficRenderer = require(Client:WaitForChild("TrafficRenderer"))
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 InputController.init()
 HUD.init()
+TrafficRenderer.init(remotes)
 
 local active = nil
 local audio = nil
@@ -3244,7 +3866,7 @@ end)
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002D">
+<Item class="ModuleScript" referent="RBX00000033">
 <Properties>
 <string name="Name">SelfTest</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3380,7 +4002,190 @@ return SelfTest
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002E">
+<Item class="ModuleScript" referent="RBX00000034">
+<Properties>
+<string name="Name">TrafficRenderer</string>
+<ProtectedString name="Source"><![CDATA[--[[
+	TrafficRenderer: draws the traffic the server sends (see TrafficService for the snapshot format).
+
+	Each traffic car is a simple stand-in (a body box and a darker cabin, or one tall box for a truck)
+	taken from a pool. Every frame it moves forward at its own speed, so it doesn't stutter between
+	the server's 10 snapshots a second, and eases toward each new snapshot. All cars move together
+	with Workspace:BulkMoveTo. The cars are anchored and solid on this computer, so your car can hit
+	them; the crash physics of the traffic car itself comes later.
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local TrafficSystem = ReplicatedStorage:WaitForChild("TrafficSystem")
+local RoadGeometry = require(TrafficSystem:WaitForChild("RoadGeometry"))
+local DriverProfiles = require(TrafficSystem:WaitForChild("DriverProfiles"))
+local Units = require(ReplicatedStorage:WaitForChild("VehicleSystem"):WaitForChild("Units"))
+
+local M = Units.METERS_PER_STUD
+local RECORD_BYTES = 12
+local FORGET_AFTER = 0.6 -- s without an update before a car is put away
+local CORRECTION_RATE = 4 -- 1/s, how quickly a car eases onto the server's position
+local LAP = RoadGeometry.LAP
+
+local PAINT = {
+	Color3.fromRGB(235, 235, 232), Color3.fromRGB(30, 30, 34), Color3.fromRGB(120, 124, 130),
+	Color3.fromRGB(170, 172, 176), Color3.fromRGB(28, 52, 110), Color3.fromRGB(122, 18, 24),
+	Color3.fromRGB(46, 70, 52), Color3.fromRGB(196, 170, 120), Color3.fromRGB(60, 90, 140),
+}
+
+local TrafficRenderer = {}
+
+local folder: Folder
+local cars = {} -- id -> car
+local pool = {} -- profile index -> spare cars
+local parts: { BasePart } = {}
+local frames: { CFrame } = {}
+
+local function newPart(name: string, size: Vector3, color: Color3, material: Enum.Material, parent: Instance): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.Color = color
+	part.Material = material
+	part.Anchored = true
+	part.CanCollide = true
+	part.CastShadow = true
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	part.Parent = parent
+	return part
+end
+
+local function makeCar(profileIndex: number)
+	local name = DriverProfiles.order[profileIndex] or "normal"
+	local p = DriverProfiles.profiles[name]
+	local truck = name == "truck"
+	local height = if truck then 3.8 else 1.15
+	local model = Instance.new("Model")
+	model.Name = "Traffic_" .. name
+	local paint = PAINT[math.random(1, #PAINT)]
+	local body = newPart("Body", Vector3.new(p.width, height, p.length) / M, paint, Enum.Material.SmoothPlastic, model)
+	local car = {
+		model = model,
+		body = body,
+		bodyLift = (0.18 + height / 2) / M,
+		profileIndex = profileIndex,
+		s = 0,
+		lanePos = 1,
+		v = 0,
+		targetS = 0,
+		targetLane = 1,
+		stamp = 0,
+		seen = 0,
+	}
+	if not truck then
+		car.cabin = newPart("Cabin", Vector3.new(p.width * 0.86, 0.5, p.length * 0.48) / M,
+			Color3.fromRGB(20, 24, 30), Enum.Material.Glass, model)
+		car.cabinLift = (0.18 + height + 0.25) / M
+	end
+	model.Parent = folder
+	return car
+end
+
+local function take(profileIndex: number)
+	local spare = pool[profileIndex]
+	if spare and #spare > 0 then
+		local car = table.remove(spare)
+		car.model.Parent = folder
+		return car
+	end
+	return makeCar(profileIndex)
+end
+
+local function putAway(id: number)
+	local car = cars[id]
+	cars[id] = nil
+	car.model.Parent = nil
+	pool[car.profileIndex] = pool[car.profileIndex] or {}
+	table.insert(pool[car.profileIndex], car)
+end
+
+local function onSnapshot(serverTime: number, data: buffer)
+	local now = Workspace:GetServerTimeNow()
+	local age = math.clamp(now - serverTime, 0, 0.5)
+	local count = buffer.len(data) // RECORD_BYTES
+	for i = 0, count - 1 do
+		local o = i * RECORD_BYTES
+		local id = buffer.readu16(data, o)
+		local s = buffer.readf32(data, o + 2)
+		local lanePos = buffer.readu16(data, o + 6) / 1000
+		local v = buffer.readu16(data, o + 8) / 100
+		local profileIndex = buffer.readu8(data, o + 10)
+		local car = cars[id]
+		if car and car.profileIndex ~= profileIndex then
+			putAway(id) -- the id was reused for a different kind of car
+			car = nil
+		end
+		if not car then
+			car = take(profileIndex)
+			cars[id] = car
+			car.s = (s + v * age) % LAP
+			car.lanePos = lanePos
+		end
+		car.targetS = s
+		car.targetLane = lanePos
+		car.v = v
+		car.stamp = serverTime
+		car.seen = os.clock()
+	end
+end
+
+local function render(dt: number)
+	local clock = os.clock()
+	local now = Workspace:GetServerTimeNow()
+	table.clear(parts)
+	table.clear(frames)
+	for id, car in cars do
+		if clock - car.seen > FORGET_AFTER then
+			putAway(id)
+			continue
+		end
+		-- where the server's car is now, extrapolated from its last snapshot
+		local target = car.targetS + car.v * math.clamp(now - car.stamp, 0, 0.5)
+		car.s = (car.s + car.v * dt) % LAP
+		local drift = (target - car.s + LAP / 2) % LAP - LAP / 2
+		if math.abs(drift) > 30 then
+			car.s = target % LAP -- too far off (a long stall): jump
+		else
+			car.s = (car.s + drift * math.clamp(dt * CORRECTION_RATE, 0, 1)) % LAP
+		end
+		car.lanePos += (car.targetLane - car.lanePos) * math.clamp(dt * CORRECTION_RATE, 0, 1)
+
+		local p, direction = RoadGeometry.pointAt(car.s, car.lanePos, 0)
+		local base = CFrame.lookAt(p / M, (p + direction) / M)
+		table.insert(parts, car.body)
+		table.insert(frames, base + Vector3.new(0, car.bodyLift, 0))
+		if car.cabin then
+			table.insert(parts, car.cabin)
+			table.insert(frames, base * CFrame.new(0, car.cabinLift, 0.15 / M))
+		end
+	end
+	if #parts > 0 then
+		Workspace:BulkMoveTo(parts, frames, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+end
+
+function TrafficRenderer.init(remotes: Folder)
+	folder = Instance.new("Folder")
+	folder.Name = "Traffic"
+	folder.Parent = Workspace
+	remotes:WaitForChild("TrafficState").OnClientEvent:Connect(onSnapshot)
+	RunService.PreRender:Connect(render)
+end
+
+return TrafficRenderer
+]]></ProtectedString>
+</Properties>
+</Item>
+<Item class="ModuleScript" referent="RBX00000035">
 <Properties>
 <string name="Name">VehicleAudio</string>
 <ProtectedString name="Source"><![CDATA[--[[
@@ -3649,7 +4454,7 @@ return VehicleAudio
 ]]></ProtectedString>
 </Properties>
 </Item>
-<Item class="ModuleScript" referent="RBX0000002F">
+<Item class="ModuleScript" referent="RBX00000036">
 <Properties>
 <string name="Name">VehicleController</string>
 <ProtectedString name="Source"><![CDATA[--[[
