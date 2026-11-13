@@ -111,8 +111,10 @@ def car_model(cfg):
         parts.append(("box", (0.38, 0.07, 0.12), (side * 0.68, ground + nose_top - 0.08, nose + 0.12), (240, 244, 255)))
         parts.append(("box", (0.3, 0.08, 0.04), (side * 0.62, ground + tail_top - 0.12, tail), (255, 30, 30)))
         parts.append(("box", (0.22, 0.1, 0.12), (side * (w / 2 + 0.05), ground + belt + 0.08, z_at(glass_from) + 0.15), paint))
-        for x in (0.2, 0.32):
-            parts.append(("cylz", (0.09, 0.045), (side * x, ground + 0.26, tail - 0.02), chrome))
+    tip_d = cfg.get("visual", {}).get("exhaustTipDiameter", 0.09)
+    tips = cfg.get("visual", {}).get("exhaustTips") or [[-0.32, 0.26], [-0.2, 0.26], [0.2, 0.26], [0.32, 0.26]]
+    for x, y in tips:
+        parts.append(("cylz", (0.09, tip_d / 2), (x, ground + y, tail - 0.02), chrome))
     for front in (True, False):
         spec = cfg["tires"]["front" if front else "rear"]
         radius = tyre_radius(spec["widthMm"], spec["aspect"], spec["rimInches"])

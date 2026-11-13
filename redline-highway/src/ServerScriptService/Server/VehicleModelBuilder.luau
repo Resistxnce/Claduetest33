@@ -10,8 +10,9 @@
 	comes from the config's visual.blockout table (the top line of the body from nose to tail, where
 	the cabin glass is, the window sill height and the cabin width); configs without one get a long-
 	bonnet GT shape. The body is drawn as slices along the car, painted outside the cabin and glass
-	inside it. The Phase 2 Blender model replaces the "Body" model and the Wheel_* parts and must keep
-	these names:
+	inside it. visual.exhaustTips lists the tailpipes as { offset from the centre line, height } in
+	metres (visual.exhaustTipDiameter sets their size). The Phase 2 Blender model replaces the "Body"
+	model and the Wheel_* parts and must keep these names:
 	  MassBox                          the physics root (keep as is)
 	  Body                             a Model of visual parts, welded to MassBox
 	  Wheel_FL, Wheel_FR, Wheel_RL, Wheel_RR   visual wheels, moved by Motor6Ds WheelJoint_*
@@ -225,9 +226,12 @@ function VehicleModelBuilder.build(config, owner: Player): Model
 		beam.Parent = headlight
 		visual(body, root, "Taillight", Vector3.new(0.3, 0.08, 0.04), Vector3.new(side * 0.62, ground + tailTop - 0.12, tail), Color3.fromRGB(255, 30, 30), Enum.Material.Neon)
 		visual(body, root, "Mirror", Vector3.new(0.22, 0.1, 0.12), Vector3.new(side * (dims.width / 2 + 0.05), ground + beltline + 0.08, zAt(glassFrom) + 0.15), paint, Enum.Material.SmoothPlastic)
-		for _, x in { 0.2, 0.32 } do
-			visual(body, root, "ExhaustTip", Vector3.new(0.12, 0.09, 0.09), Vector3.new(side * x, ground + 0.26, tail - 0.02), chrome, Enum.Material.Metal, { shape = Enum.PartType.Cylinder, rotation = CFrame.Angles(0, math.rad(90), 0) })
-		end
+	end
+	-- exhaust tips: { sideways offset from the centre line (m, + right), height above the ground (m) }
+	local tipDiameter = config.visual.exhaustTipDiameter or 0.09
+	local tips = config.visual.exhaustTips or { { -0.32, 0.26 }, { -0.2, 0.26 }, { 0.2, 0.26 }, { 0.32, 0.26 } }
+	for _, tip in tips do
+		visual(body, root, "ExhaustTip", Vector3.new(0.12, tipDiameter, tipDiameter), Vector3.new(tip[1], ground + tip[2], tail - 0.02), chrome, Enum.Material.Metal, { shape = Enum.PartType.Cylinder, rotation = CFrame.Angles(0, math.rad(90), 0) })
 	end
 
 	local seat = Instance.new("Seat")
