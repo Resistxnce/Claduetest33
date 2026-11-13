@@ -9,6 +9,9 @@
 	nominalLoad         load in N where mu applies as written
 	relaxationLength    metres of travel for the slip angle to build up (tyre lag)
 	rollingResistance   rolling resistance coefficient
+
+	A car that needs a particular tyre defines it in its own configuration (tires.compounds), based on
+	one of these, instead of editing this file. See Tire.compound and docs/VEHICLE_CONFIG.md.
 ]]
 
 return {

@@ -1,0 +1,1984 @@
+{
+ "id": "RefC8Stingray",
+ "schema": "Each leaf is {value, unit, tag, source, note}. Tags: F manufacturer, P published third-party spec, M measured test, E estimate (method in note), A assumption.",
+ "compiled": "2026-11-13",
+ "compiledBy": "research agent (web research, about 40 minutes, breadth first)",
+ "gameUse": "Engineering reference only. In game the car gets a fictional name; no Chevrolet/Corvette names, badges or body design are used.",
+ "identity": {
+  "make": {
+   "value": "Chevrolet",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "model": {
+   "value": "Corvette Stingray",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "generation": {
+   "value": "C8 (eighth generation), first mid-engine Corvette",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "modelYears": {
+   "value": "2020 onward; production began 3 Feb 2020 at Bowling Green, Kentucky",
+   "unit": "",
+   "tag": "P",
+   "source": "S10",
+   "note": "LT2 engine through MY2026; MY2027 Stingray switches to the 6.7 L LS6 (see modelYearChanges)."
+  },
+  "body": {
+   "value": "2-door, 2-seat coupe with a removable roof panel (targa-style, stows in the rear trunk); convertible also offered",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "layout": {
+   "value": "Mid-engine (behind the seats, longitudinal), rear-wheel drive, transaxle behind the engine",
+   "unit": "",
+   "tag": "F",
+   "source": "S10;S19",
+   "note": "auto motor und sport: Einbaulage 'mitte / laengs'."
+  },
+  "trimOfThisConfig": {
+   "value": "Stingray coupe 1LT/2LT/3LT with RPO Z51 Performance Package",
+   "unit": "",
+   "tag": "F",
+   "source": "S03",
+   "note": "Z51 adds: NPP dual-mode performance exhaust (495 hp), electronic LSD, 5.17:1 final drive, 345/350 mm brakes with monobloc calipers, front splitter + rear spoiler (+400 lb downforce), extra cooling (third radiator for oil/transmission), stiffer performance suspension, Michelin Pilot Sport 4S summer tyres."
+  },
+  "z51Contents": {
+   "value": [
+    "NPP performance exhaust",
+    "eLSD (electronic limited-slip differential)",
+    "5.17:1 effective final drive",
+    "Brembo 4-piston monobloc calipers front and rear, 345x30 mm front / 350x27 mm rear rotors",
+    "Z51 front splitter and rear spoiler (claimed +400 lb downforce vs base)",
+    "third radiator for engine-oil/transmission cooling",
+    "Z51 performance suspension (higher spring rates, firmer dampers, threaded spring seats)",
+    "Michelin Pilot Sport 4S tyres (base car: Pilot Sport ALS all-season)",
+    "launch control / Performance Traction Management with MRC"
+   ],
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S02;S03;S10;S22"
+  },
+  "commonOptionsOnZ51Cars": {
+   "value": {
+    "FE4 Magnetic Selective Ride Control 4.0": "USD 1,895 (2020)",
+    "E60 front lift with GPS memory": "USD 1,495 (2020), 1,995 (2021)",
+    "Z51 package price": "USD 5,000 (2020), 5,995 (2021)"
+   },
+   "unit": "USD",
+   "tag": "P",
+   "source": "S10;S13"
+  },
+  "driverSide": {
+   "value": "Left-hand drive (US); factory right-hand drive for UK, Japan, Australia, New Zealand",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "usVsEu": {
+   "power": {
+    "value": "US 495 hp (369 kW, 502 PS) @ 6,450 rpm with NPP; EU/UK 482 PS (354 kW) @ 6,450 rpm",
+    "unit": "",
+    "tag": "F",
+    "source": "S03;S19;S20;S21",
+    "note": "EU car carries gasoline particulate filters (Otto-Partikelfilter) and a different exhaust calibration."
+   },
+   "torque": {
+    "value": "US 470 lb-ft (637 Nm) @ 5,150 rpm with NPP; EU 613 Nm @ 4,500 rpm",
+    "unit": "",
+    "tag": "F",
+    "source": "S19;S20;S21"
+   },
+   "z51": {
+    "value": "Z51 package standard on every European Stingray",
+    "unit": "",
+    "tag": "F",
+    "source": "S21"
+   },
+   "topSpeed": {
+    "value": "EU homologated 296 km/h (= the US Z51 184 mph figure)",
+    "unit": "km/h",
+    "tag": "F",
+    "source": "S20"
+   },
+   "zeroTo100": {
+    "value": 3.5,
+    "unit": "s",
+    "tag": "F",
+    "source": "S20",
+    "note": "EU maker figure, 0-100 km/h."
+   },
+   "kerbWeightEu": {
+    "value": 1730,
+    "unit": "kg",
+    "tag": "F",
+    "source": "S20",
+    "note": "EU kerb weight definition (includes 75 kg driver and 90% fuel); ADAC entry for cars built from 12/2024."
+   },
+   "emissions": {
+    "value": "Euro 6e (WLTP) 36EA; WLTP combined 12.8 l/100 km, 293 g/km CO2",
+    "unit": "",
+    "tag": "F",
+    "source": "S20"
+   },
+   "passByNoise": {
+    "value": "73 dB(A) (early EU cars, maker figure quoted by AMS); 72 dB(A) (ADAC, cars from 12/2024)",
+    "unit": "dB(A)",
+    "tag": "F",
+    "source": "S19;S20"
+   },
+   "stationaryNoise": {
+    "value": 95,
+    "unit": "dB(A)",
+    "tag": "F",
+    "source": "S19",
+    "note": "Maker 'Standgeraeusch' quoted by auto motor und sport. The engine speed of the test was not found; see sound.measuredLevels.euStationaryTestRpm."
+   }
+  }
+ },
+ "engine": {
+  "code": {
+   "value": "LT2 (GM Gen V small-block, RPO LT2)",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "layout": {
+   "value": "90-degree V8, naturally aspirated",
+   "unit": "",
+   "tag": "F",
+   "source": "S02"
+  },
+  "crankType": {
+   "value": "Cross-plane (90-degree) crankshaft, forged steel (S38 alloy per Corvette Magazine)",
+   "unit": "",
+   "tag": "P",
+   "source": "S10;S07;S08"
+  },
+  "displacement": {
+   "value": 6162,
+   "unit": "cc",
+   "tag": "F",
+   "source": "S19;S20",
+   "note": "6.2 L, 376 cu in (GM quotes 375.4 cu in / 6.2 L)."
+  },
+  "bore": {
+   "value": 103.25,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "4.06 in."
+  },
+  "stroke": {
+   "value": 92.0,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "3.62 in."
+  },
+  "boreSpacing": {
+   "value": 111.76,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S07",
+   "note": "4.40 in, shared with all Gen V/Gen VI small-blocks."
+  },
+  "compressionRatio": {
+   "value": 11.5,
+   "unit": ":1",
+   "tag": "F",
+   "source": "S01;S19"
+  },
+  "combustionChamber": {
+   "value": 59,
+   "unit": "cc",
+   "tag": "F",
+   "source": "S01"
+  },
+  "valvetrain": {
+   "value": "Single cam-in-block, pushrods, hydraulic roller lifters, 2 valves per cylinder; dual-equal cam phasing (VVT, up to 62 deg); timing chain",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S07;S19",
+   "note": "Exhaust lift 14.0 mm (LT1 13.5), intake 14.0 mm; exhaust duration +18 deg and intake +4 deg vs LT1 (Corvette Magazine)."
+  },
+  "valves": {
+   "value": "Intake 54.0 mm (2.13 in) hollow-stem; exhaust 40.4 mm (1.59 in) sodium-filled",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "block": {
+   "value": "Cast A319-T7 aluminium, cast-in iron liners, 4-bolt nodular-iron main caps",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S07"
+  },
+  "heads": {
+   "value": "Cast A319-T7 aluminium",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "pistons": {
+   "value": "Hypereutectic aluminium with oil-spray cooling jets",
+   "unit": "",
+   "tag": "P",
+   "source": "S08"
+  },
+  "intake": {
+   "value": "Rear-facing intake (manifold rotated 180 deg vs front-engine LT1), 8 equal-length runners about 210 mm long, 87 mm single-bore electronic throttle",
+   "unit": "",
+   "tag": "P",
+   "source": "S07;S08;S01"
+  },
+  "fuelSystem": {
+   "value": "Gasoline direct injection, 2,175 psi (150 bar) maximum; fuel pump and injector upgrades for MY2022",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S10"
+  },
+  "ecu": {
+   "value": "GM E99 (32-bit), 58x crank reluctor",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S08"
+  },
+  "cylinderDeactivation": {
+   "value": "Active Fuel Management (V8 to V4); in V4 mode cylinders 1-7-6-4 fire",
+   "unit": "",
+   "tag": "F",
+   "source": "S01",
+   "note": "Borla lists the valves as AFM (2020-21) and DFM (2022-27); a change to Dynamic Fuel Management for 2022 is not confirmed by GM sources found here."
+  },
+  "maxPower": {
+   "value": 495,
+   "unit": "hp",
+   "tag": "F",
+   "source": "S03;S01",
+   "note": "369 kW / 502 PS @ 6,450 rpm, SAE J1349 certified, with the NPP performance exhaust (standard on Z51). Without NPP: 490 hp (365 kW)."
+  },
+  "maxPowerKw": {
+   "value": 369,
+   "unit": "kW",
+   "tag": "F",
+   "source": "S03"
+  },
+  "maxPowerRpm": {
+   "value": 6450,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S01;S03"
+  },
+  "maxTorque": {
+   "value": 637,
+   "unit": "Nm",
+   "tag": "F",
+   "source": "S01;S03",
+   "note": "470 lb-ft @ 5,150 rpm with NPP; 465 lb-ft (630 Nm) without."
+  },
+  "maxTorqueRpm": {
+   "value": 5150,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S01"
+  },
+  "fullLoadTorqueCurve": {
+   "value": [
+    [
+     1000,
+     433
+    ],
+    [
+     1500,
+     491
+    ],
+    [
+     2000,
+     530
+    ],
+    [
+     2500,
+     545
+    ],
+    [
+     3000,
+     553
+    ],
+    [
+     3500,
+     567
+    ],
+    [
+     4000,
+     599
+    ],
+    [
+     4500,
+     624
+    ],
+    [
+     5000,
+     630
+    ],
+    [
+     5150,
+     637
+    ],
+    [
+     5500,
+     616
+    ],
+    [
+     6000,
+     580
+    ],
+    [
+     6450,
+     546
+    ],
+    [
+     6500,
+     538
+    ],
+    [
+     6600,
+     525
+    ]
+   ],
+   "unit": "[rpm, Nm] crank",
+   "tag": "M",
+   "source": "S12",
+   "note": "Read from GM's chart 'LT2 vs LS6 engine performance comparison' (GM 2027 LS6 presentation, March 2026) by pixel extraction of the LT2 torque line; crank torque, SAE-rated engine. Chart peak reads 469 lb-ft at about 5,120 rpm and the LT2 power line reads about 493 hp at about 6,470 rpm, so the chart matches GM's 470 lb-ft / 495 hp figures to within about 1%. 5,150 and 6,450 rpm points are set to the factory figures (470 lb-ft; 403 lb-ft = 495 hp). Reading accuracy about +/-3 lb-ft (+/-4 Nm). The line ends at about 6,620 rpm. Values in lb-ft: 1000:319, 1500:362, 2000:391, 2500:402, 3000:408, 3500:418, 4000:442, 4500:460, 5000:465, 5150:470, 5500:454, 6000:428, 6450:403, 6500:397, 6600:387"
+  },
+  "torqueCurveShape": {
+   "value": "Rises steeply 1,000-2,000 rpm (319 to 391 lb-ft), shelf 2,000-3,500 rpm (~400-418), second rise to the 5,150 rpm peak, falls to ~387 lb-ft at 6,600 rpm. Compared with the LT1 it gives up a little between 2,800 and 4,500 rpm and gains above ~4,800 rpm.",
+   "unit": "",
+   "tag": "P",
+   "source": "S12;S07"
+  },
+  "wheelDynoReference": {
+   "value": "Stock Z51 owners' Dynojet average about 429 whp / 410 lb-ft; individual stock cars 424-442 whp; Paragon Performance (2026, SAE) stock Stingray 424 whp / 410 lb-ft",
+   "unit": "whp, lb-ft at wheels",
+   "tag": "M",
+   "source": "S28;S39",
+   "note": "Wheel figures, not crank. Implies roughly 11-15% driveline loss. Motor Trend's 2019 dyno (558 whp) was invalid and withdrawn."
+  },
+  "redline": {
+   "value": 6500,
+   "unit": "rpm",
+   "tag": "P",
+   "source": "S02",
+   "note": "Conflict: GM-derived spec page (Corvsport) gives 6,500 rpm; Corvette Magazine and EngineLabs give 6,600 rpm. GM's own torque chart is drawn to about 6,620 rpm."
+  },
+  "fuelCutRpm": {
+   "value": 6600,
+   "unit": "rpm",
+   "tag": "P",
+   "source": "S27;S12;S07",
+   "note": "Owners citing the service manual: 'Engine Overspeed Protection' uses fuel cutoff; in manual mode the limiter acts at 6,600 rpm (one post says 6,500). Consistent with the GM chart ending at ~6,600."
+  },
+  "idleRpm": {
+   "value": 600,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "",
+   "note": "Not published. Estimate from typical Gen V LT1/LT2 warm idle (about 550-650 rpm). Cold start: elevated idle (estimate 1,200-1,500 rpm) for roughly 5-15 s while the cats warm, with NPP valves open (owner reports, S26)."
+  },
+  "coldStartIdleRpm": {
+   "value": 1300,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "S26",
+   "note": "Estimate; owners describe 'rich, high rpm' cold start for the first 5-15 s. Exact rpm not found."
+  },
+  "launchControlRpm": {
+   "value": 3500,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "S03;S04",
+   "note": "GM launch procedure: Track mode, double-press TC button (PTM on MRC cars / Competitive mode), brake + full throttle, release the brake once engine speed reaches 3,500 rpm. SAE article: engine held at 3,500 rpm before the first-gear clutch engages."
+  },
+  "parkNeutralRevLimit": {
+   "value": null,
+   "unit": "rpm",
+   "tag": "A",
+   "source": "",
+   "note": "Not found (gap)."
+  },
+  "firingOrder": {
+   "value": "1-8-7-2-6-5-4-3",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S11"
+  },
+  "firingOrderV4Mode": {
+   "value": "1-7-6-4",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "cylinderNumbering": {
+   "value": "GM convention: odd cylinders 1-3-5-7 on the LEFT bank (driver's side on a US LHD car), even 2-4-6-8 on the RIGHT bank; cylinder 1 is at the front (accessory-drive end) of the left bank, cylinder 2 at the front of the right bank. In the C8 the accessory/dry-sump end faces FORWARD (toward the cabin) and the flywheel faces the transaxle at the rear, so cylinder 1 is the left-bank cylinder nearest the seats.",
+   "unit": "",
+   "tag": "E",
+   "source": "S11;S07",
+   "note": "GM numbering convention is standard (P). Orientation in the C8 is inferred: transaxle is behind the engine and the dry-sump reservoir bolts to the left-front corner of the block (Corvette Magazine)."
+  },
+  "firingSequenceByBank": {
+   "value": "L(1) R(8) L(7) R(2) R(6) L(5) R(4) L(3) at 90-deg crank intervals. Left bank fires at 0, 180, 450, 630 deg (gaps 180-270-180-90); right bank at 90, 270, 360, 540 deg (gaps 180-90-180-270).",
+   "unit": "",
+   "tag": "E",
+   "source": "S01;S11",
+   "note": "Derived from the firing order and GM numbering. Each bank on its own is unevenly spaced: this is the source of the cross-plane V8 'burble'."
+  },
+  "drySump": {
+   "value": "Standard dry sump: three scavenge pumps (two crank-driven in the shallow aluminium pan, one cam-driven in the sealed valley) plus a two-stage pressure pump that reaches full output above ~5,500 rpm; crank nose drives three of the four pumps; moulded plastic remote reservoir bolted to the left-front corner of the block; crankshaft scraper; oil-spray piston cooling; oil cooler 25% larger; sized for >1 g in any direction",
+   "unit": "",
+   "tag": "P",
+   "source": "S07;S08;S09;S03"
+  },
+  "oilCapacity": {
+   "value": 7.5,
+   "unit": "US qt",
+   "tag": "F",
+   "source": "S01",
+   "note": "7.1 L incl. filter; only about 1 qt in circulation at a time (Corvette Magazine); Dexos2 0W-40 synthetic."
+  },
+  "mounting": {
+   "value": "Low in the chassis; crank centreline below the half-shaft axis",
+   "unit": "",
+   "tag": "P",
+   "source": "S07"
+  },
+  "engineBuildPlant": {
+   "value": "Tonawanda, New York (LT2); LS6 for MY2027 built in Flint, Michigan",
+   "unit": "",
+   "tag": "P",
+   "source": "S34"
+  }
+ },
+ "transmission": {
+  "model": {
+   "value": "Tremec TR-9080, GM RPO M1L, 8-speed dual-clutch transaxle",
+   "unit": "",
+   "tag": "F",
+   "source": "S04;S03"
+  },
+  "clutches": {
+   "value": "Two concentric, normally open wet clutches; outer clutch (5 driven plates) for odd gears, inner (6 smaller plates) for even gears; hydraulically engaged",
+   "unit": "",
+   "tag": "P",
+   "source": "S04"
+  },
+  "torqueCapacity": {
+   "value": 800,
+   "unit": "Nm",
+   "tag": "F",
+   "source": "S04",
+   "note": "590 lb-ft input up to 7,500 rpm."
+  },
+  "gearRatios": {
+   "value": [
+    2.91,
+    1.76,
+    1.22,
+    0.88,
+    0.65,
+    0.51,
+    0.4,
+    0.33
+   ],
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S05;S06",
+   "note": "1st-8th. Two-decimal GM/Tremec figures; total spread 8.82:1. auto motor und sport lists 4.23, 2.57, 1.78, 1.28, 0.95, 0.74, 0.58, 0.48 (R 3.84) - those are the same gears multiplied by the ~1.4545 transfer gear (AMS also lists 5.17 axle, so do not multiply by both)."
+  },
+  "reverseRatio": {
+   "value": 2.63,
+   "unit": "",
+   "tag": "F",
+   "source": "S02;S06"
+  },
+  "finalDriveZ51": {
+   "value": 5.17,
+   "unit": "",
+   "tag": "F",
+   "source": "S04",
+   "note": "Effective final drive with the Z51 eLSD; GM rounds to 5.2:1 = transfer gear ~1.46 x 3.55:1 ring and pinion (1.4545 x 3.555 = 5.17). AMS also gives 5.17."
+  },
+  "finalDriveBase": {
+   "value": 4.89,
+   "unit": "",
+   "tag": "F",
+   "source": "S04;S05",
+   "note": "Base car with mechanical LSD; GM rounds to 4.9:1 = ~1.38 x 3.55."
+  },
+  "ringAndPinion": {
+   "value": 3.55,
+   "unit": "",
+   "tag": "F",
+   "source": "S03"
+  },
+  "overallRatiosZ51": {
+   "value": [
+    15.04,
+    9.1,
+    6.31,
+    4.55,
+    3.36,
+    2.64,
+    2.07,
+    1.71
+   ],
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "gear x 5.17"
+  },
+  "speedAt6600rpmZ51": {
+   "value": [
+    56.0,
+    92.6,
+    133.6,
+    185.2,
+    250.7,
+    319.5,
+    407.4,
+    493.8
+   ],
+   "unit": "km/h",
+   "tag": "E",
+   "source": "",
+   "note": "Per gear at 6,600 rpm, rear 305/30ZR20 dynamic radius 0.3386 m (unloaded 0.3455 m less 2%). 1st tops out near 34.8 mph and 2nd near 57.6 mph, so 0-60 mph needs two upshifts on this gearing."
+  },
+  "rpmAt70mphIn8th": {
+   "value": 1506,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "",
+   "note": "Z51, 8th gear, from ratios and tyre radius."
+  },
+  "rpmAt100kmhIn8th": {
+   "value": 1337,
+   "unit": "rpm",
+   "tag": "E",
+   "source": ""
+  },
+  "topSpeedGear": {
+   "value": "6th (Z51 at 184 mph is about 6117 rpm in 6th; 5th would be over the limiter)",
+   "unit": "",
+   "tag": "E",
+   "source": ""
+  },
+  "shiftTime": {
+   "value": 0.1,
+   "unit": "s",
+   "tag": "F",
+   "source": "S04",
+   "note": "Upshift clutch overlap 'lasts 100 milliseconds' with no interruption of torque delivery."
+  },
+  "skipShifts": {
+   "value": "Full-throttle skip downshifts across odd/even shafts, e.g. 7-4, 6-3, 5-2",
+   "unit": "",
+   "tag": "F",
+   "source": "S04"
+  },
+  "modes": {
+   "value": "Tour (smooth), Sport (altered shift points), Track (aggressive); early downshifts under hard braking, holds gears off throttle, shift points vary with lateral g; paddles: pull one in D for temporary manual, both to declutch (neutral), hold '-' for lowest available gear; burnout mode",
+   "unit": "",
+   "tag": "F",
+   "source": "S03;S04"
+  },
+  "fluid": {
+   "value": "Pentosin FFL-4, 11 L, shared for lubrication, clutch cooling and actuation; gear-driven pump; coolant-fed heat exchanger on top of the transaxle",
+   "unit": "",
+   "tag": "F",
+   "source": "S04"
+  }
+ },
+ "drivetrain": {
+  "layout": {
+   "value": "RWD, mid-engine, transaxle",
+   "unit": "",
+   "tag": "F",
+   "source": "S10"
+  },
+  "differentialZ51": {
+   "value": "Electronic limited-slip differential (eLSD), electronically modulated clutch pack inside the transaxle; standard with Z51 (base car: clutch-type mechanical LSD)",
+   "unit": "",
+   "tag": "F",
+   "source": "S04;S03"
+  },
+  "eLsdBehaviour": {
+   "value": "Varies locking continuously from open to fully locked under ECU control, using wheel speeds, steering, yaw and throttle; integrated with Performance Traction Management (on MRC cars) and stability control, and used in place of some brake-based stability intervention. GM tunes it per model (Z51 vs Z06 differ).",
+   "unit": "",
+   "tag": "P",
+   "source": "S04",
+   "note": "Detailed C8 actuation data (pressure, ramp times, lock torque) not found. C7 Z51 eLSD used an electro-hydraulic pump (~3,000 psi) per forum; not confirmed for C8."
+  },
+  "simSuggestion": {
+   "value": {
+    "preloadNm": 100,
+    "powerLock": 0.45,
+    "coastLock": 0.3
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "",
+   "note": "Clutch-LSD approximation of an active diff for the game's LimitedSlip model; tune in testing."
+  },
+  "tractionModes": {
+   "value": "Weather, Tour, Sport, Track, MyMode, Z-mode; PTM (Performance Traction Management) on cars with Magnetic Ride",
+   "unit": "",
+   "tag": "F",
+   "source": "S03;S26"
+  }
+ },
+ "mass": {
+  "dryWeight": {
+   "value": 1530,
+   "unit": "kg",
+   "tag": "F",
+   "source": "S01;S02",
+   "note": "3,366 lb, GM 'dry weight' (no fluids)."
+  },
+  "curbWeightUs1LT": {
+   "value": 1603,
+   "unit": "kg",
+   "tag": "P",
+   "source": "S31",
+   "note": "3,535 lb, 2020 Stingray 1LT coupe (Autoblog spec listing; US curb = full fluids, no driver)."
+  },
+  "curbWeightMeasuredZ51": {
+   "value": 1654,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S13",
+   "note": "3,647 lb, Car and Driver Z51 3LT test car with MRC, Oct 2019 (195 lb more than a C7 Z51)."
+  },
+  "curbWeightMeasuredZ51_2020comparo": {
+   "value": 1650,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S15",
+   "note": "3,638 lb, Car and Driver comparison car, Sept 2020."
+  },
+  "curbWeightEu": {
+   "value": 1730,
+   "unit": "kg",
+   "tag": "F",
+   "source": "S20",
+   "note": "EU definition incl. 75 kg driver."
+  },
+  "weightDistributionFactory": {
+   "value": "40 / 60",
+   "unit": "% front / rear",
+   "tag": "P",
+   "source": "S32",
+   "note": "From an alleged leaked GM document (2019); GM has not published it. Corvsport's GM-based page gives 39.4 / 60.6."
+  },
+  "weightDistributionMeasured": {
+   "value": "39.4 / 60.6",
+   "unit": "% front / rear",
+   "tag": "M",
+   "source": "S13",
+   "note": "Car and Driver: 60.6% over the rear tyres (Z51 test car)."
+  },
+  "staticWheelLoadsMeasuredCar": {
+   "value": {
+    "frontPerWheelN": 3196,
+    "rearPerWheelN": 4916
+   },
+   "unit": "N",
+   "tag": "E",
+   "source": "S13",
+   "note": "From 1,654 kg and 39.4/60.6, no driver."
+  },
+  "model2027": {
+   "value": 1679,
+   "unit": "kg",
+   "tag": "M",
+   "source": "S17",
+   "note": "3,702 lb, MY2027 LS6 Stingray Z51 test car (magazine figure restated by SSBCrack; outlet not named), 55 lb more than the 2020 car."
+  }
+ },
+ "dimensions": {
+  "length": {
+   "value": 4630,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "182.3 in; EU sheets 4,634 mm."
+  },
+  "width": {
+   "value": 1934,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "76.1 in, without mirrors; 2,025 mm with mirrors (ADAC)."
+  },
+  "height": {
+   "value": 1234,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "48.6 in; EU 1,235 mm."
+  },
+  "wheelbase": {
+   "value": 2722,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "107.2 in."
+  },
+  "trackFront": {
+   "value": 1648,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "64.9 in; AMS 1,648."
+  },
+  "trackRear": {
+   "value": 1586,
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "62.4 in; AMS 1,585."
+  },
+  "groundClearance": {
+   "value": 81,
+   "unit": "mm",
+   "tag": "P",
+   "source": "S20",
+   "note": "ADAC lists 'Bodenfreiheit 81 mm' (likely lowest point, front splitter). GM US spec does not list it. Front lift adds about 2 in (Wikipedia: '2 in (40 mm)', so roughly 40-50 mm) below about 25 mph."
+  },
+  "frontalArea": {
+   "value": 1.95,
+   "unit": "m2",
+   "tag": "E",
+   "source": "",
+   "note": "Not published. 0.82 x width 1.934 m x height 1.234 m (typical fill factor for a low sports car)."
+  },
+  "frontOverhang": {
+   "value": 0.85,
+   "unit": "m",
+   "tag": "E",
+   "source": "S36",
+   "note": "Estimated from two perspective photos (front-3/4 and rear-3/4) averaged; +/-0.08 m. Rear overhang then about 1.06 m (length - wheelbase - front)."
+  },
+  "rearOverhang": {
+   "value": 1.06,
+   "unit": "m",
+   "tag": "E",
+   "source": "S36",
+   "note": "See frontOverhang."
+  },
+  "cargo": {
+   "value": 357,
+   "unit": "L",
+   "tag": "F",
+   "source": "S01;S19",
+   "note": "12.6 cu ft front + rear trunks."
+  },
+  "fuelTank": {
+   "value": 70,
+   "unit": "L",
+   "tag": "F",
+   "source": "S02;S20",
+   "note": "18.5 US gal."
+  }
+ },
+ "tyresAndWheels": {
+  "frontTyre": {
+   "value": "245/35ZR19",
+   "unit": "",
+   "tag": "F",
+   "source": "S01",
+   "note": "Unloaded diameter ~654 mm (E, from size)."
+  },
+  "rearTyre": {
+   "value": "305/30ZR20",
+   "unit": "",
+   "tag": "F",
+   "source": "S01",
+   "note": "Unloaded diameter ~691 mm (E, from size)."
+  },
+  "oeTyreZ51": {
+   "value": "Michelin Pilot Sport 4S (GM-spec 'TPC'), Y speed rating",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S19;S18",
+   "note": "Base Stingray: Michelin Pilot Sport ALS all-season, same sizes."
+  },
+  "runFlat": {
+   "value": "Unconfirmed",
+   "unit": "",
+   "tag": "A",
+   "source": "",
+   "note": "No source found in this session on run-flat (ZP) status. Recollection (unverified): the C8 does not use run-flats and carries a sealant/inflator kit. Verify before relying on it."
+  },
+  "frontWheel": {
+   "value": "19 x 8.5 in",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "rearWheel": {
+   "value": "20 x 11 in",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "boltPattern": {
+   "value": "5 x 120 mm",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "wheelOffsets": {
+   "value": null,
+   "unit": "mm",
+   "tag": "A",
+   "source": "",
+   "note": "Not found (gap)."
+  }
+ },
+ "brakes": {
+  "system": {
+   "value": "Electric brake booster (eBoost), ventilated iron discs",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "frontDiscZ51": {
+   "value": "345 x 30",
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01;S29",
+   "note": "GM sheet prints '13.3 x 1.18 in (345 x 30 mm)'; 345 mm is 13.6 in, so the inch figure looks wrong. Replacement Z51 front rotors are sold as 345 x 30 mm."
+  },
+  "rearDiscZ51": {
+   "value": "350 x 27",
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "13.8 x 1.06 in (Corvsport prints 360 mm, a typo)."
+  },
+  "calipersZ51": {
+   "value": "Brembo 4-piston monobloc, front and rear",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "frontDiscBase": {
+   "value": "321 x 30",
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "Brembo 4-piston two-piece front calipers."
+  },
+  "rearDiscBase": {
+   "value": "339 x 26",
+   "unit": "mm",
+   "tag": "F",
+   "source": "S01",
+   "note": "Brembo 4-piston monobloc rear."
+  },
+  "braking70to0_CD2019": {
+   "value": 45.4,
+   "unit": "m",
+   "tag": "M",
+   "source": "S13",
+   "note": "149 ft, Car and Driver, Oct 2019 (C7 Z51: 139 ft)."
+  },
+  "braking70to0_CD2020": {
+   "value": 46.9,
+   "unit": "m",
+   "tag": "M",
+   "source": "S15",
+   "note": "154 ft, Car and Driver comparison, Sept 2020."
+  },
+  "braking60to0_MT": {
+   "value": 29.6,
+   "unit": "m",
+   "tag": "M",
+   "source": "S18",
+   "note": "97 ft, Motor Trend, Oct 2019."
+  },
+  "braking100to0": {
+   "value": 91.7,
+   "unit": "m",
+   "tag": "M",
+   "source": "S17",
+   "note": "301 ft for the 2020 car as restated in a 2027 comparison (secondary; outlet not named)."
+  },
+  "simTarget100to0kmh": {
+   "value": 35.0,
+   "unit": "m",
+   "tag": "E",
+   "source": "S13",
+   "note": "From 149 ft for 70-0 mph scaled by speed squared (113 to 100 km/h): about 35-36 m."
+  }
+ },
+ "aero": {
+  "dragCoefficient": {
+   "value": 0.322,
+   "unit": "",
+   "tag": "A",
+   "source": "S30",
+   "note": "GM never published a Cd. 0.322 is a forum claim (C7: 0.30 per chief engineer). Treat as unverified."
+  },
+  "z51Downforce": {
+   "value": 1779,
+   "unit": "N",
+   "tag": "F",
+   "source": "S22",
+   "note": "Chevrolet: Z51 front splitter + rear spoiler add a total of 400 lb of downforce versus the base Stingray (speed not stated). The same aero cuts top speed from 194 to 184 mph."
+  },
+  "fittedCdA_base": {
+   "value": 0.774,
+   "unit": "m2",
+   "tag": "E",
+   "source": "",
+   "note": "Drag area that makes 194 mph in 6th (~6100 rpm) with the LT2 curve, 88% driveline efficiency, Crr 0.013, 1,729 kg, air 1.20 kg/m3."
+  },
+  "fittedCdA_Z51": {
+   "value": 0.91,
+   "unit": "m2",
+   "tag": "E",
+   "source": "",
+   "note": "Same method for 184 mph in 6th (~6117 rpm) with 5.17 final drive. The Z51 increment (~0.14 m2) is close to what 400 lb of downforce at a lift/drag ratio of about 3 would add at 184 mph."
+  },
+  "fittedNote": {
+   "value": "The fitted CdA is higher than Cd 0.32 x 1.95 m2 = 0.63 m2; with 0.63 the model would reach ~205+ mph. Use the fitted value for the sim (as was done for the GT12 prototype) unless a real Cd turns up.",
+   "unit": "",
+   "tag": "E",
+   "source": ""
+  },
+  "z51ClA_extra": {
+   "value": 0.438,
+   "unit": "m2",
+   "tag": "E",
+   "source": "S22",
+   "note": "400 lb (1,779 N) assumed to be quoted at 184 mph, rho 1.20. Split suggestion: 40% front / 60% rear to keep the balance near the 40/60 weight split. Base car lift: assume about zero."
+  }
+ },
+ "suspensionAndSteering": {
+  "front": {
+   "value": "Short/long-arm (SLA) double wishbone; forged aluminium upper arms, cast aluminium L-shaped lower arms; coil-over 46 mm monotube dampers; stabilizer bar",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "rear": {
+   "value": "SLA double wishbone, aluminium arms, 46 mm monotube dampers, direct-acting stabilizer bar",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "z51Suspension": {
+   "value": "Higher spring rates and firmer dampers; threaded spring seats allow ride-height/preload adjustment",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  "magneticRide": {
+   "value": "Magnetic Selective Ride Control 4.0 (RPO FE4), optional; with Z51 it includes Performance Traction Management; available without Z51 from MY2021",
+   "unit": "",
+   "tag": "F",
+   "source": "S01;S10"
+  },
+  "frontLift": {
+   "value": "Optional front-axle lift (RPO E60) with GPS memory; about 2 in at speeds below ~25 mph (40 km/h)",
+   "unit": "",
+   "tag": "P",
+   "source": "S10",
+   "note": "Lift time and memory count not confirmed here."
+  },
+  "steering": {
+   "value": "Variable-ratio rack-and-pinion with electric power assist (Bosch/ZF per GM sheet)",
+   "unit": "",
+   "tag": "F",
+   "source": "S01"
+  },
+  "steeringRatio": {
+   "value": 15.7,
+   "unit": ":1",
+   "tag": "F",
+   "source": "S01;S19"
+  },
+  "lockToLock": {
+   "value": 2.5,
+   "unit": "turns",
+   "tag": "E",
+   "source": "",
+   "note": "Not found (gap). Estimate from 15.7:1 and typical ~35-38 deg road-wheel lock."
+  },
+  "turningCircle": {
+   "value": 11.6,
+   "unit": "m",
+   "tag": "F",
+   "source": "S01",
+   "note": "38.0 ft standard; 11.1 m (36.4 ft) with Magnetic Ride. AMS measured 12.2 m left / 12.1 m right (EU car)."
+  }
+ },
+ "performance": {
+  "factory": {
+   "zeroTo60Z51": {
+    "value": 2.9,
+    "unit": "s",
+    "tag": "F",
+    "source": "S03",
+    "note": "Base (non-Z51): 3.0 s."
+   },
+   "quarterMileZ51": {
+    "value": "11.2 s @ 121 mph (195 km/h)",
+    "unit": "",
+    "tag": "F",
+    "source": "S03",
+    "note": "Base: 11.2 s @ 123 mph (less drag)."
+   },
+   "topSpeedZ51": {
+    "value": 184,
+    "unit": "mph",
+    "tag": "F",
+    "source": "S22",
+    "note": "296 km/h; Chevrolet via spokesman Kevin Kelly (Oct 2019). Base car 194 mph (312 km/h, flying-mile average at Papenburg)."
+   },
+   "topSpeedBase": {
+    "value": 194,
+    "unit": "mph",
+    "tag": "F",
+    "source": "S22"
+   },
+   "zeroTo100kmhEu": {
+    "value": 3.5,
+    "unit": "s",
+    "tag": "F",
+    "source": "S20"
+   }
+  },
+  "magazineTests": [
+   {
+    "source": "S13/S14",
+    "outlet": "Car and Driver",
+    "date": "2019-10-15",
+    "car": "2020 Stingray Z51 3LT with MRC, Michelin PS4S",
+    "zeroTo60": {
+     "value": 2.8,
+     "unit": "s",
+     "tag": "M",
+     "source": "S14"
+    },
+    "quarterMile": {
+     "value": "11.2 s @ 122 mph",
+     "unit": "",
+     "tag": "M",
+     "source": "S14"
+    },
+    "braking70to0": {
+     "value": 149,
+     "unit": "ft",
+     "tag": "M",
+     "source": "S13"
+    },
+    "skidpad300ft": {
+     "value": 1.03,
+     "unit": "g",
+     "tag": "M",
+     "source": "S13"
+    },
+    "curbWeight": {
+     "value": 3647,
+     "unit": "lb",
+     "tag": "M",
+     "source": "S13"
+    },
+    "rearWeightShare": {
+     "value": 60.6,
+     "unit": "%",
+     "tag": "M",
+     "source": "S13"
+    },
+    "interiorSound": {
+     "value": {
+      "idle": 47,
+      "fullThrottle": 92,
+      "cruise70mph": 74
+     },
+     "unit": "dBA",
+     "tag": "M",
+     "source": "S16;S17",
+     "note": "C/D Dec 2019 issue numbers quoted on MidEngineCorvetteForum; corroborated by a 2027 comparison (idle 47 implied, 92 WOT, 74 at 70). Not read from the C/D page itself (site not fetchable)."
+    },
+    "note": "Ran with a burnout, launch control, slight wheelspin. C8 is 3 dB quieter at 70 mph than the C7."
+   },
+   {
+    "source": "S15",
+    "outlet": "Car and Driver (vs Porsche 718 Cayman GT4)",
+    "date": "2020-09-02",
+    "car": "2020 Stingray Z51 + MRC, Pilot Sport 4S",
+    "zeroTo60": {
+     "value": 3.0,
+     "unit": "s",
+     "tag": "M",
+     "source": "S15"
+    },
+    "quarterMile": {
+     "value": 11.3,
+     "unit": "s",
+     "tag": "M",
+     "source": "S15"
+    },
+    "braking70to0": {
+     "value": 154,
+     "unit": "ft",
+     "tag": "M",
+     "source": "S15"
+    },
+    "skidpad300ft": {
+     "value": 1.03,
+     "unit": "g",
+     "tag": "M",
+     "source": "S15"
+    },
+    "curbWeight": {
+     "value": 3638,
+     "unit": "lb",
+     "tag": "M",
+     "source": "S15"
+    },
+    "grattanLap": {
+     "value": "1:26.4, 138.6 mph peak on the straight",
+     "unit": "",
+     "tag": "M",
+     "source": "S15"
+    },
+    "interiorSound70mph": {
+     "value": 73,
+     "unit": "dBA",
+     "tag": "M",
+     "source": "S15",
+     "note": "Implied: the GT4's 77 dB is 'four decibels louder than the Corvette is at 70 mph'."
+    }
+   },
+   {
+    "source": "S18",
+    "outlet": "Motor Trend",
+    "date": "2019-10-15",
+    "car": "2020 Stingray Z51, Pilot Sport 4S",
+    "zeroTo60": {
+     "value": 2.8,
+     "unit": "s",
+     "tag": "M",
+     "source": "S18"
+    },
+    "quarterMile": {
+     "value": "11.1 s @ 123.2 mph",
+     "unit": "",
+     "tag": "M",
+     "source": "S18"
+    },
+    "braking60to0": {
+     "value": 97,
+     "unit": "ft",
+     "tag": "M",
+     "source": "S18"
+    },
+    "lateralG": {
+     "value": 1.04,
+     "unit": "g avg",
+     "tag": "M",
+     "source": "S18"
+    }
+   },
+   {
+    "source": "S19",
+    "outlet": "auto motor und sport (EU car)",
+    "date": "test 2020-08",
+    "car": "Stingray coupe, 482 PS EU spec, PS4S TPC",
+    "interiorSound": {
+     "value": {
+      "idle": 48,
+      "max": 89,
+      "80kmh": 69,
+      "100kmh": 72,
+      "130kmh": 76,
+      "160kmh": 79,
+      "180kmh": 81
+     },
+     "unit": "dB(A)",
+     "tag": "M",
+     "source": "S19"
+    },
+    "turningCircle": {
+     "value": "12.2 m left / 12.1 m right",
+     "unit": "",
+     "tag": "M",
+     "source": "S19"
+    }
+   },
+   {
+    "source": "S41",
+    "outlet": "Johnny Bohmer Proving Grounds (video, via CorvetteBlogger)",
+    "date": "2023-03-22",
+    "car": "Stingray Z51",
+    "topSpeed": {
+     "value": 191.7,
+     "unit": "mph",
+     "tag": "M",
+     "source": "S41",
+     "note": "2.3-mile run; above GM's 184 mph Z51 claim (headline figure only)."
+    }
+   },
+   {
+    "source": "S17",
+    "outlet": "2027 comparison (outlet not named, SSBCrack)",
+    "date": "updated 2026-10-25",
+    "car2020": "0-60 2.8 s; 1/4 11.2 s; 70-0 149 ft; 100-0 301 ft; 1.03 g; 47/92/74 dBA",
+    "car2027_LS6_Z51": "3,702 lb; 0-60 2.7 s; 0-100 6.9 s; 1/4 11.0 s @ 124 mph; 70-0 149 ft; 100-0 297 ft; 1.02 g; 53/96/73 dBA (idle/WOT/70 mph)",
+    "tag": "M",
+    "note": "Secondary restatement; use only as a cross-check."
+   }
+  ],
+  "simTargets": {
+   "value": {
+    "zeroTo100kmh": 3.0,
+    "zeroTo160kmh": 7.2,
+    "zeroTo200kmh": 11.6,
+    "topSpeedKmh": 296,
+    "quarterMile": 11.2
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "S03;S13;S17;S22",
+   "note": "0-100 km/h ~0.1-0.2 s more than 0-60 mph (2.8-2.9 s). 0-160 km/h (100 mph) ~7.2 s is derived from the 2027 comparison ('three-tenths' slower than 6.9 s). 0-200 km/h: the quarter-mile trap is 122 mph (196 km/h) at 11.2 s, so about 11.4-11.8 s. Check in the drivetrain model."
+  }
+ },
+ "sound": {
+  "engineCharacter": {
+   "value": "Naturally aspirated 6.2 L cross-plane pushrod V8, 2 valves/cyl; deep, bass-heavy note; firing frequency = rpm/15 Hz (4 firings per crank revolution)",
+   "unit": "",
+   "tag": "E",
+   "source": "S01;S10",
+   "note": "Firing frequency: 40.0 Hz at 600 rpm idle, 233.3 Hz at the 3,500 rpm launch hold, 250.0 Hz at 3,750 rpm, 430.0 Hz at peak power, 440.0 Hz at 6,600 rpm."
+  },
+  "orderContent": {
+   "value": "Engine order 4 (firing) dominates; each bank alone fires unevenly (gaps 180-270-180-90 deg), so the separately piped banks add strong half-order and 2nd-order content (the cross-plane burble). In V4 (AFM) mode cylinders 1-7-6-4 fire every 180 deg (order 2 dominant); GM's AFM valves restrict the exhaust then to hide the change.",
+   "unit": "",
+   "tag": "E",
+   "source": "S01;S25",
+   "note": "Engineering inference for the audio engineer; not measured."
+  },
+  "exhaustLayout": {
+   "manifolds": {
+    "value": "Upswept 4-into-1 stainless steel tubular headers with tapered collectors, one per bank",
+    "unit": "",
+    "tag": "P",
+    "source": "S07;S23",
+    "note": "Conflict: EngineLabs says only cars with the performance exhaust get stainless equal-length 4-1 headers and base cars use iron 4-2-1 manifolds (5 hp difference). SAE/Tenneco and Corvette Magazine describe tubular headers without that split. Unresolved."
+   },
+   "catalysts": {
+    "value": "Two round close-coupled catalytic converters, one per bank, between the engine and the frame rails/rear trunk wall",
+    "unit": "",
+    "tag": "P",
+    "source": "S07;S25"
+   },
+   "coldEnd": {
+    "value": "Tenneco 'cold end' from the catalysts to the tips, built in Smithville, Tennessee; 18 heat shields; one large muffler with multi-layer shielding",
+    "unit": "",
+    "tag": "P",
+    "source": "S23;S24"
+   },
+   "crossover": {
+    "value": "No separate X- or H-pipe found; owners describe the NPP muffler as a near straight-through design with an internal X-pipe",
+    "unit": "",
+    "tag": "P",
+    "source": "S25",
+    "note": "Forum description, not GM."
+   },
+   "valves": {
+    "value": "Standard exhaust: two electronic AFM/flow valves, one per bank downstream of the headers (close in V4 mode, manage back pressure, help warm the cats). NPP adds two tailpipe valves in the low-restriction path of the dual-outlet muffler near the tips (up to four valves in total). Actuators are decoupled from the valve bodies for heat.",
+    "unit": "",
+    "tag": "P",
+    "source": "S23;S24;S25"
+   },
+   "pipeDiameter": {
+    "value": null,
+    "unit": "mm",
+    "tag": "A",
+    "source": "",
+    "note": "Stock diameter not found; aftermarket cat-backs use 3.0 in (76 mm) pipes."
+   },
+   "tips": {
+    "value": "Quad tips: two pairs, one pair at each outer rear corner, low in the rear fascia, side by side",
+    "unit": "",
+    "tag": "M",
+    "source": "S36",
+    "note": "Seen in Commons photos (Torch Red Z51, Accelerate Yellow Z51). A centre exhaust option arrives only with the 2027 LS6."
+   },
+   "npp": {
+    "value": "RPO NPP dual-mode performance exhaust: standard with Z51, about USD 1,195 alone on non-Z51 cars; rated +5 hp / +5 lb-ft (490 to 495 hp)",
+    "unit": "",
+    "tag": "F",
+    "source": "S35;S03",
+    "note": "CorvetteBlogger cites an SAE test showing only ~1.2 hp / 0.8 lb-ft gain; main effect is sound."
+   }
+  },
+  "modes": {
+   "value": {
+    "Stealth": "tailpipe valves closed whenever the engine runs (default in Weather mode)",
+    "Tour": "valves mostly closed; quiet cruising ('barely a murmur')",
+    "Sport": "valves open at idle and in most driving",
+    "Track": "valves open all the time"
+   },
+   "unit": "",
+   "tag": "P",
+   "source": "S25;S26;S35;S13",
+   "note": "Engine-sound setting can be customised in MyMode and Z-mode."
+  },
+  "coldStart": {
+   "value": "Loud: engine runs rich with elevated idle and the NPP valves fully open for roughly the first 5-15 s to heat the catalysts",
+   "unit": "",
+   "tag": "P",
+   "source": "S26",
+   "note": "Owner description."
+  },
+  "measuredLevels": {
+   "cdInteriorIdle": {
+    "value": 47,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S16;S17",
+    "note": "Car and Driver, 2020 Z51 (Dec 2019 issue)."
+   },
+   "cdInteriorFullThrottle": {
+    "value": 92,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S16;S17"
+   },
+   "cdInterior70mph": {
+    "value": 74,
+    "unit": "dBA",
+    "tag": "M",
+    "source": "S16;S17",
+    "note": "Sept 2020 comparison car: ~73 dBA (S15)."
+   },
+   "amsInterior": {
+    "value": {
+     "idle": 48,
+     "max": 89,
+     "100kmh": 72,
+     "130kmh": 76
+    },
+    "unit": "dB(A)",
+    "tag": "M",
+    "source": "S19",
+    "note": "EU car with particulate filters."
+   },
+   "euStationary": {
+    "value": 95,
+    "unit": "dB(A)",
+    "tag": "F",
+    "source": "S19"
+   },
+   "euStationaryTestRpm": {
+    "value": 3750,
+    "unit": "rpm",
+    "tag": "E",
+    "source": "",
+    "note": "Not found on any document. UN R51.03 sets the stationary test speed at 3,750 rpm for engines rated between 5,000 and 7,500 rpm (rated speed here 6,450 rpm). Older R51.02 practice used 3/4 of rated speed (4,838 rpm). Verify on a CoC."
+   },
+   "euPassBy": {
+    "value": 73,
+    "unit": "dB(A)",
+    "tag": "F",
+    "source": "S19",
+    "note": "72 dB(A) for 12/2024-on cars (ADAC)."
+   }
+  },
+  "limiter": {
+   "value": "Fuel-cut limiter ('Engine Overspeed Protection') at ~6,600 rpm in manual mode; in automatic mode the DCT upshifts before it. Sound of the cut (bounce frequency, soft/hard) not documented - use a hard fuel cut with ~100-150 rpm bounce.",
+   "unit": "",
+   "tag": "P",
+   "source": "S27",
+   "note": "Bounce depth is an estimate (E)."
+  },
+  "overrunPops": {
+   "value": "No factory crackle/burble map is documented. Owners call the stock NPP 'not very aggressive even in Track'. Expect mild burble and light pops on lift-off and on rev-matched downshift blips in Sport/Track (valves open); almost none in Tour/Stealth. Rev-match blips on downshifts in Sport/Track.",
+   "unit": "",
+   "tag": "E",
+   "source": "S26",
+   "note": "For the game: crackles only when the valves are open, low rate, short (~0.5 s)."
+  },
+  "reviewerDescriptions": [
+   {
+    "value": "At full throttle out of corners the V-8 'thunders like a NASCAR engine.'",
+    "unit": "",
+    "tag": "P",
+    "source": "S13",
+    "note": "Car and Driver, Rich Ceppos, Oct 2019."
+   },
+   {
+    "value": "In Tour mode: 'an engine note that's barely a murmur.'",
+    "unit": "",
+    "tag": "P",
+    "source": "S13",
+    "note": "Car and Driver, Oct 2019."
+   },
+   {
+    "value": "'We sometimes wished the new Stingray felt a little louder and brasher.'",
+    "unit": "",
+    "tag": "P",
+    "source": "S13",
+    "note": "Car and Driver, Oct 2019."
+   },
+   {
+    "value": "Listed as a low: 'where's the V-8 roar?' - the sound GM 'toned down a lot for the C8'.",
+    "unit": "",
+    "tag": "P",
+    "source": "S15",
+    "note": "Car and Driver, K.C. Colwell, Sept 2020."
+   },
+   {
+    "value": "Track-mode idle sounds 'like an old school pre cat muscle car'; louder outside than inside the cabin.",
+    "unit": "",
+    "tag": "P",
+    "source": "S26",
+    "note": "Corvette Forum owner, not a reviewer."
+   }
+  ],
+  "referenceVideos": {
+   "standardVsNpp": {
+    "value": "https://www.youtube.com/watch?v=4YYRgP9ud40",
+    "unit": "",
+    "tag": "P",
+    "source": "S35",
+    "note": "MidwestRide: standard exhaust vs NPP, same camera and mic."
+   },
+   "nppSoundLevels": {
+    "value": "https://www.youtube.com/watch?v=nXO9J77yhBw",
+    "unit": "",
+    "tag": "P",
+    "source": "S38",
+    "note": "C8 Corvette Stock NPP Exhaust Sound Levels - Video 1."
+   },
+   "coldStart": {
+    "value": [
+     "https://www.youtube.com/watch?v=RNDHE3RRD4w",
+     "https://www.youtube.com/watch?v=3OZfMV_1Gxc",
+     "https://www.youtube.com/watch?v=OX6mwVF-TKQ",
+     "https://www.youtube.com/watch?v=vzLPx9rzvic"
+    ],
+    "unit": "",
+    "tag": "P",
+    "source": "S38",
+    "note": "Stock C8 cold start; 2023 Z51 cold start; cold start + revs; 2022 2LT with GM performance exhaust."
+   },
+   "stockVsAftermarketWithFlybys": {
+    "value": [
+     "https://www.youtube.com/watch?v=TQtjwFX2CkA",
+     "https://www.youtube.com/watch?v=RxedeWO4Ju4"
+    ],
+    "unit": "",
+    "tag": "P",
+    "source": "S38",
+    "note": "Stock Z51 NPP vs AWE Track: cold start, idle, dB readings, revs, flybys. Use only the stock segments."
+   },
+   "onboard": {
+    "value": [
+     "https://www.youtube.com/watch?v=osEwus5R2s8",
+     "https://www.youtube.com/watch?v=2ii_VqU3gXs",
+     "https://www.youtube.com/watch?v=jI21SSlc5jA"
+    ],
+    "unit": "",
+    "tag": "P",
+    "source": "S38",
+    "note": "2020 C8 3LT Z51 POV test drive; stock Z51 0-182 mph acceleration testing; launch control 0-60."
+   },
+   "dyno": {
+    "value": [
+     "https://www.youtube.com/watch?v=4zK7yAnEtK0",
+     "https://www.youtube.com/watch?v=_ODE8Jfs-FM",
+     "https://www.youtube.com/watch?v=PqnHvsYAAzs"
+    ],
+    "unit": "",
+    "tag": "P",
+    "source": "S38",
+    "note": "Stock C8 dyno pull; stock C8 real-world hp; first LT2 on an engine dyno (stock manifolds vs headers)."
+   },
+   "flybyNote": {
+    "value": "No verified flyby of a fully stock car found apart from the stock segments in the AWE comparisons.",
+    "unit": "",
+    "tag": "A",
+    "source": ""
+   }
+  },
+  "freelyLicensedRecordings": {
+   "value": [
+    {
+     "file": "Chevrolet Corvette Stingray - engine and exhaust sound (YouTube TiObDdbrbOs).opus",
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Stingray_-_engine_and_exhaust_sound_(YouTube_TiObDdbrbOs).opus",
+     "car": "2023 C8 Stingray Z51 (LT2) with MBRP aftermarket cat-back - not stock",
+     "licence": "CC BY 3.0",
+     "attribution": "Gripforce Clutches (YouTube)",
+     "length": "1 min 23 s",
+     "status": "Commons licence review pending; download failed (HTTP 429 from upload.wikimedia.org)"
+    },
+    {
+     "file": "Chevrolet Corvette Z06 - engine and exhaust sound (YouTube 8kg9FOz-zR8).opus",
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Z06_-_engine_and_exhaust_sound_(YouTube_8kg9FOz-zR8).opus",
+     "car": "2011 C6 Corvette Z06, LS7 7.0 L dry-sump LS-family V8, factory exhaust",
+     "licence": "CC BY 3.0",
+     "attribution": "Odonnell Chevy Buick / O'Donnell Chevrolet (YouTube)",
+     "length": "4 min 6 s",
+     "status": "Commons licence review pending; download failed (HTTP 429)"
+    },
+    {
+     "file": "archive.org item 'corvette-c8'",
+     "url": "https://archive.org/details/corvette-c8",
+     "car": "C8 promo shoot (behind the scenes)",
+     "licence": "Public Domain Mark claimed by uploader",
+     "attribution": "citizen_media_news",
+     "status": "Not used: re-upload of a YouTube video 'content managed by ContentSafe'; the licence claim is doubtful."
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "S37",
+   "note": "Nothing was saved to research_notes/cars/audio/RefC8Stingray/ because Wikimedia rate-limited this network (HTTP 429). Retry later; keep the CC BY attribution with any use."
+  }
+ },
+ "visualBlockout": {
+  "bodyStyle": {
+   "value": "Low, wide mid-engine two-seat coupe, cab-forward; short pointed nose; long rear deck with a glass engine cover; big side intakes behind the doors; tall squared-off tail with an integrated ducktail spoiler (Z51), optional high wing",
+   "unit": "",
+   "tag": "M",
+   "source": "S36"
+  },
+  "photosViewed": {
+   "value": [
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_Stingray_(C8).jpg",
+     "view": "left side, rear 3/4 (closest to a profile)",
+     "licence": "CC BY-SA 4.0",
+     "author": "Ghostofakina",
+     "note": "Accelerate Yellow Z51, 2021"
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_C8_State_Street_Bridge_downtown_Montpelier_VT_May_2022_side.jpg",
+     "view": "right side, front 3/4, elevated",
+     "licence": "CC BY-SA 4.0",
+     "author": "Artaxerxes"
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_C8_Stingray_3LT_Coupe_Z51_Torch_Red_02.jpg",
+     "view": "rear 3/4 (quad tips, high wing)",
+     "licence": "CC BY-SA 4.0",
+     "author": "Ethan Llamas"
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_C8_Stingray_3LT_Coupe_Z51_Torch_Red_01.jpg",
+     "view": "front 3/4",
+     "licence": "CC BY-SA 4.0 (assumed same author/series; not checked)",
+     "author": "Ethan Llamas"
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:2020_Chevrolet_Corvette_Stingray_Coupe.jpg",
+     "view": "front 3/4",
+     "licence": "not checked",
+     "author": "not checked"
+    }
+   ],
+   "unit": "",
+   "tag": "M",
+   "source": "S36",
+   "note": "No true orthographic side view was found in the Commons C8 category; all photos have perspective."
+  },
+  "fractionsFromNose": {
+   "value": {
+    "frontAxle": 0.18,
+    "windscreenBaseCentre": 0.29,
+    "windscreenTopHeader": 0.42,
+    "roofPeak": 0.5,
+    "roofEnd_engineCoverStart": 0.59,
+    "rearAxle": 0.77,
+    "rearDeckSpoilerLip": 0.98
+   },
+   "unit": "fraction of overall length",
+   "tag": "E",
+   "source": "S36",
+   "note": "Read from the two 3/4 side photos and averaged so their opposite perspective errors partly cancel; front/rear axle check: wheelbase fraction 0.595 vs true 0.588. Uncertainty about +/-0.03 for axles, +/-0.05 for glass/roof points. Verify against a blueprint."
+  },
+  "heights": {
+   "value": {
+    "roof": 1.234,
+    "rearDeckAtSpoiler": 1.1,
+    "noseLeadingEdge": 0.45,
+    "hoodFrontEdge": 0.68,
+    "sideIntakeTop": 0.85
+   },
+   "unit": "m",
+   "tag": "E",
+   "source": "S01;S36",
+   "note": "Roof is factory (F). Others scaled from the yellow Z51 photo with a correction for camera height (~16%); +/-10%."
+  },
+  "noseShape": {
+   "value": "Low, sharp wedge with a downturned point between slim angular headlamps; wide lower intakes; Z51 adds a deeper black splitter",
+   "unit": "",
+   "tag": "M",
+   "source": "S36"
+  },
+  "tailShape": {
+   "value": "Tall, nearly vertical tail with a full-width body-colour ducktail lip; angular split tail lamps; mesh vents at the outer corners; dark diffuser panel with the quad tips in pairs at each corner",
+   "unit": "",
+   "tag": "M",
+   "source": "S36"
+  },
+  "colourSuggestion": {
+   "value": "Any; Torch Red, Accelerate Yellow and Arctic White are typical",
+   "unit": "",
+   "tag": "A",
+   "source": ""
+  }
+ },
+ "modelYearChanges": [
+  {
+   "value": "2020: launch year; production began 3 Feb 2020 (delayed by the 2019 GM strike). Z51 USD 5,000, front lift USD 1,495.",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  {
+   "value": "2021: Magnetic Ride available without Z51; Z51 USD 5,995; front lift USD 1,995; wireless CarPlay/Android Auto; colour changes.",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  {
+   "value": "2022: LT2 fuel pump and injector upgrades; IMSA GTLM Championship Edition (1,000 units); right-hand-drive markets (UK, Japan, Australia) ramp up. Borla labels the exhaust valves AFM for 2020-21 and DFM for 2022-27 (unconfirmed).",
+   "unit": "",
+   "tag": "P",
+   "source": "S10;S40"
+  },
+  {
+   "value": "2023: 70th Anniversary Edition package.",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  {
+   "value": "2024: Z06-style high wing and more carbon options for the Stingray; EU-spec cars on sale with particulate filters (482 PS).",
+   "unit": "",
+   "tag": "P",
+   "source": "S10;S21"
+  },
+  {
+   "value": "2025: price and colour changes only.",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  {
+   "value": "2026: interior redesign (14 in cluster, 12.7 in centre screen, 6.6 in left screen, drive-mode toggle). Still LT2.",
+   "unit": "",
+   "tag": "P",
+   "source": "S10"
+  },
+  {
+   "value": "2027: LS6 6.7 L replaces the LT2 in the Stingray (and new Grand Sport/Grand Sport X): 535 hp @ 6,100 rpm, 520 lb-ft (705 Nm) @ 4,600 rpm, 13.0:1, stroke 100 mm (+8), 95 mm throttle body, Tri-Y exhaust manifolds, optional centre exhaust, redline reported 6,600 rpm; MY2027 Z51 test: 3,702 lb, 0-60 2.7 s, 53/96/73 dBA. Out of scope for this LT2 config.",
+   "unit": "",
+   "tag": "F",
+   "source": "S33;S34;S12;S17",
+   "note": "LS6 full-load curve from the same GM chart (crank, [rpm, Nm]): [[1000, 481], [1500, 548], [2000, 582], [2500, 595], [3000, 630], [3500, 643], [4000, 670], [4500, 696], [4600, 705], [5000, 698], [5500, 664], [6000, 632], [6500, 572], [6600, 555]]"
+  }
+ ],
+ "gaps": [
+  "Drag coefficient and frontal area: not published by GM; only a forum Cd (0.322). Sim uses CdA fitted to top speed.",
+  "Exact eLSD calibration (lock torque, ramp rates).",
+  "Idle rpm (warm and cold), launch rpm variation by mode, park/neutral rev limit, limiter bounce behaviour.",
+  "EU stationary-noise engine speed (estimated 3,750 rpm from UN R51.03).",
+  "Steering lock-to-lock turns; front-lift time; wheel offsets; ground clearance from GM.",
+  "Run-flat status of the OE tyres.",
+  "Stock exhaust pipe diameters; whether base cars really use iron 4-2-1 manifolds (EngineLabs) or the same tubular headers.",
+  "Car and Driver's own test sheet (0-100, 0-130 mph, 100-0 braking, sound) could not be read directly: caranddriver.com is blocked for the fetch tool; sound figures come from a forum quote and a 2027 comparison.",
+  "Motor Trend figure-eight, 0-100 and weight not obtained.",
+  "No orthographic side-view drawing; blockout fractions are estimates from perspective photos.",
+  "No freely licensed recording was downloaded (Wikimedia HTTP 429); candidates listed in sound.freelyLicensedRecordings.",
+  "GM media sites (media.chevrolet.com, news.chevrolet.com) returned 403; GM figures come from faithful reproductions (Corvsport, Corvette Story, CorvetteBlogger, SAE Mobility Engineering).",
+  "Web search budget ran out at the end of the session; Australian noise recall details and more reviewer quotes were not gathered."
+ ],
+ "sources": [
+  {
+   "id": "S01",
+   "title": "2020 Chevrolet Corvette Stingray preliminary specifications (GM), reproduced by Corvette Story",
+   "url": "https://mobile.corvettestory.com/2020-Corvette-C8-mid-engine-specs.php",
+   "type": "F (reproduction)"
+  },
+  {
+   "id": "S02",
+   "title": "Corvsport - 2020 Corvette specifications (GM data)",
+   "url": "https://www.corvsport.com/2020-corvette-specifications/",
+   "type": "F/P"
+  },
+  {
+   "id": "S03",
+   "title": "GM release 'Chevrolet Confirms 2020 Stingray Quickest in its History' via CorvetteBlogger, 6 Nov 2019",
+   "url": "https://www.corvetteblogger.com/2019/11/06/official-the-2020-corvette-stingray-goes-0-60-mph-in-2-9-seconds-runs-quarter-mile-in-11-2-121-mph/",
+   "type": "F"
+  },
+  {
+   "id": "S04",
+   "title": "SAE Mobility Engineering - Inside Tremec's Corvette dual-clutch transmission",
+   "url": "https://www.mobilityengineeringtech.com/component/content/article/40895-sae-ma-00017",
+   "type": "P"
+  },
+  {
+   "id": "S05",
+   "title": "Corvette Magazine - Two Clutches, No Waiting (search summary)",
+   "url": "https://www.corvette-mag.com/issues/135/articles/two-clutches-no-waiting",
+   "type": "P"
+  },
+  {
+   "id": "S06",
+   "title": "Tremec/GM TR-9080 press material (ratios, transfer gears) - Corvette Action Center copy (503 on fetch; content via search summary)",
+   "url": "https://corvetteactioncenter.com/specs/c8-corvette/2020-corvette/press-release-2020-corvette-tremec-8-speed-dual-clutch-transmission.html",
+   "type": "F (secondary)"
+  },
+  {
+   "id": "S07",
+   "title": "Corvette Magazine - Inside the LT2",
+   "url": "https://corvette-mag.com/issues/134/articles/inside-the-lt2",
+   "type": "P"
+  },
+  {
+   "id": "S08",
+   "title": "EngineLabs - The New 2020 Corvette LT2 Engine",
+   "url": "https://www.enginelabs.com/engine-tech/the-new-2020-corvette-lt2-engine-more-of-the-same-but-different/",
+   "type": "P"
+  },
+  {
+   "id": "S09",
+   "title": "LSX Mag - 411 on LT2",
+   "url": "https://www.lsxmag.com/news/411-on-lt2-everything-you-want-to-know-about-c8s-powerhouse/",
+   "type": "P"
+  },
+  {
+   "id": "S10",
+   "title": "Wikipedia - Chevrolet Corvette (C8)",
+   "url": "https://en.wikipedia.org/wiki/Chevrolet_Corvette_(C8)",
+   "type": "P"
+  },
+  {
+   "id": "S11",
+   "title": "Wikipedia - General Motors small-block engine (Gen III+ firing order 1-8-7-2-6-5-4-3)",
+   "url": "https://en.wikipedia.org/wiki/General_Motors_small-block_engine",
+   "type": "P"
+  },
+  {
+   "id": "S12",
+   "title": "GM slide 'LT2 vs LS6 engine performance comparison' (March 2026), image as published by The Autopian; same chart photographed in a The Straight Pipes video (CorvetteBlogger)",
+   "url": "https://images-stag.jazelc.com/uploads/theautopian-m2en/ls6-performance-e1774532266852.png",
+   "alt": [
+    "https://www.theautopian.com/chevy-is-bringing-back-the-ls-v8-and-this-time-its-a-6-7-liter-lump-of-american-muscle/",
+    "https://www.corvetteblogger.com/2026/03/26/the-new-6-7l-ls6-makes-more-torque-than-any-na-production-v8-in-history/"
+   ],
+   "type": "F (chart, read by pixel extraction)"
+  },
+  {
+   "id": "S13",
+   "title": "Car and Driver, Rich Ceppos, '2020 Chevrolet Corvette Is More Than the Best Corvette Ever', 15 Oct 2019 (Yahoo syndication)",
+   "url": "https://uk.news.yahoo.com/2020-chevrolet-corvette-more-best-143100266.html",
+   "type": "M"
+  },
+  {
+   "id": "S14",
+   "title": "Car and Driver, Maxwell B. Mortimer, '2020 Chevy Corvette Hits 60 MPH in 2.8 Seconds', 15 Oct 2019 (Yahoo syndication)",
+   "url": "https://uk.news.yahoo.com/2020-chevy-corvette-hits-60-203000416.html",
+   "type": "M"
+  },
+  {
+   "id": "S15",
+   "title": "Car and Driver, K.C. Colwell, 'Tested: 2020 Chevrolet Corvette Z51 vs. Porsche 718 Cayman GT4', 2 Sept 2020 (Yahoo syndication)",
+   "url": "https://uk.news.yahoo.com/tested-2020-chevrolet-corvette-z51-163800417.html",
+   "type": "M"
+  },
+  {
+   "id": "S16",
+   "title": "MidEngineCorvetteForum 'Noise level?' thread quoting Car and Driver Dec 2019 sound levels (search snippet; page 403)",
+   "url": "https://www.midenginecorvetteforum.com/forum/me-discussion-photos-videos/97277-noise-level",
+   "type": "M (secondary)"
+  },
+  {
+   "id": "S17",
+   "title": "SSBCrack News - 2027 Corvette Stingray performance review and comparison with 2020 model (updated 25 Oct 2026)",
+   "url": "https://news.ssbcrack.com/2027-chevrolet-corvette-stingray-performance-review-and-comparison-with-2020-model/",
+   "type": "M (secondary)"
+  },
+  {
+   "id": "S18",
+   "title": "Motor Trend test via CorvetteBlogger, 15 Oct 2019",
+   "url": "https://www.corvetteblogger.com/2019/10/15/motor-trend-2020-corvette-stingray-z51-runs-0-60-in-2-8-seconds-quarter-mile-in-11-1-123-2-mph/",
+   "type": "M"
+  },
+  {
+   "id": "S19",
+   "title": "auto motor und sport - Corvette Stingray technical data and measurements (test 08/2020)",
+   "url": "https://www.auto-motor-und-sport.de/test/chevrolet-corvette-stingray-unterwegs-im-495-ps-starken-v8/technische-daten/",
+   "type": "F/M"
+  },
+  {
+   "id": "S20",
+   "title": "ADAC Autokatalog - Corvette Stingray Coupe 6.2 V8 3LT (from 12/2024)",
+   "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/chevrolet/corvette/c8/341293/",
+   "type": "F (homologation data)"
+  },
+  {
+   "id": "S21",
+   "title": "Chevrolet Europe launch as reported by Motorsactu (482 PS / 613 Nm, GPF, Z51 standard)",
+   "url": "https://motorsactu.com/la-chevrolet-corvette-stingray-enfin-prete-pour-leurope",
+   "type": "F (secondary)"
+  },
+  {
+   "id": "S22",
+   "title": "Top speed 194 / 184 mph and Z51 +400 lb downforce: Motor Authority; Car and Driver via Yahoo (search summaries)",
+   "url": "https://www.motorauthority.com/news/1124601_2020-chevy-corvette-stingray-s-top-speed-is-194-mph-but-z51-is-slower",
+   "alt": [
+    "https://autos.yahoo.com/2020-chevy-corvette-z51s-top-143000923.html"
+   ],
+   "type": "F (secondary)"
+  },
+  {
+   "id": "S23",
+   "title": "SAE Mobility Engineering - An Exhaust Symphony in the Key of C8 (Tenneco)",
+   "url": "https://www.mobilityengineeringtech.com/component/content/article/44640-sae-ma-03960",
+   "type": "P"
+  },
+  {
+   "id": "S24",
+   "title": "CorvetteBlogger - Tenneco's C8 Corvette exhaust system detailed, 16 Mar 2020",
+   "url": "https://www.corvetteblogger.com/2020/03/16/tennecos-c8-corvette-exhaust-system-detailed/",
+   "type": "P"
+  },
+  {
+   "id": "S25",
+   "title": "Corvette Forum - AFM and NPP valves; exhaust flow diagram (GM service-manual excerpts; search snippets)",
+   "url": "https://www.corvetteforum.com/forums/c8-tech-performance/4953174-afm-and-npp-valves.html",
+   "alt": [
+    "https://www.corvetteforum.com/forums/c8-tech-performance/4596737-exhaust-flow-diagram.html"
+   ],
+   "type": "P (forum)"
+  },
+  {
+   "id": "S26",
+   "title": "Corvette Forum - NPP usage / sound settings / cold start threads (search snippets)",
+   "url": "https://www.corvetteforum.com/forums/c8-stingray-general-discussion/4605453-npp-usage.html",
+   "alt": [
+    "https://www.corvetteforum.com/forums/c8-general-discussion/4733233-cold-start-sound-vs-normal.html"
+   ],
+   "type": "P (forum)"
+  },
+  {
+   "id": "S27",
+   "title": "Corvette Forum - limiter / max rpm threads (search snippets)",
+   "url": "https://www.corvetteforum.com/forums/c8-tech-performance/4681888-limiter.html",
+   "alt": [
+    "https://www.corvetteforum.com/forums/c8-tech-performance/4894562-max-rpm.html"
+   ],
+   "type": "P (forum)"
+  },
+  {
+   "id": "S28",
+   "title": "Corvette Forum - 'Dyno numbers are in' (stock average 429 whp / 410 lb-ft)",
+   "url": "https://www.corvetteforum.com/forums/c8-tech-performance/4614246-dyno-numbers-are-in.html",
+   "type": "M (owners)"
+  },
+  {
+   "id": "S29",
+   "title": "Paragon Performance - EBC Z51 front rotors 345 x 30 mm",
+   "url": "https://www.paragonperf.com/ebc-c8-corvette-stingray-z51-front-2pc-rotors.html",
+   "type": "P"
+  },
+  {
+   "id": "S30",
+   "title": "Corvette Forum - drag coefficients thread (Cd 0.322 claim)",
+   "url": "https://www.corvetteforum.com/forums/c8-tech-performance/4338961-drag-coefficients.html",
+   "type": "A (forum)"
+  },
+  {
+   "id": "S31",
+   "title": "Autoblog - 2020 Stingray 1LT coupe specs (curb 3,535 lb)",
+   "url": "https://www.autoblog.com/buy/2020-Chevrolet-Corvette-Stingray_w_1LT__2dr_Coupe/specs",
+   "type": "P"
+  },
+  {
+   "id": "S32",
+   "title": "GM Authority - alleged leaked GM performance document (40/60)",
+   "url": "https://gmauthority.com/blog/2019/08/2020-corvette-stingray-performance-figures-leaked-from-alleged-gm-document/",
+   "type": "P (unverified)"
+  },
+  {
+   "id": "S33",
+   "title": "Chevrolet newsroom - Deep dive: the 2027 Corvette's next-generation V8 (403 on fetch; figures via search summaries incl. GM Authority)",
+   "url": "https://news.chevrolet.com/newsroom.detail.html/Pages/topic/us/en/2026/mar/0326-Deep-dive-2027-Chevrolet-Corvettes-next-generation-V8.html",
+   "type": "F"
+  },
+  {
+   "id": "S34",
+   "title": "The Drive - Chevy's new LS6 gives 2027 Corvette more torque than any factory NA V8",
+   "url": "https://www.thedrive.com/news/chevys-new-ls6-gives-2027-corvette-more-torque-than-any-factory-na-v8-ever",
+   "type": "P"
+  },
+  {
+   "id": "S35",
+   "title": "CorvetteBlogger - video comparison of the 2020 Corvette's two exhaust systems (MidwestRide), 10 Jul 2020",
+   "url": "https://www.corvetteblogger.com/2020/07/10/video-comparison-of-the-2020-corvettes-two-different-exhaust-systems/",
+   "type": "P"
+  },
+  {
+   "id": "S36",
+   "title": "Wikimedia Commons photos viewed (see visualBlockout.photosViewed); category",
+   "url": "https://commons.wikimedia.org/wiki/Category:Chevrolet_Corvette_C8",
+   "type": "M (photos)"
+  },
+  {
+   "id": "S37",
+   "title": "Wikimedia Commons audio search 'corvette' (17 results; 2 relevant CC BY 3.0 files)",
+   "url": "https://commons.wikimedia.org/w/index.php?search=corvette+filetype%3Aaudio&title=Special:MediaSearch&type=audio",
+   "type": "P"
+  },
+  {
+   "id": "S38",
+   "title": "YouTube reference videos (links only; found by search)",
+   "url": "https://www.youtube.com/",
+   "type": "P"
+  },
+  {
+   "id": "S39",
+   "title": "Corvsport - Paragon Performance dyno of 2026/27 Grand Sport LS6 vs stock Stingray (search summary)",
+   "url": "https://www.corvsport.com/video-paragon-performance-tests-the-2026-corvette-grand-sports-new-6-7l-ls6-v8/",
+   "type": "M"
+  },
+  {
+   "id": "S40",
+   "title": "Borla - C8 Stingray exhaust systems (valve naming AFM/DFM)",
+   "url": "https://www.borla.com/chevrolet-corvette-stingray-c8-exhaust-systems",
+   "type": "P"
+  },
+  {
+   "id": "S41",
+   "title": "CorvetteBlogger - C8 Stingray Z51 191.7 mph at Johnny Bohmer Proving Grounds, 22 Mar 2023 (headline)",
+   "url": "https://www.corvetteblogger.com/2023/03/22/video-c8-corvette-stingray-with-z51-runs-top-speed-of-191-7-mph-on-the-space-shuttles-runway/",
+   "type": "M"
+  }
+ ]
+}

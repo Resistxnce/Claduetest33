@@ -7,7 +7,9 @@
 	Positions: s is the distance along the road (m); lanes are numbered from the left, 1 = fast lane;
 	lanePos is the lateral position in lanes (2.5 = halfway between lanes 2 and 3).
 	Car following: IDM. Lane changes: MOBIL with a keep-right bias and a safety limit on how hard the
-	new follower would have to brake. Players' cars are "obstacles": the simulation doesn't move them,
+	new follower would have to brake. Curves: with speed limits set (setSpeedLimits, made from the
+	road's curvature by RoadGeometry:speedLimits), each driver slows ahead of a curve to keep their
+	sideways acceleration comfortable. Players' cars are "obstacles": the simulation doesn't move them,
 	but traffic follows them, yields to them and won't pull out in front of them unsafely.
 ]]
 
@@ -18,6 +20,8 @@ local PROFILES = DriverProfiles.profiles
 local LANE_CHANGE_TIME = DriverProfiles.LANE_CHANGE_TIME
 local MIN_TIME_IN_LANE = DriverProfiles.MIN_TIME_IN_LANE
 local DECISION = DriverProfiles.DECISION_INTERVAL
+local CURVE_LOOKAHEAD = DriverProfiles.CURVE_LOOKAHEAD
+local CURVE_RESPONSE = DriverProfiles.CURVE_RESPONSE
 
 local TrafficSimulation = {}
 TrafficSimulation.__index = TrafficSimulation
@@ -65,7 +69,32 @@ function TrafficSimulation.new(length: number, lanes: number, loop: boolean, see
 	self.laneChanges = 0
 	self.order = {}
 	self.keys = {}
+	self.limits = nil -- profile name -> speed limit (m/s) for each limitStep metres of road
+	self.limitStep = DriverProfiles.LIMIT_STEP
 	return self
+end
+
+-- limits: profile name -> { speed limit (m/s) for each step metres of road, from s = 0 }
+function TrafficSimulation:setSpeedLimits(limits, step: number)
+	self.limits = limits
+	self.limitStep = step
+end
+
+-- The speed limit for a profile at distance s, or nil without limits.
+function TrafficSimulation:limitAt(s: number, profileName: string): number?
+	local limit = self.limits and self.limits[profileName]
+	if limit == nil then
+		return nil
+	end
+	if self.loop then
+		s %= self.length
+	end
+	return limit[math.clamp(math.floor(s / self.limitStep) + 1, 1, #limit)]
+end
+
+-- The leftmost lane a profile may use (trucks keep to the lanes on the right).
+function TrafficSimulation:laneMin(p): number
+	return if p.rightLanes then math.max(1, self.lanes - p.rightLanes + 1) else 1
 end
 
 function TrafficSimulation:pickProfile(): string
@@ -82,10 +111,13 @@ end
 function TrafficSimulation:add(s: number, lane: number, profileName: string, v: number?)
 	local p = PROFILES[profileName]
 	local v0 = self.random:NextNumber(p.speed[1], p.speed[2]) / 3.6
+	if v == nil then
+		v = math.min(v0 * 0.85, self:limitAt(s, profileName) or math.huge)
+	end
 	local vehicle = {
 		id = self.nextId,
 		s = s % self.length,
-		v = if v == nil then v0 * 0.85 else v,
+		v = v,
 		a = 0,
 		lane = lane,
 		lanePos = lane,
@@ -109,7 +141,7 @@ function TrafficSimulation:populate(perKmPerLane: number)
 		local spacing = self.length / math.max(count, 1)
 		for k = 0, count - 1 do
 			local name = self:pickProfile()
-			if PROFILES[name].laneMin > lane then
+			if self:laneMin(PROFILES[name]) > lane then
 				name = "normal"
 			end
 			self:add(k * spacing + self.random:NextNumber(0, spacing * 0.4), lane, name)
@@ -211,7 +243,7 @@ end
 -- MOBIL: should car v move to lane target?
 function TrafficSimulation:wantsChange(v, target: number): boolean
 	local p = v.profile
-	if target < math.max(1, p.laneMin) or target > self.lanes then
+	if target < self:laneMin(p) or target > self.lanes then
 		return false
 	end
 	local leadOld, gapOld, followOld, gapFollowOld = self:neighbours(v, v.lane)
@@ -252,6 +284,11 @@ function TrafficSimulation:step(dt: number)
 		if v.change > 0 and v.fromLane ~= v.lane then
 			local lead2, gap2 = self:neighbours(v, v.fromLane)
 			a = math.min(a, self:accel(v, lead2, gap2))
+		end
+		local limit = self:limitAt(v.s + v.v * CURVE_LOOKAHEAD, v.profileName)
+		if limit then
+			-- slow for the curve ahead
+			a = math.min(a, math.max((limit - v.v) / CURVE_RESPONSE, -DriverProfiles.MAX_DECEL))
 		end
 		v.a = a
 		v.decision -= dt

@@ -11,7 +11,14 @@
 
 	Inside step(), wheel spin, clutch and engine are integrated in SUBSTEPS smaller steps with the
 	car's velocity held constant, and tyre forces are averaged over them. This keeps the stiff parts
-	(tyres, clutch, differential) stable while Roblox integrates the car body once per frame.
+	(tyres, clutch, torque converter, differentials) stable while Roblox integrates the car body once
+	per frame.
+
+	The configuration chooses the gearbox (dual-clutch or torque-converter automatic), the drive
+	layout (front, rear, or all-wheel drive with a fixed split or an on-demand centre coupling) and
+	the engine's forced induction. docs/VEHICLE_CONFIG.md describes every setting. An automatic
+	starts in park (neutral with the brakes holding the car) and pulls into drive when the driver
+	first presses a pedal.
 ]]
 
 local Units = require(script.Parent.Parent.Units)
@@ -62,7 +69,7 @@ function VehicleSimulation.new(config)
 		local front = string.sub(id, 1, 1) == "F"
 		local left = string.sub(id, 2, 2) == "L"
 		local axle = if front then config.suspension.front else config.suspension.rear
-		local tire = Tire.new(if front then config.tires.front else config.tires.rear)
+		local tire = Tire.new(if front then config.tires.front else config.tires.rear, config.tires.compounds)
 		local track = if front then dims.trackFront else dims.trackRear
 		local cornerLoad = if front then frontCornerLoad else rearCornerLoad
 		local suspension = Suspension.new(axle, cornerLoad)
@@ -105,6 +112,15 @@ function VehicleSimulation.new(config)
 
 	self.engine = Engine.new(config.engine)
 	self.transmission = Transmission.new(config.transmission)
+	local tr = self.transmission
+	if tr.automatic then
+		-- the converter's capacity follows from its stall speed (see Transmission.converter)
+		local stallRpm = config.transmission.converter.stallRpm
+		tr.converterK = Engine.fullLoadTorque(config.engine, stallRpm) / Units.rpmToRadPerSec(stallRpm) ^ 2
+		tr.gear = 0
+		tr.fromGear = 0
+	end
+	self.parked = tr.automatic
 	self.steering = Steering.new(config.steering)
 	self.absEnabled = config.brakes.abs.enabled
 	local tractionControl = config.drivetrain.tractionControl
@@ -117,22 +133,29 @@ function VehicleSimulation.new(config)
 	return self
 end
 
+-- Driven axles, front first. With an on-demand centre coupling both axles are driven and their
+-- shares are the base split, which also weights the gearbox speed in _inputOmega.
 function VehicleSimulation:_buildAxles()
 	local drivetrain = self.config.drivetrain
+	local coupling = if drivetrain.layout == "AWD" then drivetrain.centreCoupling else nil
 	local frontShare
 	if drivetrain.layout == "FWD" then
 		frontShare = 1
 	elseif drivetrain.layout == "RWD" then
 		frontShare = 0
+	elseif coupling then
+		frontShare = math.clamp(coupling.baseFrontShare, 0, 1)
 	else
 		frontShare = math.clamp(drivetrain.frontTorqueShare, 0, 1)
 	end
+	self.coupling = coupling
+	self.frontShare = frontShare
 	local axles = {}
-	if frontShare > 0 then
-		table.insert(axles, { left = self.wheels.FL, right = self.wheels.FR, share = frontShare, diff = drivetrain.frontDifferential })
+	if frontShare > 0 or coupling then
+		table.insert(axles, { left = self.wheels.FL, right = self.wheels.FR, share = frontShare, diff = drivetrain.frontDifferential, torque = 0 })
 	end
-	if frontShare < 1 then
-		table.insert(axles, { left = self.wheels.RL, right = self.wheels.RR, share = 1 - frontShare, diff = drivetrain.rearDifferential })
+	if frontShare < 1 or coupling then
+		table.insert(axles, { left = self.wheels.RL, right = self.wheels.RR, share = 1 - frontShare, diff = drivetrain.rearDifferential, torque = 0 })
 	end
 	for _, axle in axles do
 		for _, w in { axle.left, axle.right } do
@@ -200,15 +223,31 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	local cfg = self.config
 	local tr = self.transmission
 	local engine = self.engine
+	local automatic = tr.automatic
 	local g = Units.GRAVITY
 	self.lastForwardSpeed = forwardSpeed
 
-	self:_autoReverse(dt, input, forwardSpeed)
+	-- an automatic leaves park for drive when the driver first presses a pedal
+	if self.parked and (input.throttle > 0.05 or input.brake > 0.05) then
+		self.parked = false
+		Transmission.shift(tr, 1)
+	end
+	if not self.parked then
+		self:_autoReverse(dt, input, forwardSpeed)
+	end
 	local pedal, brakePedal = input.throttle, input.brake
 	if tr.gear == -1 then
 		pedal, brakePedal = input.brake, input.throttle
 	end
 	local handbrake = input.handbrake
+	-- in park the brakes hold the car, standing in for the parking pawl
+	local holdBrake = if self.parked then 1 else brakePedal
+	-- an electronic top-speed limiter closes the throttle over the last 3 km/h
+	local enginePedal = pedal
+	local speedLimit = cfg.engine.speedLimitKmh
+	if speedLimit then
+		enginePedal = math.min(pedal, math.clamp((speedLimit - math.abs(forwardSpeed) * 3.6) / 3, 0, 1))
+	end
 
 	-- suspension loads
 	for _, id in WHEEL_IDS do

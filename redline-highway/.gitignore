@@ -1,2 +1,11 @@
 __pycache__/
 *.pyc
+# third-party reference recordings are kept local, for analysis only (attribution notes are committed)
+research_notes/cars/audio/**/*.opus
+research_notes/cars/audio/**/*.ogg
+research_notes/cars/audio/**/*.oga
+research_notes/cars/audio/**/*.wav
+research_notes/cars/audio/**/*.mp3
+research_notes/cars/audio/**/*.flac
+research_notes/cars/audio/**/*.m4a
+research_notes/cars/audio/**/*.webm

@@ -1,49 +1,63 @@
 #!/usr/bin/env python3
-"""Make Redline Highway's placeholder sound sheets: original, synthesized engine and driving sounds.
+"""Make Redline Highway's sound sheets: every car's engine, the driving effects and traffic.
 
-Roblox counts every uploaded sound against a monthly limit, so the sounds are packed into two
-"sheets" (one file each). The game plays each sound from its own region of a sheet using
-Sound.PlaybackRegion and Sound.LoopRegion.
+Each car's engine is synthesized from its acoustic definition, assets/audio/engines/<ConfigId>.json
+(the format is in docs/AUDIO.md):
+  * firing events come from the firing order, which cylinders sit on which bank, the bank angle and
+    the crank type (an even-firing crank, or a common-pin V whose gaps alternate with the bank angle);
+  * each firing sends a blowdown pulse down its cylinder's primary pipe to a collector. The exhaust
+    routing says which collector each cylinder feeds and how collectors merge (separate banks, an
+    X-pipe, an H-pipe, a Y into one pipe, or hot-V cross-bank manifolds that give each turbo evenly
+    spaced pulses). That decides which pulse pattern each tailpipe carries, which is why a
+    cross-plane V8 burbles and a flat-plane V8 screams;
+  * pipe lengths set the resonances; mufflers (valves open or closed), turbos (which smooth the
+    pulses), the tailpipe radiation, intake roar, combustion and valvetrain noise complete the sound;
+  * loops are made at steady engine speeds from idle to the limiter, on and off throttle, plus loops
+    at the limiter with its cut pattern baked in (free revving and in gear), and forced-induction
+    layers (a turbo whistle loop pitched by boost, blow-off one-shots, supercharger whine loops);
+  * each loop's playback gain comes from the car's measured sound levels (idle, full throttle).
+Every loop is a whole number of engine cycles (limiter loops a whole number of bounces), and all
+filtering is circular, so each loop repeats without a click.
 
-  assets/audio/GT12_Engine.flac      engine loops at 8 engine speeds, on and off throttle
-  assets/audio/Driving_Effects.flac  tyre squeal, road and wind noise, gearbox whine, exhaust
-                                     crackles, shift and suspension one-shots
+Roblox counts every upload against a monthly limit, so sounds are packed into a few files ("packs",
+listed in assets/audio/packs.json); one pack can hold several cars. The game plays each sound from its
+own region of a pack with Sound.PlaybackRegion and Sound.LoopRegion. Each car's regions are in its own
+sheet table, src/ReplicatedStorage/VehicleSystem/VehicleAudio/Sheets/<sheet>.luau.
 
-It also writes the region tables the game reads:
-  src/ReplicatedStorage/VehicleSystem/VehicleAudio/Sheets/GT12_Engine.luau
-  src/ReplicatedStorage/VehicleSystem/VehicleAudio/Sheets/Driving_Effects.luau
-
-How the engine is made: a 65-degree V12 fires 12 times per two crank turns. Bank A fires every
-120 degrees and bank B 65 degrees after each bank A firing, so the gaps alternate 65 and 55 degrees,
-which gives this layout its characteristic texture. Each firing sends a pressure pulse down that
-bank's exhaust. The pulses pass through pipe resonances, a silencer and tailpipe, and are mixed with
-intake roar, combustion rasp and valvetrain noise. On-throttle loops have strong, sharp pulses;
-off-throttle loops have weak, uneven ones. Every loop is exactly a whole number of engine cycles,
-and all filtering is circular, so each loop repeats without a click.
-
-These are placeholders to build and tune the audio system with. Recorded engine sounds (made by
-you or properly licensed) can replace them later without code changes: see docs/AUDIO.md.
-
-Usage: python3 tools/synth_audio.py   (needs numpy and ffmpeg)
+Usage (needs numpy and ffmpeg):
+  python3 tools/synth_audio.py                    build every pack
+  python3 tools/synth_audio.py --car RefM3G80     build only the pack that holds this car
+  python3 tools/synth_audio.py --check RefM3G80   check a definition; print its firing and pulse pattern
+  python3 tools/synth_audio.py --analyze REC --car RefM3G80 [--start S --end S]
+                                                  engine-order analysis of a recording against the car
 """
+import argparse
+import copy
+import json
 import math
 import pathlib
 import subprocess
+import sys
 import wave
+import zlib
 
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AUDIO_DIR = ROOT / "assets" / "audio"
+ENGINE_DIR = AUDIO_DIR / "engines"
+PACKS_FILE = AUDIO_DIR / "packs.json"
 SHEET_DIR = ROOT / "src" / "ReplicatedStorage" / "VehicleSystem" / "VehicleAudio" / "Sheets"
 FS = 44100
 GAP = 0.02  # seconds of silence between regions
+PRE_ROLL = 0.02  # seconds of a loop's end stored just before it (context for the resampler)
+POST_ROLL = 0.25  # seconds of a loop's start stored after it, so a late loop jump lands on matching audio
 
-REDLINE = 8900
-BANK_ANGLE = 65.0
-ENGINE_POINTS = [1000, 1500, 2200, 3200, 4400, 5800, 7300, 8900]
-ENGINE_LOOP_SECONDS = 0.8
 WHINE_HZ = 1000.0
+AIR_C = 343.0  # speed of sound in air at 20 C, m/s
+TARGET_A_RMS = 0.075  # every loop is stored at this A-weighted RMS; its gain is in the sheet
+REFERENCE_DBA = 95.0  # [A] an engine measured at this level plays at gain 1
+LEVEL_COMPRESSION = 0.6  # [A] game dB per real dB: idle stays audible next to full throttle
 
 
 # --------------------------------------------------------------------------------------------

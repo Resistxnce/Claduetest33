@@ -1,0 +1,37 @@
+Reference recordings for RefCamaroZL1 (Chevrolet Camaro ZL1, LT4 supercharged 6.2 V8)
+Downloaded 2026-11-13 from Wikimedia Commons. SHA-1 checked against the Commons API.
+
+No freely licensed recording of a Camaro ZL1 itself was found. These two are the closest:
+an LT4 engine in another GM car, and a sibling supercharged GM 6.2 V8.
+
+1. Commons_Cadillac_CT5-V_Blackwing_LT4_engine_and_exhaust_sound.opus
+   What:     Cadillac CT5-V Blackwing (LT4 6.2 supercharged V8) fitted with an aftermarket
+             AWE SwitchPath exhaust. Start-up, revving and acceleration. 301 s, Opus, 48 kHz stereo.
+             The exhaust is NOT the Camaro's; the engine and supercharger are the same family.
+   Commons:  https://commons.wikimedia.org/wiki/File:Cadillac_CT5-V_Blackwing_-_engine_and_exhaust_sound_(YouTube_Dgo5_38A-S0).opus
+   Author:   Drag Racing Wheels - Forgestar - Weld - Race Stars (YouTube channel)
+   Original: YouTube video "Cadillac CT5-V Blackwing Exhaust Sound AWE SwitchPath 6.2L LT4
+             (Diamond Black & Chrome Tips)", published under YouTube's CC BY licence.
+             Uploaded to Commons by Braiion, 2026-10-27.
+   Licence:  Creative Commons Attribution 3.0 (CC BY 3.0)
+             https://creativecommons.org/licenses/by/3.0
+   SHA-1:    3e5ca257458ba6bdec706f63a7e8c13f2db1c339
+   Credit line if used: "Cadillac CT5-V Blackwing engine sound" by Drag Racing Wheels - Forgestar -
+             Weld - Race Stars, CC BY 3.0, via Wikimedia Commons.
+
+2. Commons_Chevrolet_Corvette_C6_ZR1_LS9_recorded2010.ogg
+   What:     Chevrolet Corvette C6 ZR1 (LS9 6.2 supercharged V8, Eaton TVS R2300 with 4-lobe
+             rotors) pulling away from the start of the Goodwood Festival of Speed hillclimb,
+             3 July 2010. 12 s, Ogg Vorbis, 44.1 kHz stereo.
+   Commons:  https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_C6_ZR1_recorded2010.ogg
+   Author:   Ed Pond (Wikimedia Commons user Edvvc), own work
+   Licence:  Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)
+             https://creativecommons.org/licenses/by-sa/3.0
+   SHA-1:    6372b0ae13715af27d53f2d5f56642dc2b4d2c4c
+   Credit line if used: "Chevrolet Corvette C6 ZR1" by Ed Pond, CC BY-SA 3.0, via Wikimedia Commons.
+
+Use notes
+- Both licences require attribution. CC BY-SA also requires that edited versions (for example,
+  loops cut from it) be shared under the same licence. Check that this suits a Roblox game
+  before putting either into the game; they are safest as listening references.
+- Nothing here was taken from YouTube directly.

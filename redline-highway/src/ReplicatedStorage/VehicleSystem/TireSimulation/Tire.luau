@@ -26,8 +26,35 @@ local function shape(s: number, c: number): number
 	return math.sin(c * math.atan(b * s))
 end
 
-function Tire.new(spec)
-	local compound = Compounds[spec.compound] or Compounds.Performance
+--[[
+	The compound called name. A car can define its own compounds in config.tires.compounds
+	(carCompounds): each names the compound it is based on (base, a name in Compounds or another of
+	the car's own; "Performance" if left out) and lists only the values that differ, for example a
+	road tyre against a track tyre. Unknown names fall back to Performance with a warning.
+]]
+function Tire.compound(name: string, carCompounds, depth: number?)
+	local own = carCompounds and carCompounds[name]
+	if own and (depth or 0) < 4 then
+		local base = own.base or "Performance"
+		local merged = table.clone(Tire.compound(base, if base == name then nil else carCompounds, (depth or 0) + 1))
+		for key, value in own do
+			if key ~= "base" then
+				merged[key] = value
+			end
+		end
+		return merged
+	end
+	local shared = Compounds[name]
+	if not shared then
+		warn("[Tire] Unknown tyre compound " .. tostring(name) .. "; using Performance")
+		return Compounds.Performance
+	end
+	return shared
+end
+
+-- spec: one axle's tyre settings. carCompounds: config.tires.compounds, if the car has any.
+function Tire.new(spec, carCompounds)
+	local compound = Tire.compound(spec.compound, carCompounds)
 	return {
 		radius = Tire.radiusFromSize(spec.widthMm, spec.aspect, spec.rimInches),
 		inertia = spec.inertia,

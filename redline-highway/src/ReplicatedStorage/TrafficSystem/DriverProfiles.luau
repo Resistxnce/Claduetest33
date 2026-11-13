@@ -13,17 +13,20 @@
 	  politeness  MOBIL politeness: how much the gains and losses of others count, 0 to 1
 	  threshold   MOBIL threshold: how much better a lane must be before changing, m/s^2
 	  length, width   body size, m
-	  laneMin     leftmost lane the profile may use (trucks stay in the right lanes)
+	  lateral     the most sideways acceleration the driver accepts in a curve, m/s^2; traffic slows
+	              for curves so that it stays within this (comfortable values, Traffic Flow Dynamics
+	              and highway design guides put typical drivers at 2 to 3 m/s^2)
+	  rightLanes  if set, the profile only uses this many lanes on the right (trucks)
 	  share       how common the profile is
 ]]
 
 local DriverProfiles = {}
 
 DriverProfiles.profiles = {
-	cautious = { speed = { 95, 110 }, gap = 1.8, minGap = 2.5, accel = 1.0, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 4.6, width = 1.8, laneMin = 1, share = 0.25 },
-	normal = { speed = { 110, 130 }, gap = 1.4, minGap = 2.0, accel = 1.4, decel = 2.0, politeness = 0.3, threshold = 0.2, length = 4.7, width = 1.85, laneMin = 1, share = 0.45 },
-	aggressive = { speed = { 130, 155 }, gap = 0.9, minGap = 1.5, accel = 2.0, decel = 2.5, politeness = 0.1, threshold = 0.1, length = 4.6, width = 1.85, laneMin = 1, share = 0.15 },
-	truck = { speed = { 80, 90 }, gap = 1.8, minGap = 3.0, accel = 0.6, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 14.0, width = 2.5, laneMin = 3, share = 0.15 },
+	cautious = { speed = { 95, 110 }, gap = 1.8, minGap = 2.5, accel = 1.0, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 4.6, width = 1.8, lateral = 2.0, share = 0.25 },
+	normal = { speed = { 110, 130 }, gap = 1.4, minGap = 2.0, accel = 1.4, decel = 2.0, politeness = 0.3, threshold = 0.2, length = 4.7, width = 1.85, lateral = 2.4, share = 0.45 },
+	aggressive = { speed = { 130, 155 }, gap = 0.9, minGap = 1.5, accel = 2.0, decel = 2.5, politeness = 0.1, threshold = 0.1, length = 4.6, width = 1.85, lateral = 3.0, share = 0.15 },
+	truck = { speed = { 80, 90 }, gap = 1.8, minGap = 3.0, accel = 0.6, decel = 1.5, politeness = 0.5, threshold = 0.3, length = 14.0, width = 2.5, lateral = 1.6, rightLanes = 2, share = 0.15 },
 }
 -- fixed order, so random choices are repeatable for a given seed
 DriverProfiles.order = { "cautious", "normal", "aggressive", "truck" }
@@ -36,5 +39,13 @@ DriverProfiles.DECISION_INTERVAL = { 1.0, 2.0 } -- seconds between a driver's la
 DriverProfiles.MIN_TIME_IN_LANE = 4.0 -- seconds after a lane change before the next one
 -- how traffic expects a player's car to brake, used in the lane-change safety check
 DriverProfiles.PLAYER = { gap = 1.0, minGap = 2.0, accel = 3.0, decel = 6.0 }
+-- Curves: each profile has a speed limit for every LIMIT_STEP metres of road, from its lateral
+-- comfort and the curvature (RoadGeometry:speedLimits), lowered ahead of each curve so that slowing
+-- at CURVE_DECEL gets there in time. A driver aims for the limit CURVE_LOOKAHEAD seconds ahead and
+-- closes the difference over CURVE_RESPONSE seconds.
+DriverProfiles.LIMIT_STEP = 10 -- m
+DriverProfiles.CURVE_DECEL = 1.0 -- m/s^2
+DriverProfiles.CURVE_LOOKAHEAD = 1.0 -- s
+DriverProfiles.CURVE_RESPONSE = 1.0 -- s
 
 return DriverProfiles
