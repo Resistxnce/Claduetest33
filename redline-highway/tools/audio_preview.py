@@ -173,6 +173,11 @@ class EngineMix:
                 spec["idleLevel"] + (1 - spec["idleLevel"]) * clamp(rpm / spec["redlineRpm"], 0, 1.1) ** spec["rpmCurve"])
 
         gear = inp["gear"]
+        if inp["shifting"] or gear != self.last_gear:
+            self.since_shift = 0.0
+        else:
+            self.since_shift += dt
+
         if gear != self.last_gear:
             if gear > self.last_gear and self.last_gear >= 1:
                 if self.load > 0.5 and inp["load"] > 0.5 and rpm > spec["shiftCutMinRpm"]:
@@ -191,7 +196,7 @@ class EngineMix:
         self.load += (target - self.load) * clamp(rate * dt, 0, 1)
         load = self.load
 
-        if inp["limiter"]:
+        if inp["limiter"] and self.since_shift > spec.get("limiterShiftMask", 0.15):
             self.limiter_seen = 0.0
         else:
             self.limiter_seen += dt

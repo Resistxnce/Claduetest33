@@ -131,7 +131,7 @@ The engine sheet is synthesized by `tools/synth_audio.py` from `assets/audio/eng
 | Firing | 1-8-7-2-6-5-4-3, GM bank numbering (odd left, even right), 90° V, cross-plane crank. Every 90° overall; each bank 180-270-180-90°: the burble. | P / E (`--check` confirms the pattern with no warnings) |
 | Exhaust | Tri-Y manifolds [F] modelled as one 0.45 m collector per bank. X-pipe crossover 0.35 [E]: X, H or none is unconfirmed. Two 3.0 / 3.1 m pipes to quad tips [P]. | P / F / E |
 | Valves | Dual-mode exhaust, modelled as Sport: valves shut at light load below 3,500 rpm, open on throttle or above it | P / E |
-| Supercharger | Roots type, two 4-lobe rotors, 3.10 × crank speed, 8 pulses per rotor turn. Whine = 0.4133 × rpm Hz (engine order 24.8, 6.2 × the firing frequency). Whine loops are made at 1,200 and 4,000 rpm, so playback stays within 0.54-1.65 × from idle to the limiter. | P / E |
+| Supercharger | Roots type, two 4-lobe rotors, 3.10 × crank speed, 8 pulses per rotor turn. Whine = 0.4133 × rpm Hz (engine order 24.8, 6.2 × the firing frequency). A weaker single-rotor line at half that pitch (0.207 × rpm), 0.2 of the main line (about 14 dB under) [E]. Whine loops are made at 1,200 and 4,000 rpm, so playback stays within 0.54-1.65 × from idle to the limiter. | P / E |
 | Limiter | Fuel cut at 6,600 rpm. Free revving bounces at 8 Hz and drops 350 rpm; in gear it bounces at 10 Hz and drops 150 rpm. | E (behaviour not documented) |
 | Overrun | Burble 0.4, plus crackles after high-rpm lift-offs and a crack on full-throttle upshifts. GM's bulletin 17-NA-078 says WOT pops in Sport and Track are normal. | F / E |
 | Loudness | Cabin estimates: idle 54 dBA, full throttle 85, 70 mph 70. These come from Edmunds' previous-generation ZL1 (53.6 / 81.9 / 69.9), adjusted for the coupe; C/D's figures could not be read. | E |
@@ -144,7 +144,14 @@ The engine sheet is synthesized by `tools/synth_audio.py` from `assets/audio/eng
 - **Outlet offset.** The first build had the far outlet 0.25 m farther from the listener. That put half orders up to 7 dB above the firing order on throttle (14 dB on the limiter), far burblier than either recording. Two tailpipes heard from behind sum almost in phase, so the offset is now 0 and the 0.1 m pipe-length difference keeps some burble.
 - **Supercharger whine, pitch.** In the drive preview, the order spectrum (resampled with the model's rpm) shows a line at order 24.8 at full boost. It sits 14-18 dB under the firing-order line and 18-27 dB above the floor around it. The whine-only signal (the preview rendered with and without the whine) peaks at 261.6 Hz at 633 rpm, which is 0.4133 × rpm. The baked loops measure 496.7 Hz at 1,200 rpm and 1,653.3 Hz at 4,000.
 - **Whine on the spectrogram.** In a spectrogram of the launch with 0.4133 × rpm marked, the line follows the marks through 1st to 5th and steps down at each upshift (`whine_overlay_launch.png` in the build scratch folder).
-- **Supercharger whine, level.** The whine-only signal sits 15-16 dB(A) under the rest of the mix at full throttle from 4,000 to 6,600 rpm, at a volume of 0.06. It sits 26 dB(A) under at part throttle (no boost below 68% throttle) and 31 dB(A) under at idle. Neither reference recording shows a whine line above its noise floor (tailpipe microphones), so the level remains an estimate.
+- **Supercharger whine, level.** Reviewers hear the whine most at low revs and part throttle, faintly at a quiet idle, and covered by the exhaust at high revs. The config's whine shape is set to match: volume 0.06, idle share 0.4, full level from 1,500 rpm, floor 0.5. Measured with the whine-only signal (the mix rendered with and without the whine), against the rest of the mix:
+  - 11-13 dB(A) under in full-throttle pulls from 1,500 to 4,500 rpm;
+  - 15-17 dB(A) under at part throttle (2,000-4,500 rpm);
+  - 16 dB(A) under at full throttle above 4,500 rpm;
+  - 21 dB(A) under at idle.
+
+  With the mixer's original shape these were 11.6-17, 22-24, 15.7 and 31 dB(A). Neither reference recording shows a whine line above its noise floor (tailpipe microphones), so the levels remain estimates.
+- **Single-rotor line.** In the whine loops the half-pitch line measures 14 dB under the main line, with its third harmonic 24-25 dB under. In the drive preview's order spectrum it shows at order 12.4, 5-12 dB above the floor around it during the launch. On the spectrogram it is close to engine order 12, so it is hard to pick out by eye.
 - **Relative levels.** The mixer compresses real levels by half, so the research estimates mean full throttle should be +15.5 dB over idle and a 70 mph cruise +8.0. In the cockpit the model gives +14.5 dB at full throttle (5,800-6,600 rpm) and +9.1 at 70 mph in 10th. The exterior view gives +14.5 and +8.7. With the Track shift pattern the car cruises at 70 mph in 6th at 3,160 rpm, which is +10.5 dB in the cockpit.
 - **Spectrograms viewed.** Both preview spectrograms were checked, plus zoomed views. They show the free rev hitting the limiter, with its bounce as vertical striations about 8 a second. They show the launch's rising harmonic fans and upshift steps, the blipped downshifts under braking, and the 2nd-gear limiter hold, flat with striations about 10 a second.
 - **Limiter switching.** The limiter loops take over fully during the free rev (the free-revving loop) and the 2nd-gear hold (the in-gear loop, mean mix 0.99). The longest cut-free spell is 0.10 s, under the 0.3 s hold, so there are no dropouts. The loops' envelopes repeat at 7.9 and 9.9 Hz.
@@ -179,7 +186,7 @@ In the model this gives 0-60 mph in 3.77 s with rollout (C/D 3.7, MT 3.8). The q
 2. **No freely licensed recording of a ZL1.** The calibration used an LT4 with an aftermarket exhaust and an LS9 ZR1 clip. Neither shows the whine above its noise, so the whine level is an estimate.
 3. **Exhaust crossover.** X-pipe, H-pipe or none is unconfirmed, as are pipe diameters, catalysts and mufflers.
 4. **The rev limiter.** Its exact rpm and behaviour, and GM's park/neutral rev limit for automatics, are not documented. The game uses one limiter, at 6,600 rpm.
-5. **Torque curve and the supercharger's second line.** GM's crank torque chart wasn't found: the curve is an estimate, checked against a wheel-dyno shape. The blower's timing-gear tooth count is unknown, and the single-rotor half-pitch line isn't synthesized.
+5. **Torque curve and the supercharger's other lines.** GM's crank torque chart wasn't found: the curve is an estimate, checked against a wheel-dyno shape. The blower's timing-gear tooth count is unknown, so there is no gear-mesh line, and the single-rotor line's level is an estimate.
 6. **Gearbox and drive.** Converter stall and absolute shift times are not published. Weight distribution, centre-of-mass height, the Cd and lift figures, springs, bars, dampers, steering ratio and ride height are all estimates.
 7. **Handling is untested.** The lateral grip and anti-roll split are design estimates for Studio testing.
 8. **0-100 mph.** Hennessey doesn't say whether its 7.6 s uses rollout. The model gives 7.55 s from a standstill and 7.19 s with rollout.
@@ -188,7 +195,7 @@ In the model this gives 0-60 mph in 3.77 s with rollout (C/D 3.7, MT 3.8). The q
 
 - **The fuel cut acts through the throttle filter** (`Engine.luau`; `Engine.net` in the Python copy). A fast free rev overshoots the limiter: this car's first hit reaches the 7,000 rpm clamp. In gear, the blower's boost collapses on the limiter, so the whine fades, although a real fuel cut leaves the throttle open.
 - **Automatic mode upshifts under braking.** Pedal 0 uses the light upshift point, so hard braking from speed upshifts first. GM's Sport mode downshifts under braking.
-- **The mixer's supercharger whine shape is fixed.** The 20% floor and the rpm/2500 ramp make it weakest at low rpm and part throttle, where reviewers hear it most.
+- **Resolved:** the supercharger whine shape (`superchargerIdleShare`, `superchargerFullRpm`, `superchargerRpmFloor`) and the single-rotor line (`singleRotorLevel`) are now settings, and this car uses both.
 
 ## Sources
 

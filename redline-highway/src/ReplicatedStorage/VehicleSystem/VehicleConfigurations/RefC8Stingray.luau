@@ -34,8 +34,8 @@ return {
 		frontShare = 0.394, -- [M] 39.4 / 60.6 measured by Car and Driver on the same car (S13); 40 / 60 in a leaked GM document [P] (S32)
 		comHeight = 0.44, -- [E] not published; about 0.36 of the 1.234 m roof, as the GT12's estimate, with the dry-sump V8 mounted low (crank below the half-shafts, S07)
 		-- [E] Size of the invisible box that carries the mass. It sets rotational inertia: about 2,550 kg*m^2
-		-- in yaw, a radius of gyration of 1.21 m, 0.83 of front-axle-to-CoM times CoM-to-rear-axle (a
-		-- mid-engine car's mass sits nearer the middle than the GT12's front-mid V12, 2,700 kg*m^2).
+		-- in yaw, a radius of gyration of 1.21 m, whose square is 0.83 of (front axle to CoM x CoM to rear
+		-- axle): a mid-engine car's mass sits nearer the middle than the GT12's (2,700 kg*m^2).
 		inertiaBox = { width = 1.80, height = 0.70, length = 3.80 },
 	},
 
@@ -110,11 +110,11 @@ return {
 
 	drivetrain = {
 		layout = "RWD", -- [F] mid-engine, rear-wheel drive (S10)
-		frontTorqueShare = 0, -- used by AWD layouts (0 to 1)
+		frontTorqueShare = 0, -- [F] rear-wheel drive: nothing to the front (the field is used by AWD layouts)
 		-- [E] The Z51's electronic limited-slip differential (a clutch pack modulated from open to locked,
 		-- S04) as a clutch-type LSD; GM's calibration isn't published. Values from the research note.
 		rearDifferential = { type = "LimitedSlip", preload = 100, powerLock = 0.45, coastLock = 0.30, stiffness = 180 },
-		frontDifferential = { type = "Open" },
+		frontDifferential = { type = "Open" }, -- [F] the front axle isn't driven
 		-- [E] Traction control (the real car has Performance Traction Management): caps engine and clutch
 		-- torque at headroom times what the driven tyres can grip, and trims while they slip past targetSlip.
 		-- headroom: 1.3 to 2.0 were tried; launch times moved by under 0.05 s (spec sheet), so it stays at 1.3.
@@ -124,9 +124,9 @@ return {
 	-- [E] Not published. Springs from ride frequencies of 1.7 Hz front and 1.9 Hz rear (Z51 springs are
 	-- stiffer than the base car's, S10; reviewers praise the ride), at corner masses of 341 and 524 kg.
 	-- Dampers at about 0.3 of critical in bump and 0.5 in rebound. Anti-roll bars give the front axle about
-	-- 52% of the roll stiffness against its 39% of the weight, for a stable, slightly understeering balance
-	-- (about 1.4 degrees of roll per g). The real car has SLA double wishbones and 46 mm monotube coil-overs
-	-- at both ends [F] (S01).
+	-- 52% of the roll stiffness against its 39% of the weight (about 1.4 degrees of roll per g); with the
+	-- tyres' nominal loads below, a steady-state estimate puts the car at neutral on the limit. The real
+	-- car has SLA double wishbones and 46 mm monotube coil-overs at both ends [F] (S01).
 	suspension = {
 		front = {
 			springRate = 38900, -- [E] N/m at the wheel, 1.7 Hz
@@ -279,17 +279,17 @@ return {
 		-- Chosen from renders of seven variants (docs/cars/RefC8Stingray.md).
 		blockout = {
 			profile = {
-				{ 0, 0.76 }, -- nose (hidden in the box below the beltline)
-				{ 0.08, 0.78 }, -- front of the bonnet
-				{ 0.18, 0.81 }, -- front axle
-				{ 0.28, 0.89 }, -- windscreen base
-				{ 0.42, 1.20 }, -- windscreen header
+				{ 0, 0.76 }, -- [E] nose (hidden in the box below the beltline)
+				{ 0.08, 0.78 }, -- [E] front of the bonnet
+				{ 0.18, 0.81 }, -- [E] front axle (research 0.18)
+				{ 0.28, 0.89 }, -- [E] windscreen base (research 0.29)
+				{ 0.42, 1.20 }, -- [E] windscreen header (research 0.42)
 				{ 0.50, 1.234 }, -- roof peak, the factory height [F]
-				{ 0.56, 1.21 }, -- roof end
-				{ 0.64, 1.05 }, -- foot of the rear glass, start of the engine deck
-				{ 0.95, 1.01 }, -- engine deck over and behind the rear axle
-				{ 0.98, 1.05 }, -- ducktail spoiler lip
-				{ 1, 0.97 }, -- tail
+				{ 0.56, 1.21 }, -- [E] roof end (research 0.59)
+				{ 0.64, 1.05 }, -- [E] foot of the rear glass, start of the engine deck
+				{ 0.95, 1.01 }, -- [E] engine deck over and behind the rear axle (axle at 0.77)
+				{ 0.98, 1.05 }, -- [E] ducktail spoiler lip (research 0.98, about 1.10 m +/-10%)
+				{ 1, 0.97 }, -- [E] tail
 			},
 			greenhouse = { 0.28, 0.64 }, -- [E] cabin glass, windscreen base to the foot of the rear glass
 			beltline = 0.76, -- [E] side window sill, m

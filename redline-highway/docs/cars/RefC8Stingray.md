@@ -291,7 +291,8 @@ bounce is the baked loop's.
      ```python
      if erpm < 0.85 * idle: e = min(e, clamp((erpm - 0.6 * idle) / (0.25 * idle), 0, 1))
      ```
-   - With it, every stopping case stops and returns to 565 rpm.
+   - With it, every braking case stops and the engine returns to 565 rpm. One edge case remains: holding 2nd
+     manually at a standstill settles at 366 rpm with the clutch 4% engaged.
    - Stopgap if it can't land before testing: set this car's `idleRpm` to 800. That was tested to stop
      cleanly, but it raises the idle sound by a third.
 2. **Low-speed tyre slip floor** (`TireSimulation/Tire.luau` line 85, and `drivetrain_model.py` line 402).

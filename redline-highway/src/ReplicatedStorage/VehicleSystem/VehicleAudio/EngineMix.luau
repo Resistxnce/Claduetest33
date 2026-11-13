@@ -99,6 +99,7 @@ function EngineMix.new(spec, engineSheet, effectsSheet, random: Random?)
 		crackleNames = {},
 		whineHz = 1000,
 		limiterSeen = math.huge, -- seconds since the fuel cut was last active
+		sinceShift = math.huge, -- seconds since the gearbox last changed gear
 		limiterMix = 0, -- 0 = normal loops, 1 = limiter loops
 		freeMix = 0, -- 0 = in-gear limiter loop, 1 = free-revving one
 		limiterRpm = 0, -- smoothed rpm while on the limiter
@@ -204,8 +205,16 @@ function EngineMix.update(self, dt: number, input)
 		else spec.engineVolume * engineGain
 			* (spec.idleLevel + (1 - spec.idleLevel) * math.clamp(rpm / spec.redlineRpm, 0, 1.1) ^ spec.rpmCurve)
 
-	-- gear changes: an ignition-cut crack on full-throttle upshifts, a clunk on every shift
+	-- time since the gearbox last changed gear: its shifting flag, or a new gear (which also covers
+	-- a gearbox that doesn't report shifting)
 	local gear = input.gear
+	if input.shifting or gear ~= self.lastGear then
+		self.sinceShift = 0
+	else
+		self.sinceShift += dt
+	end
+
+	-- gear changes: an ignition-cut crack on full-throttle upshifts, a clunk on every shift
 	if gear ~= self.lastGear then
 		if gear > self.lastGear and self.lastGear >= 1 then
 			if self.load > 0.5 and input.load > 0.5 and rpm > spec.shiftCutMinRpm then
@@ -230,8 +239,10 @@ function EngineMix.update(self, dt: number, input)
 	local load = self.load
 
 	-- the rev limiter: switch to the limiter loops while the fuel cut keeps coming back with the
-	-- pedal down (a fast attack so the first cut is heard), and back when it stops
-	if input.limiter then
+	-- pedal down (a fast attack so the first cut is heard), and back when it stops. A gear change
+	-- flares the engine into the fuel cut for a moment while the clutch slips. That isn't the
+	-- limiter, so cuts during a shift and for limiterShiftMask seconds after it are ignored.
+	if input.limiter and self.sinceShift > (spec.limiterShiftMask or 0.15) then
 		self.limiterSeen = 0
 	else
 		self.limiterSeen += dt

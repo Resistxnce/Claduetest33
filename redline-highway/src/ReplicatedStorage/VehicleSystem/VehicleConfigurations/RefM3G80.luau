@@ -301,7 +301,7 @@ return {
 		zeroTo60MphRollout = 3.5, -- [M] Car and Driver and MotorTrend, both 3.5 s with a one-foot rollout
 		zeroTo100Mph = 7.6, -- [M] Car and Driver, one-foot rollout (MotorTrend 7.5 s)
 		quarterMile = 11.6, -- [M] Car and Driver and MotorTrend 11.6 s (one-foot rollout); The Citizen 11.58 s
-		quarterMileKmh = 200.0, -- [M] Car and Driver 124 mph; MotorTrend 125.6 mph; The Citizen 201.2 km/h
+		quarterMileKmh = 199.6, -- [M] Car and Driver 124 mph (MotorTrend 125.6 mph = 202.1 km/h; The Citizen 201.2 km/h)
 		brake60MphTo0 = 31.1, -- [M] MotorTrend 102 ft
 		brake70MphTo0 = 45.7, -- [M] Car and Driver 150 ft
 	},
