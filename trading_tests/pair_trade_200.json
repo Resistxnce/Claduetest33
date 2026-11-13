@@ -16,5 +16,19 @@
   },
   "costs": "No commission. Borrow fee on the AMD short and bid/ask gaps are a few cents at most over 4 hours, so they are ignored.",
   "realism_note": "Most brokers only let you short whole shares and need a margin account, so a $200 AMD short (0.37 shares) is simulated pro rata.",
-  "price_source": "Yahoo Finance chart API, 1-minute bars"
+  "price_source": "Yahoo Finance chart API, 1-minute bars",
+  "result": {
+    "scored_utc": "2026-11-13T19:06:03Z",
+    "nvda_exit": 162.53,
+    "amd_exit": 530.9,
+    "spy_exit": 753.36,
+    "nvda_long_pnl": 0.15,
+    "amd_short_pnl": 3.22,
+    "total_pnl": 3.38,
+    "total_pct": 0.84,
+    "best_moment": "+5.05 at 01:02 PM EST",
+    "worst_moment": "-0.89 at 10:32 AM EST",
+    "spy_move_pct": 0.06,
+    "note": "Nvidia was flat (+0.08%) and AMD fell 1.61%, so nearly all the gain came from the short. No AMD-specific news for the day was found. Nvidia reports quarterly results on November 17, 2026."
+  }
 }
