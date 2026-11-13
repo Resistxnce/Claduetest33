@@ -128,68 +128,716 @@ def finish(x, rms=0.1):
 
 
 # --------------------------------------------------------------------------------------------
-# Engine loops
+# Acoustic building blocks: frequency responses applied with circular()
 # --------------------------------------------------------------------------------------------
 
-def loop_length(rpm, seconds):
-    cycle = 120.0 / rpm  # seconds per 720-degree engine cycle
-    cycles = max(1, round(seconds / cycle))
-    n = round(cycles * cycle * FS)
-    return n, cycles, cycles * 120.0 * FS / n  # samples, cycles, exact engine speed of the loop
+def gas_c(temp_k):
+    """Speed of sound in hot exhaust gas (ratio of specific heats about 1.35), m/s."""
+    return 19.7 * math.sqrt(temp_k)
 
 
-def engine_loop(point_rpm, on, rng):
-    n, cycles, rpm = loop_length(point_rpm, ENGINE_LOOP_SECONDS)
-    f = freqs(n)
-    t = np.arange(n) / FS
-    deg = 60.0 / (rpm * 360.0)  # seconds per crank degree
-    x = rpm / REDLINE
+def a_weighting(f):
+    """IEC 61672 A-weighting as a linear amplitude factor."""
+    f2 = np.maximum(np.asarray(f, dtype=float), 1e-3) ** 2
+    ra = (12194.0 ** 2 * f2 * f2) / ((f2 + 20.6 ** 2) * np.sqrt((f2 + 107.7 ** 2) * (f2 + 737.9 ** 2))
+                                     * (f2 + 12194.0 ** 2))
+    return ra * 10 ** (2.0 / 20)
 
-    amp_jitter, time_jitter = (0.05, 0.2) if on else (0.16, 0.45)
-    banks = []
-    for offset in (0.0, BANK_ANGLE):
-        cylinder = 1 + 0.04 * rng.standard_normal(6)  # each cylinder slightly different
-        times, amps = [], []
-        for c in range(cycles):
-            for k in range(6):
-                angle = c * 720.0 + k * 120.0 + offset + time_jitter * rng.standard_normal()
-                a = cylinder[k] * (1 + amp_jitter * rng.standard_normal())
-                if not on and rng.random() < 0.05 + 0.08 * x:
-                    a *= 0.3  # lean, uneven combustion on the overrun
-                times.append(angle * deg)
-                amps.append(a)
-        banks.append((times, amps))
 
-    tau = (0.12 + 0.18 * (1 - x)) * 1e-3 if on else (0.30 + 0.30 * (1 - x)) * 1e-3
-    pulse = gamma_pulse(f, tau)
-    silencer = (lowpass(f, 3600 if on else 2200, 0.8) * (1 + 1.1 * resonator(f, 110, 1.2))
-                * highpass(f, 30))
-    exhaust = np.zeros(n)
-    for b, (times, amps) in enumerate(banks):
-        k = 1 + 0.07 * b  # the banks' pipes differ slightly in length
-        headers = (0.5 + 1.4 * resonator(f, 160 * k, 4) + 1.0 * resonator(f, 480 * k, 4)
-                   + 0.7 * resonator(f, 800 * k, 4) + 0.45 * resonator(f, 1450 * k, 3.5)
-                   + 0.25 * resonator(f, 2600 * k, 3))
-        exhaust += circular(impulse_train(n, times, amps), pulse * headers * silencer)
+def a_rms(x):
+    """A-weighted RMS of a loop."""
+    y = np.fft.irfft(np.fft.rfft(x) * a_weighting(freqs(len(x))), n=len(x))
+    return float(np.sqrt(np.mean(y * y)))
 
-    all_times = banks[0][0] + banks[1][0]
-    all_amps = banks[0][1] + banks[1][1]
-    fire_hz = rpm / 60 * 6  # a whole number of cycles per loop, so these modulations repeat too
-    intake = circular(rng.standard_normal(n) * (1 + 0.8 * np.cos(2 * np.pi * fire_hz * t)),
-                      resonator(f, 420, 1.5) + 0.6 * resonator(f, 1100, 2))
-    valvetrain = circular(rng.standard_normal(n) * (1 + 0.5 * np.cos(np.pi * fire_hz * t)),
-                          resonator(f, 5500, 0.9))
-    envelope = circular(impulse_train(n, all_times, all_amps), decay(f, 0.6e-3))
-    rasp = circular(rng.standard_normal(n) * envelope, resonator(f, 2800, 0.8))
 
-    if on:
-        mix = (unit(exhaust) + (0.2 + 0.3 * x) * unit(intake) + 0.035 * unit(valvetrain)
-               + (0.10 + 0.15 * x) * unit(rasp))
-        drive = 1.4 + 0.8 * x
-        mix = np.tanh(drive * mix / np.max(np.abs(mix))) / math.tanh(drive)
+def pipe(f, length, c, g, loss_hz=5000.0):
+    """A pipe's resonances, with unit gain at its peaks and a delay of length / c.
+
+    g is the round-trip reflection (the two end reflection coefficients multiplied): g > 0 for a pipe
+    acoustically open at both ends (peaks at n*c/2L), g < 0 for one closed at its source end (peaks at
+    odd multiples of c/4L). Wall friction and radiation lower the high peaks (loss_hz)."""
+    if length <= 0:
+        return np.ones(len(f), dtype=complex)
+    k = 2j * np.pi * f * length / c
+    gf = g * np.exp(-f / loss_hz)
+    return np.exp(-k) * (1 - abs(g)) / (1 - gf * np.exp(-2 * k))
+
+
+def blowdown(f, rise_s, decay_s):
+    """Spectrum of a blowdown pressure pulse: a fast rise and a slower decay, unit area."""
+    return 1 / ((1 + 2j * np.pi * f * rise_s) * (1 + 2j * np.pi * f * decay_s))
+
+
+def radiation(f, diameter_m):
+    """A pipe end radiates the rate of change of its flow until ka ~ 1, then evenly."""
+    s = 1j * f / (AIR_C / (math.pi * diameter_m))
+    return s / (1 + s)
+
+
+def expansion_chamber(f, area_ratio, length, c):
+    """Transmission of a simple expansion chamber (a silencer box): passbands at n * c / 2L."""
+    m = area_ratio
+    return 1 / np.sqrt(1 + 0.25 * (m - 1 / m) ** 2 * np.sin(2 * np.pi * f * length / c) ** 2)
+
+
+def shift(f, seconds):
+    return np.exp(-2j * np.pi * f * seconds)
+
+
+def burst(n, times, amps, tau, rng):
+    """Noise bursts (exponential decay tau) starting at each time: combustion and afterfire."""
+    envelope = circular(impulse_train(n, times, amps), decay(freqs(n), tau)) / (tau * FS)
+    return rng.standard_normal(n) * envelope
+
+
+# --------------------------------------------------------------------------------------------
+# Engine acoustic definitions: assets/audio/engines/<ConfigId>.json (format in docs/AUDIO.md)
+# --------------------------------------------------------------------------------------------
+
+class DefinitionError(Exception):
+    pass
+
+
+DEFAULTS = {
+    "seed": None,  # random seed; default: from the car id
+    "sheet": None,  # sheet (and Luau table) name; default "<id>_Engine"
+    "engine": {
+        "layout": "V",  # "V", "inline" or "flat"
+        "bankAngleDeg": 90,
+        "crank": "even",  # "crossplane", "flatplane", "even", "commonPin" (odd-firing V), "inline"
+        "firingIntervalsDeg": None,  # optional cycle of gaps along the firing order, overrides crank
+        "idleRpm": 800,
+        "limiterRpm": 6500,
+        "aspiration": "NA",  # "NA", "Turbo" or "Supercharger"
+    },
+    "exhaust": {
+        "evoDeg": 130,  # exhaust valve opens this many crank degrees after the firing
+        "pulseRiseDeg": 8,  # blowdown pulse rise, crank degrees
+        "pulseDecayDeg": 45,  # and decay
+        "minRiseMs": 0.06,  # the rise can't be quicker than this
+        "gasTempK": 1000,  # in the primaries (sets pulse travel time and primary resonances)
+        "pipeTempK": 700,  # downstream of the collectors
+        "primaryReflection": -0.55,  # round-trip reflection of a primary (closed valve end)
+        "pipeReflection": 0.45,  # of the pipes after the collector
+        "rasp": 0.35,  # 0..1: how much full-load pulses sharpen (harmonic richness)
+        "level": 1.0,
+        "collectors": None,  # default: one per bank, see BANK_COLLECTOR
+        "merge": {"type": "separate", "crossover": 0.0, "crossoverHz": 400, "pathM": 0.3},
+        "outlets": None,  # default: one per collector, see OUTLET
+        "muffler": {
+            "valves": "open",  # "open", "closed", "auto" (open above openAboveRpm or openAboveLoad)
+            "openAboveRpm": 3500,
+            "openAboveLoad": 0.6,
+            "openLowpassHz": 3800,
+            "closedLowpassHz": 1300,
+            "closedCutDb": 7,
+            "chamberAreaRatio": 6,
+            "chamberLengthM": 0.45,
+        },
+    },
+    "intake": {
+        "level": 0.25,  # relative to the exhaust at full load
+        "intakeDeg": 400,  # induction pulse, crank degrees after the firing
+        "runnerLengthM": 0.30,
+        "airboxHz": 110,  # Helmholtz resonance of the plenum and airbox
+        "snorkelLengthM": 0.5,
+        "mouthDiameterM": 0.09,
+    },
+    "mechanical": {
+        "combustion": 0.10,  # block-radiated combustion noise
+        "valvetrain": 0.03,  # valve seating ticks
+        "injectors": 0.025,  # direct-injection ticks (0 for port injection)
+        "blockHz": [1800, 3300],
+    },
+    "idle": {"roughness": 0.08, "lope": 0.0},  # cycle-to-cycle variation at idle; cam lope 0..1
+    "overrun": {"pulseLevel": 0.16, "burble": 0.0},  # off-throttle pulse strength; pops per second / 6
+    "forcedInduction": None,
+    "limiter": {
+        "type": "fuelCut",  # "fuelCut", "ignitionCut" (afterfire pops) or "softCut" (partial cut)
+        "free": {"bounceHz": 8.0, "dropRpm": 300, "cutShare": 0.45},  # free revving (neutral)
+        "load": {"bounceHz": 6.0, "dropRpm": 140, "cutShare": 0.35},  # in gear
+        "popChance": 0.0,  # chance of an afterfire pop per cut firing
+        "cutLevel": 0.12,  # pulse strength of a cut cylinder (it only pumps air)
+    },
+    "loops": {"rpmPoints": None, "seconds": 1.0, "limiterSeconds": 1.25},
+    "loudness": {"interior": {}, "exterior": {}, "loadRangeDb": 12.0},
+    "notes": {},
+}
+
+BANK_COLLECTOR = {"primaryLengthM": 0.55, "lengthSpreadM": 0.02}
+OUTLET = {"pipeLengthM": 2.4, "tailLengthM": 0.35, "diameterM": 0.09, "gain": 1.0, "offsetM": 0.0}
+TURBO = {
+    "count": 2,
+    "pulseDamping": 0.55,  # 0..1: share of the pulse's sharp part the turbine takes out
+    "dampingHz": 180,  # pulses are smoothed above this
+    "whistleHz": [2500, 8500],  # whistle pitch from low to full boost
+    "whistleLevel": 0.10,
+    "whooshLevel": 0.08,  # broadband turbine and compressor noise in the main loops
+    "blowOff": {"type": "recirculating", "level": 0.5, "variants": 3},
+    "wastegateFlutter": 0.0,
+}
+SUPERCHARGER = {
+    "kind": "roots",  # twin-rotor (Roots/TVS) or "centrifugal"
+    "rotorLobes": 4,
+    "driveRatio": 2.4,  # rotor turns per crank turn
+    "pulsesPerRev": None,  # default: 2 * rotorLobes for a twin-rotor blower
+    "whineLevel": 0.12,
+    "whineRpm": [1800, 5200],  # crank speeds the whine loops are made at
+}
+
+
+def deep_merge(base, over):
+    out = copy.deepcopy(base)
+    for k, v in (over or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = deep_merge(out[k], v)
+        else:
+            out[k] = copy.deepcopy(v)
+    return out
+
+
+def definition_path(car):
+    p = pathlib.Path(car)
+    return p if p.suffix == ".json" else ENGINE_DIR / f"{car}.json"
+
+
+def load_definition(car):
+    path = definition_path(car)
+    if not path.exists():
+        raise DefinitionError(f"no acoustic definition at {path}")
+    try:
+        raw = json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        raise DefinitionError(f"{path.name}: not valid JSON ({e})") from None
+    d = deep_merge(DEFAULTS, raw)
+    d["id"] = raw.get("id") or path.stem
+    d["sheet"] = d["sheet"] or f"{d['id']}_Engine"
+    d["seed"] = d["seed"] if d["seed"] is not None else zlib.crc32(d["id"].encode())
+    validate(d)
+    return d
+
+
+def validate(d):
+    e, x = d["engine"], d["exhaust"]
+    where = d["id"]
+
+    def fail(msg):
+        raise DefinitionError(f"{where}: {msg}")
+
+    order = e.get("firingOrder")
+    if not order:
+        fail("engine.firingOrder is missing")
+    n = len(order)
+    if sorted(order) != list(range(1, n + 1)):
+        fail(f"engine.firingOrder must list cylinders 1..{n} once each, got {order}")
+    e["cylinders"] = e.get("cylinders", n)
+    if e["cylinders"] != n:
+        fail(f"engine.cylinders is {e['cylinders']} but the firing order has {n}")
+    banks = e.get("banks") or {"A": list(range(1, n + 1))}
+    e["banks"] = banks
+    listed = sorted(c for cyls in banks.values() for c in cyls)
+    if listed != list(range(1, n + 1)):
+        fail(f"engine.banks must hold every cylinder once, got {banks}")
+    if not e["idleRpm"] < e["limiterRpm"]:
+        fail("engine.idleRpm must be below engine.limiterRpm")
+    if x["collectors"] is None:
+        x["collectors"] = [dict(BANK_COLLECTOR, name=b, cylinders=list(c)) for b, c in banks.items()]
     else:
-        mix = unit(exhaust) + 0.12 * unit(intake) + 0.05 * unit(valvetrain) + 0.03 * unit(rasp)
-    return finish(mix), rpm
+        x["collectors"] = [deep_merge(BANK_COLLECTOR, c) for c in x["collectors"]]
+    names = [c.get("name") for c in x["collectors"]]
+    if None in names or len(set(names)) != len(names):
+        fail("every exhaust collector needs a unique name")
+    fed = sorted(c for col in x["collectors"] for c in col["cylinders"])
+    if fed != list(range(1, n + 1)):
+        fail(f"exhaust collectors must take every cylinder once, got {fed}")
+    if x["outlets"] is None:
+        x["outlets"] = [dict(OUTLET, collectors=[c["name"]]) for c in x["collectors"]]
+    else:
+        x["outlets"] = [deep_merge(OUTLET, o) for o in x["outlets"]]
+    for o in x["outlets"]:
+        for name in o.get("collectors", []):
+            if name not in names:
+                fail(f"exhaust outlet refers to unknown collector {name!r}")
+    merge = x["merge"]
+    if merge["type"] not in ("separate", "xpipe", "hpipe", "y"):
+        fail(f"exhaust.merge.type must be separate, xpipe, hpipe or y, got {merge['type']!r}")
+    if merge["type"] in ("xpipe", "hpipe") and len(x["outlets"]) < 2:
+        fail("an X- or H-pipe needs at least two outlets")
+    if x["muffler"]["valves"] not in ("open", "closed", "auto"):
+        fail("exhaust.muffler.valves must be open, closed or auto")
+    fi = d.get("forcedInduction")
+    if fi:
+        kind = fi.get("type")
+        if kind == "Turbo":
+            d["forcedInduction"] = fi = deep_merge(TURBO, fi)
+            lo, hi = fi["whistleHz"]
+            if not 200 < lo < hi < 16000:
+                fail("forcedInduction.whistleHz must be [low, high] in Hz")
+        elif kind == "Supercharger":
+            d["forcedInduction"] = fi = deep_merge(SUPERCHARGER, fi)
+            if fi["pulsesPerRev"] is None:
+                fi["pulsesPerRev"] = 2 * fi["rotorLobes"] if fi["kind"] == "roots" else fi.get("impellerBlades", 12)
+        else:
+            fail("forcedInduction.type must be Turbo or Supercharger")
+        e["aspiration"] = kind
+    lim = d["limiter"]
+    lim.setdefault("rpm", e["limiterRpm"])
+    if lim["type"] not in ("fuelCut", "ignitionCut", "softCut"):
+        fail("limiter.type must be fuelCut, ignitionCut or softCut")
+    loops = d["loops"]
+    if not loops["rpmPoints"]:
+        count = max(5, math.ceil(math.log(e["limiterRpm"] / e["idleRpm"]) / math.log(1.33)) + 1)
+        loops["rpmPoints"] = [round(v / 50) * 50 for v in np.geomspace(e["idleRpm"], e["limiterRpm"], count)]
+    pts = loops["rpmPoints"]
+    if pts != sorted(pts) or pts[0] < 0.5 * e["idleRpm"] or pts[-1] > e["limiterRpm"] + 200:
+        fail("loops.rpmPoints must ascend from about idle to the limiter")
+    firing_angles(d)  # raises if the firing pattern is impossible
+
+
+# --------------------------------------------------------------------------------------------
+# Firing events
+# --------------------------------------------------------------------------------------------
+
+def firing_intervals(e):
+    """Gaps (crank degrees) between successive firings along the firing order."""
+    n = len(e["firingOrder"])
+    if e.get("firingIntervalsDeg"):
+        return list(e["firingIntervalsDeg"])
+    if e["crank"] == "commonPin":
+        # Two cylinders, one per bank, share each crankpin. The second fires one bank angle after
+        # the first, so the gaps alternate bank angle and (pin spacing - bank angle).
+        pin_spacing = 2 * 720.0 / n
+        return [e["bankAngleDeg"], pin_spacing - e["bankAngleDeg"]]
+    return [720.0 / n]
+
+
+def firing_angles(d):
+    """Crank angle (0..720) at which each cylinder fires, plus the bank of each cylinder."""
+    e = d["engine"]
+    order = e["firingOrder"]
+    gaps = firing_intervals(e)
+    angles, a = {}, 0.0
+    for i, cyl in enumerate(order):
+        angles[cyl] = a
+        a += gaps[i % len(gaps)]
+    if abs(a - 720.0) > 1e-6:
+        raise DefinitionError(f"{d['id']}: the firing gaps add up to {a:g} degrees, not 720")
+    if e["crank"] == "commonPin":
+        bank_of = {c: b for b, cyls in e["banks"].items() for c in cyls}
+        position = {c: cyls.index(c) for cyls in e["banks"].values() for c in cyls}
+        for i in range(0, len(order), 2):
+            a_, b_ = order[i], order[(i + 1) % len(order)]
+            if bank_of[a_] == bank_of[b_] or position[a_] != position[b_]:
+                raise DefinitionError(
+                    f"{d['id']}: crank 'commonPin' needs the firing order to pair cylinders that share a pin "
+                    f"(same place in each bank's front-to-back list); {a_} and {b_} don't")
+    return angles
+
+
+def pulse_gaps(angles, cylinders):
+    """Gaps between the pulses that a group of cylinders sends into one pipe."""
+    a = sorted(angles[c] for c in cylinders)
+    return [round((a[(i + 1) % len(a)] - a[i]) % 720.0 or 720.0, 1) for i in range(len(a))]
+
+
+def describe(d):
+    """Text summary of the firing and pulse pattern, for the console and docs."""
+    e, x = d["engine"], d["exhaust"]
+    angles = firing_angles(d)
+    order = e["firingOrder"]
+    bank_of = {c: b for b, cyls in e["banks"].items() for c in cyls}
+    lines = [f"{d['id']}: {e['cylinders']} cylinders, {e['layout']} {e.get('bankAngleDeg', '')} deg, "
+             f"crank {e['crank']}, {e['aspiration']}, idle {e['idleRpm']} rpm, limiter {e['limiterRpm']} rpm",
+             "  firing gaps: " + "-".join(f"{g:g}" for g in pulse_gaps(angles, order)),
+             "  bank sequence: " + " ".join(f"{c}{bank_of[c]}" for c in order)]
+    for b, cyls in e["banks"].items():
+        lines.append(f"  bank {b} pulse gaps: " + "-".join(f"{g:g}" for g in pulse_gaps(angles, cyls)))
+    for col in x["collectors"]:
+        gaps = pulse_gaps(angles, col["cylinders"])
+        even = "even" if max(gaps) - min(gaps) < 1 else "uneven"
+        lines.append(f"  collector {col['name']} {col['cylinders']}: pulse gaps "
+                     + "-".join(f"{g:g}" for g in gaps) + f" ({even})")
+    m = x["merge"]
+    lines.append(f"  merge: {m['type']}" + (f", crossover {m['crossover']}" if m["type"] in ("xpipe", "hpipe") else "")
+                 + f"; {len(x['outlets'])} outlet(s); valves {x['muffler']['valves']}")
+    if e["crank"] == "flatplane" and len(e["banks"]) == 2:
+        if any(bank_of[order[i]] == bank_of[order[(i + 1) % len(order)]] for i in range(len(order))):
+            lines.append("  WARNING: a flat-plane V8 alternates banks; check the firing order and bank numbering")
+    if e["crank"] == "crossplane" and len(e["banks"]) == 2:
+        if all(bank_of[order[i]] != bank_of[order[(i + 1) % len(order)]] for i in range(len(order))):
+            lines.append("  WARNING: this firing order alternates banks like a flat-plane crank; check the numbering")
+    return "\n".join(lines)
+
+
+# --------------------------------------------------------------------------------------------
+# Engine sound
+# --------------------------------------------------------------------------------------------
+
+def steady_theta(rpm_target, seconds):
+    """Crank angle per sample for a steady loop of a whole number of 720-degree cycles."""
+    cycles = max(2, round(seconds * rpm_target / 120))
+    n = round(cycles * 120 / rpm_target * FS)
+    rpm = cycles * 120 * FS / n
+    theta = np.arange(n + 1) * (6 * rpm / FS)
+    return n, theta, rpm
+
+
+def limiter_theta(top, drop, bounce_hz, cut_share, seconds):
+    """Crank angle per sample for a loop of whole limiter bounces, and the cut phase per sample.
+
+    Each bounce: the cut starts at the top and the engine slows by `drop` rpm, then fuel returns and
+    it climbs back. The speeds are scaled very slightly so the loop is a whole number of cycles."""
+    bounces = max(2, round(seconds * bounce_hz))
+    n = round(bounces / bounce_hz * FS)
+    phase = (np.arange(n + 1) * bounces / n) % 1.0
+    q = cut_share
+    rpm = np.where(phase < q, top - drop * 0.5 * (1 - np.cos(np.pi * phase / q)),
+                   top - drop + drop * 0.5 * (1 - np.cos(np.pi * (phase - q) / (1 - q))))
+    theta = np.concatenate([[0.0], np.cumsum((rpm[:-1] + rpm[1:]) * 0.5 * 6 / FS)])
+    cycles = max(1, round(theta[-1] / 720))
+    theta *= cycles * 720 / theta[-1]
+    mean_rpm = theta[-1] / (6 * n / FS)
+    return n, theta, float(mean_rpm), phase < q
+
+
+class EngineModel:
+    """Synthesizes one car's engine from its acoustic definition."""
+
+    def __init__(self, d):
+        self.d = d
+        e = d["engine"]
+        self.angles = firing_angles(d)
+        self.cyls = e["firingOrder"]
+        self.idle = e["idleRpm"]
+        self.top = e["limiterRpm"]
+        x = d["exhaust"]
+        self.collector_of = {c: k for k, col in enumerate(x["collectors"]) for c in col["cylinders"]}
+        rng = np.random.default_rng(d["seed"])
+        # each cylinder breathes and burns slightly differently (fixed for the car): this puts the
+        # half orders in the sound that every real engine has
+        self.cyl_gain = {c: 1 + 0.035 * rng.standard_normal() for c in self.cyls}
+        self.primary_len = {}
+        for col in x["collectors"]:
+            for c in col["cylinders"]:
+                self.primary_len[c] = col["primaryLengthM"] + col["lengthSpreadM"] * rng.uniform(-1, 1)
+        self.fi = d.get("forcedInduction")
+        self.turbo = self.fi if self.fi and self.fi["type"] == "Turbo" else None
+
+    # ---- events ------------------------------------------------------------------------------
+
+    def event_times(self, theta, offset_deg):
+        """Times (s) and cycle numbers of every cylinder's event at firing angle + offset."""
+        n = len(theta) - 1
+        total = theta[-1]
+        cycles = round(total / 720)
+        t = np.arange(n + 1) / FS
+        out = {}
+        for c in self.cyls:
+            target = (self.angles[c] + offset_deg + 720.0 * np.arange(cycles)) % total
+            out[c] = np.interp(target, theta, t) % (n / FS)
+        return out
+
+    def amplitudes(self, times, load, rpm, rng, cut=None, cut_level=0.12, soft=False):
+        d = self.d
+        rough = d["idle"]["roughness"] * math.sqrt(self.idle / max(rpm, 1)) * (1.6 - 0.6 * load)
+        lope = d["idle"]["lope"] * max(0.0, 1 - (rpm - self.idle) / 1500)
+        out, flags = {}, {}
+        for c, ts in times.items():
+            a = self.cyl_gain[c] * (1 + rough * rng.standard_normal(len(ts)))
+            if lope > 0:  # big cam overlap: some cycles burn weakly at idle
+                a *= 1 - lope * 0.6 * (rng.random(len(ts)) < 0.35)
+            a = np.maximum(a, 0.05)
+            cut_now = np.zeros(len(ts), dtype=bool)
+            if cut is not None:
+                idx = np.minimum((ts * FS).astype(int), len(cut) - 1)
+                cut_now = cut[idx]
+                if soft:  # a soft limiter cuts only some cylinders
+                    cut_now &= rng.random(len(ts)) < 0.5
+            out[c] = np.where(cut_now, a * cut_level, a)
+            flags[c] = cut_now
+        return out, flags
+
+    # ---- components --------------------------------------------------------------------------
+
+    def render(self, theta, rpm, load, rng, cut=None, valve_open=True):
+        """Every sound component of one loop, unscaled. theta: crank angle per sample."""
+        d, x = self.d, self.d["exhaust"]
+        n = len(theta) - 1
+        f = freqs(n)
+        on = load > 0.5
+        deg_s = 1 / (6 * rpm)  # seconds per crank degree
+        lim = d["limiter"]
+        fire = self.event_times(theta, 0.0)
+        amps, cut_flags = self.amplitudes(fire, load, rpm, rng, cut, lim["cutLevel"], lim["type"] == "softCut")
+        pulse_level = d["overrun"]["pulseLevel"] + (1 - d["overrun"]["pulseLevel"]) * load
+
+        # exhaust: blowdown pulses into the primaries, summed at each collector
+        evo = self.event_times(theta, x["evoDeg"])
+        c_hot = gas_c(x["gasTempK"] if on else x["gasTempK"] * 0.75)
+        cols = x["collectors"]
+        trains = np.zeros((len(cols), n))
+        for c in self.cyls:
+            k = self.collector_of[c]
+            trains[k] += impulse_train(n, evo[c] + self.primary_len[c] / c_hot, amps[c] * pulse_level)
+        rise = max(x["pulseRiseDeg"] * deg_s * (1 if on else 1.6), x["minRiseMs"] * 1e-3)
+        fall = x["pulseDecayDeg"] * deg_s * (1 if on else 1.3)
+        shaped = np.fft.rfft(trains, axis=1) * blowdown(f, rise, fall)[None, :]
+        for k, col in enumerate(cols):
+            shaped[k] *= pipe(f, col["primaryLengthM"], c_hot, x["primaryReflection"])
+        pressure = np.fft.irfft(shaped, n=n, axis=1)
+        # strong pulses steepen as they travel: raise the shaped pulses to a power above 1
+        peak = np.max(np.abs(pressure)) or 1.0
+        gamma = 1 + x["rasp"] * load
+        pressure = np.sign(pressure) * (np.abs(pressure) / peak) ** gamma * peak
+        # afterfire pops (limiter ignition cut, overrun burble) explode in the exhaust
+        pops = self.pops(n, fire, cut_flags, load, rpm, rng)
+        if pops is not None:
+            pressure += pops * peak
+        spectra = np.fft.rfft(pressure, axis=1)
+        if self.turbo:
+            t = self.turbo
+            damp = t["pulseDamping"]
+            spectra *= ((1 - damp) + damp * lowpass(f, t["dampingHz"], 0.6))[None, :]
+        c_pipe = gas_c(x["pipeTempK"])
+        names = [col["name"] for col in cols]
+        merge = x["merge"]
+        if merge["type"] in ("xpipe", "hpipe"):
+            cross = merge["crossover"] * lowpass(f, merge["crossoverHz"], 0.7) * shift(f, merge["pathM"] / c_pipe)
+        exhaust = np.zeros(len(f), dtype=complex)
+        mf = x["muffler"]
+        if valve_open:
+            silencer = lowpass(f, mf["openLowpassHz"], 0.6) * (0.7 + 0.3 * expansion_chamber(f, 2.0, mf["chamberLengthM"], c_pipe))
+        else:
+            silencer = (lowpass(f, mf["closedLowpassHz"], 0.6) * lowpass(f, mf["closedLowpassHz"] * 2.5, 0.6)
+                        * expansion_chamber(f, mf["chamberAreaRatio"], mf["chamberLengthM"], c_pipe)
+                        * 10 ** (-mf["closedCutDb"] / 20))
+        for o in x["outlets"]:
+            own = [names.index(nm) for nm in o["collectors"]]
+            if merge["type"] == "y":
+                feed = spectra.mean(axis=0)
+            else:
+                feed = spectra[own].sum(axis=0)
+                if merge["type"] in ("xpipe", "hpipe"):
+                    others = [k for k in range(len(cols)) if k not in own]
+                    feed = (1 - merge["crossover"] * lowpass(f, merge["crossoverHz"], 0.7)) * feed
+                    if others:
+                        feed = feed + cross * spectra[others].sum(axis=0)
+            path = (pipe(f, o["pipeLengthM"], c_pipe, x["pipeReflection"]) * silencer
+                    * pipe(f, o["tailLengthM"], gas_c(x["pipeTempK"] * 0.7), 0.35)
+                    * radiation(f, o["diameterM"]) * shift(f, o["offsetM"] / AIR_C))
+            exhaust += o["gain"] * feed * path
+        exhaust_t = np.fft.irfft(exhaust * highpass(f, 25), n=n)
+
+        # intake: suction pulses through runners, plenum and airbox
+        it = d["intake"]
+        intake_times = self.event_times(theta, it["intakeDeg"])
+        train = np.zeros(n)
+        for c in self.cyls:
+            train += impulse_train(n, intake_times[c], self.cyl_gain[c] * (0.25 + 0.75 * load) * np.ones(len(intake_times[c])))
+        intake = circular(train, blowdown(f, max(20 * deg_s, 2e-4), 70 * deg_s)
+                          * pipe(f, it["runnerLengthM"], 360.0, -0.5)
+                          * (0.35 + resonator(f, it["airboxHz"], 1.8))
+                          * pipe(f, it["snorkelLengthM"], AIR_C, 0.4)
+                          * radiation(f, it["mouthDiameterM"]) * highpass(f, 30))
+        # throttle hiss at part throttle
+        hiss = circular(rng.standard_normal(n), resonator(f, 2500, 0.9)) * (load * (1 - load) * 4)
+        intake = intake / (np.sqrt(np.mean(intake ** 2)) or 1) + 0.15 * hiss
+
+        # combustion noise radiated by the block, and valvetrain / injector ticks
+        mech = d["mechanical"]
+        fire_t = np.concatenate([fire[c] for c in self.cyls])
+        fire_a = np.concatenate([np.where(cut_flags[c], 0.0, amps[c]) for c in self.cyls]) * (0.45 + 0.55 * load)
+        block_hz = mech["blockHz"]
+        block = circular(burst(n, fire_t, fire_a, 0.7e-3, rng),
+                         resonator(f, block_hz[0], 1.3) + 0.7 * resonator(f, block_hz[1], 1.6))
+        ticks = np.zeros(n)
+        for offset, level, hz in ((x["evoDeg"] + 230, mech["valvetrain"], 5200), (590, mech["valvetrain"], 6100),
+                                  (-300, mech["injectors"], 3900)):
+            if level <= 0:
+                continue
+            ev = self.event_times(theta, offset)
+            tt = np.concatenate([ev[c] for c in self.cyls])
+            ticks += level * circular(impulse_train(n, tt, np.ones(len(tt))), resonator(f, hz, 6) * highpass(f, 2000))
+        parts = {"exhaust": exhaust_t, "intake": intake, "block": block, "ticks": ticks}
+        if self.turbo:
+            env = circular(np.abs(exhaust_t), lowpass(f, 60))
+            env = 0.6 + 0.4 * env / (np.max(env) or 1)
+            parts["whoosh"] = circular(rng.standard_normal(n) * env, resonator(f, 2800, 0.7) + 0.6 * resonator(f, 5200, 1.2)) \
+                * load * (rpm / self.top)
+        return parts
+
+    def pops(self, n, fire, cut_flags, load, rpm, rng):
+        """Afterfire pops: unburnt fuel lighting in the hot exhaust (ignition cut, overrun burble)."""
+        d = self.d
+        x = d["exhaust"]
+        times, amps = [], []
+        if d["limiter"]["type"] == "ignitionCut" and d["limiter"]["popChance"] > 0:
+            for c in self.cyls:
+                hit = cut_flags[c] & (rng.random(len(fire[c])) < d["limiter"]["popChance"])
+                times += list(fire[c][hit] + x["evoDeg"] / (6 * rpm) + rng.uniform(1e-3, 6e-3, hit.sum()))
+                amps += list(rng.uniform(1.2, 2.6, hit.sum()))
+        burble = d["overrun"]["burble"]
+        if load < 0.5 and burble > 0 and rpm > 2200:
+            rate = burble * 6 * min(1.0, (rpm - 2200) / 3000)
+            count = rng.poisson(rate * n / FS)
+            times += list(rng.uniform(0, n / FS, count))
+            amps += list(rng.uniform(0.6, 1.8, count))
+        if not times:
+            return None
+        cols = len(d["exhaust"]["collectors"])
+        out = np.zeros((cols, n))
+        for tm, a in zip(times, amps):
+            k = rng.integers(cols)
+            out[k] += a * burst(n, [tm % (n / FS)], [1.0], 1.6e-3, rng) * 0.5
+            out[k] += a * circular(impulse_train(n, [tm % (n / FS)], [1.0]), decay(freqs(n), 4e-3)) / (4e-3 * FS)
+        return out
+
+    def valve_open(self, rpm, load):
+        m = self.d["exhaust"]["muffler"]
+        if m["valves"] == "auto":
+            return rpm >= m["openAboveRpm"] or load >= m["openAboveLoad"]
+        return m["valves"] == "open"
+
+    def mix(self, parts, scales):
+        d = self.d
+        w = {"exhaust": d["exhaust"]["level"], "intake": d["intake"]["level"],
+             "block": d["mechanical"]["combustion"], "ticks": 1.0,
+             "whoosh": self.turbo["whooshLevel"] if self.turbo else 0.0}
+        return sum(w[k] * scales[k] * v for k, v in parts.items())
+
+    @staticmethod
+    def scales_of(parts):
+        out = {}
+        for k, v in parts.items():
+            r = math.sqrt(float(np.mean(v * v)))
+            out[k] = 1 / r if r > 0 else 0.0
+        out["ticks"] = 1.0 / (math.sqrt(float(np.mean(parts["exhaust"] ** 2))) or 1)  # ticks are set relative to the exhaust
+        return out
+
+    # ---- loops -------------------------------------------------------------------------------
+
+    def rng_for(self, name):
+        return np.random.default_rng([self.d["seed"], zlib.crc32(name.encode())])
+
+    def steady_loop(self, point, load, name):
+        """A steady-rpm loop. Each rpm point's components are scaled from its full-load render, so
+        the balance between exhaust, intake and mechanical noise shifts naturally off throttle."""
+        n, theta, rpm = steady_theta(point, self.d["loops"]["seconds"])
+        ref = self.render(theta, rpm, 1.0, self.rng_for(name + "/ref"), valve_open=self.valve_open(rpm, 1.0))
+        scales = self.scales_of(ref)
+        parts = ref if load >= 1.0 else self.render(theta, rpm, load, self.rng_for(name),
+                                                    valve_open=self.valve_open(rpm, load))
+        y = self.mix(parts, scales)
+        y -= np.mean(y)
+        return finish_a(y), rpm
+
+    def limiter_loop(self, kind):
+        lim = self.d["limiter"]
+        p = lim[kind]
+        top = lim["rpm"] + (60 if kind == "free" else 20)  # the speed overshoots the limit a little
+        n, theta, rpm_mean, cut = limiter_theta(top, p["dropRpm"], p["bounceHz"], p["cutShare"],
+                                                self.d["loops"]["limiterSeconds"])
+        name = f"limiter_{kind}"
+        # scale like a full-load loop at this speed, so the cut phases are quieter than full throttle
+        n_ref, theta_ref, rpm_ref = steady_theta(rpm_mean, 0.5)
+        ref = self.render(theta_ref, rpm_ref, 1.0, self.rng_for(name + "/ref"))
+        scales = self.scales_of(ref)
+        ref_mix = self.mix(ref, scales)
+        norm = TARGET_A_RMS / (a_rms(ref_mix - np.mean(ref_mix)) or 1)
+        parts = self.render(theta, rpm_mean, 1.0, self.rng_for(name), cut=cut)
+        y = self.mix(parts, scales)
+        y = (y - np.mean(y)) * norm
+        return 0.97 * np.tanh(y / 0.97), rpm_mean
+
+
+def finish_a(x):
+    """Store a loop at the common A-weighted level, soft-limiting peaks."""
+    r = a_rms(x)
+    y = x * (TARGET_A_RMS / r if r > 0 else 1)
+    return 0.97 * np.tanh(y / 0.97)
+
+
+# --------------------------------------------------------------------------------------------
+# Forced induction layers
+# --------------------------------------------------------------------------------------------
+
+def turbo_whistle(fi, rng):
+    """Compressor whistle and whoosh, at the middle of its pitch range (the game pitches it by boost)."""
+    lo, hi = fi["whistleHz"]
+    base = math.sqrt(lo * hi)
+    n = round(1.0 * FS)
+    f = freqs(n)
+    tone = periodic_tone(n, base, [(1, 1.0), (2, 0.18), (3, 0.05)], [(0.004, 3), (0.003, 7), (0.002, 13)], rng)
+    period = n / FS
+    f0 = round(base * period) / period
+    narrow = circular(rng.standard_normal(n), resonator(f, f0, 30))
+    whoosh = circular(rng.standard_normal(n), resonator(f, 0.55 * f0, 0.7) + 0.5 * resonator(f, 1.6 * f0, 1.0))
+    return finish(unit(tone) + 0.5 * unit(narrow) + 0.45 * unit(whoosh)), f0
+
+
+def blow_off(fi, rng, variant):
+    """A one-shot when the throttle shuts on boost: valve dump, recirculation whoosh or surge flutter."""
+    kind = fi["blowOff"]["type"]
+    lo, hi = fi["whistleHz"]
+    dur = {"atmospheric": 0.55, "recirculating": 0.6, "flutter": 0.7}.get(kind, 0.6)
+    n = round(dur * FS)
+    t = np.arange(n) / FS
+    f = freqs(n)
+    out = np.zeros(n)
+    # the turbo spins down: whistle sweeping down from near full boost
+    sweep = hi * (0.75 + 0.1 * variant) * np.exp(-t / 0.35) + lo * 0.6 * (1 - np.exp(-t / 0.35))
+    phase = 2 * np.pi * np.cumsum(sweep) / FS
+    out += 0.25 * np.sin(phase) * np.exp(-t / 0.3)
+    if kind == "atmospheric":  # "pssh": the valve dumps boost to the air
+        hiss = linear(rng.standard_normal(n), lambda ff: resonator(ff, 3200 + 400 * variant, 1.1) + 0.6 * highpass(ff, 5000))
+        out += unit(hiss) * 0.9 * np.minimum(t / 0.006, 1) * np.exp(-t / (0.16 + 0.04 * variant))
+    elif kind == "recirculating":  # softer whoosh as boost is routed back to the intake
+        hiss = linear(rng.standard_normal(n), lambda ff: resonator(ff, 2200 + 300 * variant, 0.9))
+        out += unit(hiss) * 0.45 * np.minimum(t / 0.02, 1) * np.exp(-t / 0.22)
+    else:  # flutter: the compressor surges against the shut throttle, "stu-tu-tu-tu"
+        rate = 16 + 4 * variant
+        k = np.arange(int(dur * rate))
+        times = k / rate + 0.004 * rng.standard_normal(len(k))
+        amps = np.exp(-k / (5.5 + variant))
+        chuff = burst(n, np.clip(times, 0, dur - 0.01), amps, 5e-3, rng)
+        out += 0.9 * unit(linear(chuff, lambda ff: resonator(ff, 650, 1.2) + 0.5 * resonator(ff, 1900, 1.5)))
+    return fade(0.9 * out / np.max(np.abs(out)), 20)
+
+
+def supercharger_whine(fi, crank_rpm, rng):
+    """Rotor whine at one crank speed: each rotor lobe pushes a pocket of air, pulsesPerRev a turn."""
+    base = crank_rpm / 60 * fi["driveRatio"] * fi["pulsesPerRev"]
+    n = round(0.6 * FS)
+    f = freqs(n)
+    tone = periodic_tone(n, base, [(1, 1.0), (2, 0.45), (3, 0.22), (4, 0.1)], [(0.002, 5)], rng)
+    period = n / FS
+    f0 = round(base * period) / period
+    air = circular(rng.standard_normal(n) * (1 + 0.6 * np.sin(2 * np.pi * f0 * np.arange(n) / FS)),
+                   resonator(f, 2.2 * f0, 1.2) + 0.5 * highpass(f, 3000))
+    return finish(unit(tone) + 0.35 * unit(air)), f0
+
+
+# --------------------------------------------------------------------------------------------
+# Loudness: each loop's playback gain from the car's measured sound levels
+# --------------------------------------------------------------------------------------------
+
+def level_dba(d, rpm, load):
+    """Modelled level (dBA) at an engine speed and load, through the measured idle and full-throttle
+    levels: rises in proportion to log(rpm), and loadRangeDb between closed and full throttle."""
+    L = d["loudness"]
+    src = L.get("interior") or {}
+    idle_db = src.get("idleDbA", 58.0)
+    wot_db = src.get("fullThrottleDbA", 88.0)
+    load_range = L.get("loadRangeDb", 12.0)
+    e = d["engine"]
+    idle_load = 0.15
+    slope = (wot_db - idle_db - load_range * (1 - idle_load)) / math.log10(e["limiterRpm"] / e["idleRpm"])
+    slope = max(slope, 4.0)
+    return idle_db + slope * math.log10(max(rpm, 0.5 * e["idleRpm"]) / e["idleRpm"]) + load_range * (load - idle_load)
+
+
+def loop_gain(d, rpm, load):
+    return 10 ** (LEVEL_COMPRESSION * (level_dba(d, rpm, load) - REFERENCE_DBA) / 20)
 
 
 # --------------------------------------------------------------------------------------------
