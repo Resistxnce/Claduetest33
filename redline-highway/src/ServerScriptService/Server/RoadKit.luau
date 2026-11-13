@@ -143,6 +143,36 @@ function RoadKit.pieces(road, s0: number, s1: number, maxLength: number?, sag: n
 	return points
 end
 
+-- Pieces all the way round the loop, broken at the given distances (and at every section's ends),
+-- so features can change exactly where a tunnel or bridge starts.
+function RoadKit.loopPieces(road, breaks: { number }?): { number }
+	local cuts = {}
+	for _, s in breaks or {} do
+		table.insert(cuts, s)
+	end
+	for _, section in road.sections do
+		table.insert(cuts, section.from)
+		table.insert(cuts, section.to)
+	end
+	table.sort(cuts)
+	local points = { 0 }
+	local from = 0
+	for _, cut in cuts do
+		if cut > from + 0.5 and cut < road.length - 0.5 then
+			local part = RoadKit.pieces(road, from, cut)
+			for i = 2, #part do
+				table.insert(points, part[i])
+			end
+			from = cut
+		end
+	end
+	local part = RoadKit.pieces(road, from, road.length)
+	for i = 2, #part do
+		table.insert(points, part[i])
+	end
+	return points
+end
+
 --[[
 	A box along the road from s0 to s1 at a sideways offset: width across, thickness deep, its top
 	`top` metres above the road surface. extend lengthens it (m) to close gaps on curves.
