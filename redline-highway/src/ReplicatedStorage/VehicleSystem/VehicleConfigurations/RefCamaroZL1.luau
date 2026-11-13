@@ -282,7 +282,7 @@ return {
 
 	-- Published figures the telemetry timer and tools/drivetrain_model.py compare against. US figures
 	-- (GM's included) are taken with a one-foot rollout, as SAE J1491 and the drag strip do; the
-	-- in-game timer starts from a true standstill, so it reads about 0.2-0.3 s more.
+	-- in-game timer starts from a true standstill, so it reads about 0.3 s more (0.32-0.36 s in the model).
 	performanceTargets = {
 		zeroTo60MphRollout = 3.5, -- [F] GM, 10-speed coupe, OE tyres on a non-prepped surface. Tests [M]: C/D 3.4 s, Motor Trend 3.5 s, MotorWeek 3.5 s, Hennessey 3.6 s
 		zeroTo100Mph = 7.6, -- [M] Hennessey's stock 10-speed baseline run

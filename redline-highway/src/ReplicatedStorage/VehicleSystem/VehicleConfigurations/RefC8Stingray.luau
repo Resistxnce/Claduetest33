@@ -214,7 +214,7 @@ return {
 		minPitch = 0.5,
 		maxPitch = 2.0,
 		-- rev limiter: the limiter loops take over while the fuel cut keeps coming back
-		limiterHold = 0.3, -- s after the last cut before the normal loops return
+		limiterHold = 0.35, -- s after the last cut before the normal loops return: the cuts come every 0.20-0.27 s on this car (drivetrain model)
 		limiterAttack = 40, -- 1/s, about 25 ms
 		limiterRelease = 10, -- 1/s
 		-- forced induction: not used by this naturally aspirated engine

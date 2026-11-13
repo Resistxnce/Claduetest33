@@ -128,11 +128,9 @@ return {
 		-- [E] Traction control (Performance Traction Management and launch control on the real car,
 		-- which let the driver set the allowed tyre slip, S23). It caps engine and clutch torque at
 		-- headroom times what the driven tyres can grip, and trims further while they slip more than
-		-- targetSlip. Tuned with tools/drivetrain_model.py at 45-144 fps: allowing a little more slip
-		-- (0.15), trimming more gently (10/s) and recovering quickly (4/s) stops the launch from
-		-- hunting; 0-60 mph then varies by under 0.07 s with frame rate. The GT12's settings (0.11, 15,
-		-- 2, 1.3) bog this car's launch by up to 0.8 s at 45-60 fps.
-		tractionControl = { enabled = true, targetSlip = 0.15, rate = 10, recovery = 4, headroom = 1.4 },
+		-- targetSlip. The shared defaults, as the GT12. Not tuned while the shared engine-inertia fix
+		-- is pending: before it, the launch hunted at 45-60 fps (docs/cars/RefC8Z06.md).
+		tractionControl = { enabled = true, targetSlip = 0.11, rate = 15, recovery = 2, headroom = 1.3 },
 	},
 
 	-- [E] Springs and dampers from target ride frequencies of 1.9 Hz front and 2.1 Hz rear (magnetic
@@ -168,14 +166,15 @@ return {
 	},
 
 	tires = {
-		-- [E] The car's own tyres. Grip is fitted to the magazine launch, braking and skidpad figures
-		-- (docs/cars/RefC8Z06.md): muLong to C/D's 0-60 and MT's 60-0, muLat to the skidpad (about
-		-- 1.11 g on the road tyre, 1.16 g on the track tyre). Nominal loads are the shared compounds'
+		-- [E] The car's own tyres (docs/cars/RefC8Z06.md). muLong is the research's estimate (1.40 road,
+		-- 1.50 track); with the game's keyboard brake ramp the road tyre stops from 60 mph in MT's 29 m.
+		-- muLat is set from the skidpad: about 1.11 g on the road tyre (tests 1.10-1.12 g) and 1.16 g on
+		-- the track tyre (1.16 g), after the tyre model's load sensitivity. Nominal loads are the shared compounds'
 		-- values scaled by tread width (275 and 345 mm, against 295 mm), so the wider rear tyre loses
 		-- less grip to its heavier load.
 		compounds = {
 			-- road tyre in the Michelin Pilot Sport 4S ZP class (base car), 275/30 front
-			RoadPerformance = { base = "Performance", muLong = 1.45, muLat = 1.14, nominalLoad = 4100 },
+			RoadPerformance = { base = "Performance", muLong = 1.40, muLat = 1.14, nominalLoad = 4100 },
 			-- the same tyre in the 345/25 rear size
 			RoadPerformanceRear = { base = "RoadPerformance", nominalLoad = 5150 },
 			-- track tyre in the Pilot Sport Cup 2 R ZP class (Z07 package), 275/30 front

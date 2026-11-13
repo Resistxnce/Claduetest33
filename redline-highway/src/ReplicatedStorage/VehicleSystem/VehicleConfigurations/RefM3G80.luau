@@ -99,9 +99,10 @@ return {
 			-- steep near 2,500 rpm); a linear ramp can't follow it, so the curve points above carry the shape.
 			boostStartRpm = 1750,
 			fullBoostRpm = 2744, -- [F] BMW's diagram reaches 650 Nm here (spec sheet: 2,750 rpm)
-			-- [E] s to 90% boost when floored at 2,744 rpm in a held gear. Fitted to the in-gear times: 80-120 km/h
-			-- 2.73 s in 4th (BMW 2.6, The Citizen 2.67) and 3.58 s in 5th (BMW 3.4, The Citizen 4.02)
-			spoolTime = 0.5,
+			-- [E] s to 90% boost when floored at 2,744 rpm in a held gear: the middle of the 0.6-0.8 s starting
+			-- range (docs/VEHICLE_CONFIG.md); testers note lag below about 2,750 rpm. Checked against BMW's and
+			-- The Citizen's in-gear 80-120 km/h times (docs/cars/RefM3G80.md), not fitted to them.
+			spoolTime = 0.7,
 			dumpTime = 0.2, -- [E] electric wastegates, no blow-off valve documented (recirculation is internal)
 		},
 	},
@@ -119,9 +120,11 @@ return {
 		turbineInertia = 0.05, -- [E] kg*m^2, converter turbine and gearbox input
 		minShiftInterval = 0.3, -- [E] s
 		-- [E] gearbox input rpm. Full throttle upshifts 200 rpm under the limiter (BMW's power plateau runs to
-		-- 7,200 rpm); light throttle reaches 8th gear by about 90 km/h.
-		autoUpshiftRpm = { light = 1900, full = 7050 },
-		autoDownshiftRpm = { light = 1100, full = 4800 }, -- [E] kickdown keeps the engine near the power plateau
+		-- 7,200 rpm), so the car tops out against the 290 km/h limiter in 7th, not on the rev limiter in 6th.
+		-- A steady 100 km/h (about 20% pedal) holds 8th at 1,580 rpm (MotorTrend: 1,500 rpm at 60 mph in 8th
+		-- [M]); full-pedal kickdown keeps the engine above 4,200 rpm, below every upshift's landing speed.
+		autoUpshiftRpm = { light = 1700, full = 7050 },
+		autoDownshiftRpm = { light = 900, full = 4200 },
 		converter = {
 			-- [E] not published. Launch control holds about 2,700 rpm [P] with about 1.0 bar of boost [M], so the
 			-- converter absorbs about 480 Nm at 2,700 rpm; the same converter takes the full 650 Nm at 3,100 rpm.
@@ -132,7 +135,7 @@ return {
 		},
 		lockup = {
 			minGear = 1, -- [F] BMW: the lock-up clutch is "fully engaged the moment the car has pulled away"
-			minSpeedKmh = 20, -- [E] closes after the engine reaches its boost range in 1st (2,744 rpm = 22 km/h)
+			minSpeedKmh = 10, -- [E] "the moment the car has pulled away" [F]
 			engageTime = 0.3, -- [E] s
 			maxTorque = 910, -- [E] Nm, 1.4 x peak engine torque
 		},
@@ -147,11 +150,10 @@ return {
 		rearDifferential = { type = "LimitedSlip", preload = 80, powerLock = 0.45, coastLock = 0.25, stiffness = 200 },
 		frontDifferential = { type = "Open" },
 		-- [E] DSC with slip control in the engine ECU [F] (M Traction Control, 10 stages). Caps engine torque at
-		-- headroom x what the rear tyres can grip and trims while they slip past targetSlip.
-		-- headroom 1.6: the cap ignores the engine's own inertia, which in 1st gear (15.8:1 overall) is worth about
-		-- 480 kg; at 1.3 the rear tyres reached only 86% of their grip. rate 30 and recovery 6 (twice and three
-		-- times the GT12's): BMW says the ECU-based slip control acts up to 10 times more often [F].
-		tractionControl = { enabled = true, targetSlip = 0.11, rate = 30, recovery = 6, headroom = 1.6 },
+		-- headroom x what the rear tyres can grip and trims while they slip past targetSlip. The shared starting
+		-- values (docs/VEHICLE_CONFIG.md); BMW says its ECU-based slip control acts up to 10 times more often [F],
+		-- which would support a faster rate and recovery: see docs/cars/RefM3G80.md before changing them.
+		tractionControl = { enabled = true, targetSlip = 0.11, rate = 15, recovery = 2, headroom = 1.3 },
 	},
 
 	-- [E] Spring and damper rates are not published. Springs from the research's ride frequencies of
@@ -257,7 +259,7 @@ return {
 		limiterRelease = 10, -- 1/s, and go out
 		-- forced induction: no tester describes a turbo whistle (they note lag below 2,750 rpm), and there
 		-- is no atmospheric blow-off valve [E], so both layers are kept quiet
-		turboVolume = 0.15, -- whistle at full boost
+		turboVolume = 0.04, -- whistle at full boost: about 20 dB under the engine (A-weighted)
 		blowOffVolume = 0.2, -- internal recirculation whoosh
 		blowOffMinBoost = 0.35, -- boost (0-1) needed for a blow-off when the throttle shuts
 		superchargerVolume = 0.3, -- not used (turbo engine)
@@ -284,7 +286,7 @@ return {
 		-- cabin engine sound under load (research estimate), +3 dB, which is +1.5 dB at the game's 0.5 level
 		-- compression, so engine = 1.19. The equaliser lifts the low orders the speakers add and cuts the
 		-- treble the cabin keeps out.
-		interior = { engine = 1.19, wind = 0.45, road = 1.1, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
+		interior = { engine = 1.19, wind = 0.55, road = 1.6, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
 	},
 
 	-- [F] Factory figures (zeroTo60Mph, zeroTo100, zeroTo200, topSpeedKmh) and [M] magazine figures. US

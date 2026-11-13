@@ -265,12 +265,13 @@ return {
 		limiterHold = 0.3, -- s after the last cut (the simulation cuts about 4.5 times a second)
 		limiterAttack = 40, -- 1/s, about 25 ms
 		limiterRelease = 10,
-		-- [E] Turbo whistle at full boost: louder than the GT12's default, for evo's "rushing whoosh of
-		-- the turbochargers" and Autocar's "whoosh and fizz". Rises with boost (shaft speed).
-		turboVolume = 0.42,
+		-- [E] Turbo whistle at full boost, about 12 dB (A-weighted) under the engine: clearly there, as in
+		-- evo's "rushing whoosh of the turbochargers" and Autocar's "whoosh and fizz", without screaming
+		-- over the exhaust (0.42 measured only 3-7 dB under it). Pitch rises with boost (shaft speed).
+		turboVolume = 0.16,
 		-- [A] Lift-off flutter (the sheet's blow-off one-shots are the "flutter" kind): wastegate and
 		-- dump-valve chatter when the throttle shuts on boost. Not described by the sources read.
-		blowOffVolume = 0.5,
+		blowOffVolume = 0.85, -- the flutter is short chuffs (RMS about 1/20 of its peak): 0.5 was barely above coasting
 		blowOffMinBoost = 0.4, -- boost (0-1) needed for the flutter when the throttle shuts
 		superchargerVolume = 0, -- no supercharger
 		-- [E] Ignition-cut upshifts [F]: a short crack on full-throttle upshifts, as long as the shift.

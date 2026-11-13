@@ -38,7 +38,7 @@
       "chamberLengthM": 0.55
     }
   },
-  "intake": {"level": 0.35, "runnerLengthM": 0.21, "airboxHz": 100, "snorkelLengthM": 0.8, "mouthDiameterM": 0.1},
+  "intake": {"level": 0.3, "runnerLengthM": 0.21, "airboxHz": 100, "snorkelLengthM": 0.8, "mouthDiameterM": 0.1},
   "mechanical": {"combustion": 0.05, "valvetrain": 0.008, "injectors": 0.01},
   "idle": {"roughness": 0.08, "lope": 0.1},
   "overrun": {"pulseLevel": 0.16, "burble": 0.12},
@@ -78,7 +78,7 @@
     "exhaust.muffler.openLowpassHz": "[E] Nearly straight-through with the valves open (S25), so a little above the default 3,800 Hz.",
     "exhaust.muffler.chamberLengthM": "[E] One large transverse muffler (S24).",
     "exhaust.closedLowpassHz": "[E] Defaults; unused while the valves are open.",
-    "intake.level": "[E] Higher than the default 0.25: the rear-facing intake and airbox sit right behind the seats in a mid-engine car (S07; docs/AUDIO.md).",
+    "intake.level": "[E] A little above the default 0.25: the rear-facing intake and airbox sit right behind the seats in a mid-engine car (S07; docs/AUDIO.md). At 0.35 the evenly spaced intake pulses masked the exhaust's idle burble (measured), so 0.3.",
     "intake.runnerLengthM": "[P] Eight equal runners about 210 mm long (S07, S08).",
     "intake.airboxHz": "[E] A large plenum fed by an 87 mm throttle (S07, S08): a little below the default 110 Hz.",
     "intake.snorkelLengthM": "[E] Duct from the left-side body intake to the airbox, about 0.8 m.",
