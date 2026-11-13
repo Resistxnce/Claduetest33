@@ -6,8 +6,12 @@
 	the car's mass distribution, with its density set so it weighs exactly the configured mass.
 	Everything else is massless, so mass, centre of mass and rotational inertia are all correct.
 
-	The visible body here is a stand-in (graybox) built to the real dimensions. The Phase 2 Blender
-	model replaces the "Body" model and the Wheel_* parts and must keep these names:
+	The visible body here is a stand-in (blockout) built to the real dimensions. Its side profile
+	comes from the config's visual.blockout table (the top line of the body from nose to tail, where
+	the cabin glass is, the window sill height and the cabin width); configs without one get a long-
+	bonnet GT shape. The body is drawn as slices along the car, painted outside the cabin and glass
+	inside it. The Phase 2 Blender model replaces the "Body" model and the Wheel_* parts and must keep
+	these names:
 	  MassBox                          the physics root (keep as is)
 	  Body                             a Model of visual parts, welded to MassBox
 	  Wheel_FL, Wheel_FR, Wheel_RL, Wheel_RR   visual wheels, moved by Motor6Ds WheelJoint_*
@@ -82,6 +86,33 @@ local function visual(parent: Instance, root: BasePart, name: string, size: Vect
 	return part
 end
 
+-- Default stand-in shape: a front-engined GT with a long bonnet and a fastback.
+local DEFAULT_BLOCKOUT = {
+	profile = { { 0, 0.5 }, { 0.03, 0.66 }, { 0.42, 0.86 }, { 0.56, 1.25 }, { 0.63, 1.276 }, { 0.8, 1.02 }, { 0.95, 0.93 }, { 1, 0.9 } },
+	greenhouse = { 0.42, 0.8 },
+	beltline = 0.86,
+	cabinWidth = 0.72,
+	sill = 0.14,
+}
+local SLICES = 24
+
+-- Height of the body's top line at a share of the length from the nose (linear between points).
+local function profileHeight(profile, share: number): number
+	if share <= profile[1][1] then
+		return profile[1][2]
+	end
+	for i = 1, #profile - 1 do
+		local a, b = profile[i], profile[i + 1]
+		if share <= b[1] then
+			local t = if b[1] > a[1] then (share - a[1]) / (b[1] - a[1]) else 0
+			return a[2] + (b[2] - a[2]) * t
+		end
+	end
+	return profile[#profile][2]
+end
+VehicleModelBuilder.profileHeight = profileHeight
+VehicleModelBuilder.DEFAULT_BLOCKOUT = DEFAULT_BLOCKOUT
+
 function VehicleModelBuilder.build(config, owner: Player): Model
 	local mass = config.mass
 	local dims = config.dimensions
@@ -116,7 +147,18 @@ function VehicleModelBuilder.build(config, owner: Player): Model
 	local nose = frontZ - dims.frontOverhang
 	local tail = nose + dims.length
 	local midZ = (nose + tail) / 2
-	local cabinZ = frontZ + 2.05
+	local shape = config.visual.blockout or DEFAULT_BLOCKOUT
+	local profile = shape.profile
+	local glassFrom, glassTo = shape.greenhouse[1], shape.greenhouse[2]
+	local beltline = shape.beltline
+	local sill = shape.sill or 0.14
+	-- where things sit along the car, as z in the car's frame
+	local function zAt(share: number): number
+		return nose + dims.length * share
+	end
+	local driverShare = glassFrom + 0.4 * (glassTo - glassFrom)
+	local cabinZ = zAt(driverShare)
+	local eyeHeight = profileHeight(profile, driverShare) - 0.2
 
 	local paint = config.visual.bodyColor
 	local carbon = Color3.fromRGB(28, 28, 30)
@@ -128,26 +170,61 @@ function VehicleModelBuilder.build(config, owner: Player): Model
 	body.Name = "Body"
 	body.Parent = model
 
-	-- the lower body is also the car's collision shape
-	visual(body, root, "LowerBody", Vector3.new(dims.width - 0.03, 0.52, dims.length - 0.1), Vector3.new(0, ground + 0.39, midZ), paint, Enum.Material.SmoothPlastic, { collide = true })
-	visual(body, root, "Bonnet", Vector3.new(dims.width - 0.2, 0.16, 1.95), Vector3.new(0, ground + 0.73, nose + 1.3), paint, Enum.Material.SmoothPlastic)
-	visual(body, root, "Cabin", Vector3.new(1.45, 0.58, 1.55), Vector3.new(0, ground + 0.94, cabinZ), glass, Enum.Material.Glass, { transparency = 0.35 })
-	visual(body, root, "Roof", Vector3.new(1.38, 0.05, 1.15), Vector3.new(0, ground + 1.25, cabinZ + 0.1), paint, Enum.Material.SmoothPlastic)
-	visual(body, root, "RearDeck", Vector3.new(dims.width - 0.2, 0.14, 1.0), Vector3.new(0, ground + 0.72, tail - 0.6), paint, Enum.Material.SmoothPlastic)
+	-- the lower body (sill to window line) is also the car's collision shape
+	visual(body, root, "LowerBody", Vector3.new(dims.width - 0.03, beltline - sill, dims.length - 0.1), Vector3.new(0, ground + (sill + beltline) / 2, midZ), paint, Enum.Material.SmoothPlastic, { collide = true })
+
+	-- upper body as slices along the car: painted bonnet and deck, glass cabin with a painted roof
+	local sliceLength = dims.length / SLICES
+	for i = 0, SLICES - 1 do
+		local share = (i + 0.5) / SLICES
+		local top = profileHeight(profile, share)
+		local z = zAt(share)
+		if share > glassFrom and share < glassTo then
+			if top - 0.07 > beltline then
+				visual(body, root, "Glass", Vector3.new(dims.width * shape.cabinWidth, top - 0.07 - beltline, sliceLength + 0.01), Vector3.new(0, ground + (beltline + top - 0.07) / 2, z), glass, Enum.Material.Glass, { transparency = 0.3 })
+			end
+		elseif top > beltline then
+			visual(body, root, "Panel", Vector3.new(dims.width - 0.12, top - beltline, sliceLength + 0.01), Vector3.new(0, ground + (beltline + top) / 2, z), paint, Enum.Material.SmoothPlastic)
+		end
+	end
+
+	-- smooth cabin top: a tilted plate along each piece of the profile inside the greenhouse,
+	-- glass where it's steep (windscreen, rear window), painted where it's flat (roof)
+	local points = { { glassFrom, profileHeight(profile, glassFrom) } }
+	for _, point in profile do
+		if point[1] > glassFrom and point[1] < glassTo then
+			table.insert(points, point)
+		end
+	end
+	table.insert(points, { glassTo, profileHeight(profile, glassTo) })
+	for i = 1, #points - 1 do
+		local a, b = points[i], points[i + 1]
+		local dz, dy = (b[1] - a[1]) * dims.length, b[2] - a[2]
+		local length = math.sqrt(dz * dz + dy * dy)
+		if length > 0.02 then
+			local steep = math.abs(dy) > 0.35 * dz
+			visual(body, root, if steep then "Screen" else "Roof", Vector3.new(dims.width * shape.cabinWidth, 0.04, length + 0.02),
+				Vector3.new(0, ground + (a[2] + b[2]) / 2 - 0.02, zAt((a[1] + b[1]) / 2)),
+				if steep then glass else paint, if steep then Enum.Material.Glass else Enum.Material.SmoothPlastic,
+				{ rotation = CFrame.Angles(-math.atan2(dy, dz), 0, 0), transparency = if steep then 0.25 else nil })
+		end
+	end
+
+	local noseTop = profileHeight(profile, 0.02)
+	local tailTop = profileHeight(profile, 0.98)
 	visual(body, root, "FrontIntake", Vector3.new(1.5, 0.22, 0.12), Vector3.new(0, ground + 0.3, nose + 0.04), dark, Enum.Material.SmoothPlastic)
 	visual(body, root, "Splitter", Vector3.new(dims.width - 0.2, 0.03, 0.3), Vector3.new(0, ground + 0.135, nose + 0.15), carbon, Enum.Material.SmoothPlastic)
 	visual(body, root, "Diffuser", Vector3.new(1.5, 0.16, 0.3), Vector3.new(0, ground + 0.22, tail - 0.12), carbon, Enum.Material.SmoothPlastic)
-	visual(body, root, "SpoilerLip", Vector3.new(1.55, 0.04, 0.22), Vector3.new(0, ground + 0.82, tail - 0.15), paint, Enum.Material.SmoothPlastic)
 	for _, side in { -1, 1 } do
-		local headlight = visual(body, root, "Headlight", Vector3.new(0.38, 0.07, 0.12), Vector3.new(side * 0.68, ground + 0.62, nose + 0.12), Color3.fromRGB(240, 244, 255), Enum.Material.Neon)
+		local headlight = visual(body, root, "Headlight", Vector3.new(0.38, 0.07, 0.12), Vector3.new(side * 0.68, ground + noseTop - 0.08, nose + 0.12), Color3.fromRGB(240, 244, 255), Enum.Material.Neon)
 		local beam = Instance.new("SpotLight")
 		beam.Face = Enum.NormalId.Front
 		beam.Brightness = 3
 		beam.Range = 60
 		beam.Angle = 50
 		beam.Parent = headlight
-		visual(body, root, "Taillight", Vector3.new(0.3, 0.08, 0.04), Vector3.new(side * 0.62, ground + 0.68, tail), Color3.fromRGB(255, 30, 30), Enum.Material.Neon)
-		visual(body, root, "Mirror", Vector3.new(0.22, 0.1, 0.12), Vector3.new(side * (dims.width / 2 + 0.05), ground + 0.92, cabinZ - 0.75), paint, Enum.Material.SmoothPlastic)
+		visual(body, root, "Taillight", Vector3.new(0.3, 0.08, 0.04), Vector3.new(side * 0.62, ground + tailTop - 0.12, tail), Color3.fromRGB(255, 30, 30), Enum.Material.Neon)
+		visual(body, root, "Mirror", Vector3.new(0.22, 0.1, 0.12), Vector3.new(side * (dims.width / 2 + 0.05), ground + beltline + 0.08, zAt(glassFrom) + 0.15), paint, Enum.Material.SmoothPlastic)
 		for _, x in { 0.2, 0.32 } do
 			visual(body, root, "ExhaustTip", Vector3.new(0.12, 0.09, 0.09), Vector3.new(side * x, ground + 0.26, tail - 0.02), chrome, Enum.Material.Metal, { shape = Enum.PartType.Cylinder, rotation = CFrame.Angles(0, math.rad(90), 0) })
 		end
@@ -166,8 +243,8 @@ function VehicleModelBuilder.build(config, owner: Player): Model
 	weld(root, seat)
 
 	attachment(root, "ChaseCamTarget", Vector3.new(0, 0.5, 0))
-	attachment(root, "HoodCam", Vector3.new(0, ground + 0.92, cabinZ - 0.95))
-	attachment(root, "CockpitCam", Vector3.new(driverX, ground + 1.08, cabinZ + 0.15))
+	attachment(root, "HoodCam", Vector3.new(0, ground + profileHeight(profile, glassFrom - 0.06) + 0.12, zAt(glassFrom - 0.06)))
+	attachment(root, "CockpitCam", Vector3.new(driverX, ground + eyeHeight, cabinZ + 0.15))
 
 	-- wheels: visual only. Their position, steering and spin come from the client controller.
 	for _, id in WHEEL_IDS do
