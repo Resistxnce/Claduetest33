@@ -1,29 +1,100 @@
 {
   "id": "RefC8Stingray",
-  "displayName": "(draft) Corvette Stingray C8 Z51 reference",
-  "reference": "Chevrolet Corvette Stingray (C8) with Z51, LT2 6.2 L naturally aspirated pushrod cross-plane V8, valved exhaust. Engineering reference only.",
+  "displayName": "Ridgeway Halcyon S",
+  "reference": "Chevrolet Corvette Stingray Z51 (C8, 2020-2026): GM LT2 6.2 L naturally aspirated pushrod cross-plane V8, dry sump, with the Z51's NPP valved performance exhaust. Engineering reference only.",
   "engine": {
-    "cylinders": 8, "layout": "V", "bankAngleDeg": 90, "crank": "crossplane",
+    "cylinders": 8,
+    "layout": "V",
+    "bankAngleDeg": 90,
+    "crank": "crossplane",
     "firingOrder": [1, 8, 7, 2, 6, 5, 4, 3],
     "banks": {"L": [1, 3, 5, 7], "R": [2, 4, 6, 8]},
-    "idleRpm": 600, "limiterRpm": 6600, "aspiration": "NA"
+    "displacementCc": 6162,
+    "idleRpm": 600,
+    "limiterRpm": 6600,
+    "aspiration": "NA",
+    "cylinderSpread": 0.06
   },
   "exhaust": {
-    "rasp": 0.45,
-    "merge": {"type": "xpipe", "crossover": 0.3, "crossoverHz": 600, "pathM": 0.3},
-    "outlets": [
-      {"collectors": ["L"], "pipeLengthM": 1.8, "tailLengthM": 0.3, "diameterM": 0.09},
-      {"collectors": ["R"], "pipeLengthM": 1.9, "tailLengthM": 0.3, "diameterM": 0.09, "offsetM": 1.1}
+    "evoDeg": 130,
+    "gasTempK": 1050,
+    "pipeTempK": 750,
+    "rasp": 0.4,
+    "collectors": [
+      {"name": "L", "cylinders": [1, 3, 5, 7], "primaryLengthM": 0.5, "lengthSpreadM": 0.02},
+      {"name": "R", "cylinders": [2, 4, 6, 8], "primaryLengthM": 0.5, "lengthSpreadM": 0.02}
     ],
-    "muffler": {"valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.5}
+    "merge": {"type": "xpipe", "crossover": 0.4, "crossoverHz": 500, "pathM": 0.3},
+    "outlets": [
+      {"collectors": ["L"], "pipeLengthM": 1.9, "tailLengthM": 0.3, "diameterM": 0.076, "offsetM": 0.0},
+      {"collectors": ["R"], "pipeLengthM": 1.95, "tailLengthM": 0.3, "diameterM": 0.076, "offsetM": 0.2}
+    ],
+    "muffler": {
+      "valves": "open",
+      "openLowpassHz": 4000,
+      "closedLowpassHz": 1300,
+      "closedCutDb": 7,
+      "chamberAreaRatio": 6,
+      "chamberLengthM": 0.55
+    }
   },
-  "intake": {"level": 0.3},
-  "mechanical": {"combustion": 0.06, "valvetrain": 0.015, "injectors": 0.01},
-  "idle": {"roughness": 0.09, "lope": 0.15},
-  "overrun": {"burble": 0.35},
-  "limiter": {"type": "fuelCut", "free": {"bounceHz": 6.0, "dropRpm": 300, "cutShare": 0.5}},
-  "loudness": {"interior": {"idleDbA": 48, "fullThrottleDbA": 85}},
+  "intake": {"level": 0.35, "runnerLengthM": 0.21, "airboxHz": 100, "snorkelLengthM": 0.8, "mouthDiameterM": 0.1},
+  "mechanical": {"combustion": 0.05, "valvetrain": 0.008, "injectors": 0.01},
+  "idle": {"roughness": 0.08, "lope": 0.1},
+  "overrun": {"pulseLevel": 0.16, "burble": 0.12},
+  "forcedInduction": null,
+  "limiter": {
+    "type": "fuelCut",
+    "free": {"bounceHz": 9.0, "dropRpm": 250, "cutShare": 0.45},
+    "load": {"bounceHz": 7.0, "dropRpm": 120, "cutShare": 0.35},
+    "popChance": 0.0,
+    "cutLevel": 0.12
+  },
+  "loops": {"rpmPoints": [600, 800, 1050, 1400, 1850, 2450, 3250, 4300, 5450, 6600], "seconds": 1.0, "limiterSeconds": 1.25},
+  "loudness": {
+    "interior": {"idleDbA": 47, "fullThrottleDbA": 92, "cruiseDbA": 74, "source": "Car and Driver, 2020 Z51 test, Dec 2019 issue (research S16, S17): 47 dBA idle, 92 dBA full throttle, 74 dBA at 70 mph"},
+    "exterior": {"stationaryDbA": 95, "atRpm": 3750, "source": "EU stationary noise, maker figure quoted by auto motor und sport (S19); test rpm estimated from UN R51.03"},
+    "loadRangeDb": 12
+  },
   "notes": {
-    "draft": "[E] Draft written to test the valved cross-plane format; the car builder replaces it from research_notes/cars/RefC8Stingray."
+    "sources": "Research notes: research_notes/cars/RefC8Stingray.json and .md (source ids S01-S41). Spec sheet: docs/cars/RefC8Stingray.md.",
+    "engine.cylinders": "[F] V8 (S01).",
+    "engine.bankAngleDeg": "[F] 90-degree V8 (S01, S02).",
+    "engine.crank": "[P] Cross-plane crankshaft, forged steel (S07, S10): even firing every 90 degrees.",
+    "engine.firingOrder": "[F] 1-8-7-2-6-5-4-3 (S01, S11).",
+    "engine.banks": "[P] GM numbering: odd cylinders 1-3-5-7 on the left (driver's side) bank, even 2-4-6-8 on the right, cylinder 1 at the accessory end (S11). [E] In the C8 the accessory and dry-sump end faces forward, toward the cabin (transaxle behind the engine, oil tank on the block's left-front corner, S07), so each list runs front to back in the car too. Bank sequence along the firing order: L R L R R L R L; the left bank fires at 0/180/450/630 degrees (gaps 180-270-180-90), the right at 90/270/360/540 (180-90-180-270): the uneven pulses of each bank are the cross-plane burble.",
+    "engine.displacementCc": "[F] 6,162 cc, 103.25 x 92.0 mm (S01, S19, S20).",
+    "engine.idleRpm": "[E] Not published; typical Gen V warm idle 550-650 rpm (research note). Matches the car config.",
+    "engine.limiterRpm": "[P] Fuel-cut 'Engine Overspeed Protection' at about 6,600 rpm in manual mode (S27); GM's torque chart ends at about 6,620 rpm (S12). Matches the car config.",
+    "engine.cylinderSpread": "[E] The calibrated default (docs/AUDIO.md, Calibration).",
+    "exhaust.evoDeg": "[E] Calibrated default. The LT2's exhaust cam has 18 degrees more duration than the LT1's (S07), so the real EVO is a little earlier; a uniform shift doesn't change a steady loop's spectrum.",
+    "exhaust.gasTempK": "[E] Full-load primary gas temperature of a naturally aspirated V8, as the GT12.",
+    "exhaust.pipeTempK": "[E] Downstream of the close-coupled catalysts (S07, S25), which keep the gas hot.",
+    "exhaust.rasp": "[E] A little above the default: reviewers hear it 'thunder like a NASCAR engine' at full throttle (S13).",
+    "exhaust.collectors": "[P] Upswept 4-into-1 stainless tubular headers with tapered collectors, one per bank (S07, S23); EngineLabs calls them equal-length on performance-exhaust cars (S08). [E] Primary length 0.5 m (compact mid-engine headers) with a 0.02 m spread.",
+    "exhaust.merge": "[P] No separate X- or H-pipe; owners describe the NPP muffler as nearly straight-through with an internal X-pipe (S25). [E] crossover 0.4 below 500 Hz, in the 0.3-0.5 range docs/AUDIO.md gives for X-pipes; the BMW S65 recording used for calibration showed a crossover near 0.5.",
+    "exhaust.outlets": "[P] Two close-coupled catalysts, then Tenneco's cold end with one large shielded muffler (S23, S24); quad tips as two pairs, one pair at each outer rear corner (S36 photos). [E] 1.9-1.95 m from collector to tips (a short mid-engine run: cats at the rear bulkhead, transverse muffler over the transaxle); 0.3 m tails. [A] 76 mm (3 in) pipes: the stock size wasn't found, aftermarket cat-backs use 3 in (research note). [E] The right-hand tips are 0.2 m farther from a driver sitting on the left.",
+    "exhaust.muffler.valves": "[P] The Z51's NPP exhaust adds two tailpipe valves (up to four valves with the AFM valves, S23-S25). Valve modes: Stealth closed, Tour mostly closed, Sport open at idle and in most driving, Track always open (S25, S26). [E] Modelled open: the game plays Sport/Track. Tour's closed-valve cruising and V4 (AFM) mode are not modelled.",
+    "exhaust.muffler.openLowpassHz": "[E] Nearly straight-through with the valves open (S25), so a little above the default 3,800 Hz.",
+    "exhaust.muffler.chamberLengthM": "[E] One large transverse muffler (S24).",
+    "exhaust.closedLowpassHz": "[E] Defaults; unused while the valves are open.",
+    "intake.level": "[E] Higher than the default 0.25: the rear-facing intake and airbox sit right behind the seats in a mid-engine car (S07; docs/AUDIO.md).",
+    "intake.runnerLengthM": "[P] Eight equal runners about 210 mm long (S07, S08).",
+    "intake.airboxHz": "[E] A large plenum fed by an 87 mm throttle (S07, S08): a little below the default 110 Hz.",
+    "intake.snorkelLengthM": "[E] Duct from the left-side body intake to the airbox, about 0.8 m.",
+    "intake.mouthDiameterM": "[E] About 0.1 m (the throttle is 87 mm, S07).",
+    "mechanical.combustion": "[E] Calibrated default.",
+    "mechanical.valvetrain": "[E] Calibrated default; pushrods with hydraulic roller lifters, 2 valves per cylinder (S01).",
+    "mechanical.injectors": "[E] Direct injection at 150 bar (S01): slightly above the calibrated default for the familiar Gen V injector tick at idle.",
+    "idle.roughness": "[E] Calibrated default.",
+    "idle.lope": "[E] A trace of lope: the LT2 cam has more duration than the LT1's (S07), and owners compare the Track-mode idle to 'an old school pre cat muscle car' (S26).",
+    "overrun.burble": "[E] Mild: no factory crackle map is documented and owners call the stock NPP 'not very aggressive even in Track' (S26); about 0.7 pops a second on a high-rpm overrun.",
+    "limiter.type": "[P] Fuel cut (S27).",
+    "limiter.free": "[E] Undocumented. Free revving bounces faster and deeper than in gear.",
+    "limiter.load": "[E] In gear: a hard cut with a 120 rpm bounce, inside the research's 100-150 rpm suggestion (S27 and research note).",
+    "loops.rpmPoints": "[E] Idle (600) to the cut (6,600) about 1.31x apart, so playback speed stays within about 15% of each recording.",
+    "loudness.interior": "[M] Car and Driver's measured cabin levels for the 2020 Z51 (S16; restated in S17): 47 dBA idle and 92 dBA full throttle set the loop gains. The 74 dBA at 70 mph (73 in the Sept 2020 test, S15) is mostly wind and tyres; the engine's modelled share at 70 mph in 8th (about 1,480 rpm, light load) is about 61 dBA. The drive mode of the idle measurement isn't stated.",
+    "loudness.exterior": "[F] 95 dB(A) EU stationary noise (S19). [E] Test speed 3,750 rpm from UN R51.03 for a 6,450 rpm rated speed (not found on a document). Not used by the gain model.",
+    "loudness.loadRangeDb": "[E] Calibrated default: closed vs full throttle at the same rpm."
   }
 }

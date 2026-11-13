@@ -1,32 +1,111 @@
 {
   "id": "RefM3G80",
-  "displayName": "(draft) BMW M3 Competition G80 reference",
-  "reference": "BMW M3 Competition (G80), S58 3.0 L twin-turbo inline-6. Engineering reference only.",
+  "displayName": "Brandt Kestrel RS",
+  "reference": "BMW M3 Competition (G80), S58B30T0 3.0 L twin-turbo inline-6: two mono-scroll turbochargers, one per three cylinders (1-3 and 4-6), valved dual-branch exhaust with four tailpipes, EU specification (gasoline particulate filters). Engineering reference only.",
   "engine": {
-    "cylinders": 6, "layout": "inline", "crank": "even",
+    "cylinders": 6,
+    "layout": "inline",
+    "crank": "even",
     "firingOrder": [1, 5, 3, 6, 2, 4],
-    "banks": { "A": [1, 2, 3, 4, 5, 6] },
-    "idleRpm": 750, "limiterRpm": 7200, "aspiration": "Turbo"
+    "banks": {"A": [1, 2, 3, 4, 5, 6]},
+    "displacementCc": 2993,
+    "idleRpm": 700,
+    "limiterRpm": 7250,
+    "aspiration": "Turbo",
+    "cylinderSpread": 0.06
   },
   "exhaust": {
-    "evoDeg": 125, "pulseRiseDeg": 8, "pulseDecayDeg": 45, "rasp": 0.3,
+    "evoDeg": 130,
+    "pulseRiseDeg": 4,
+    "pulseDecayDeg": 30,
+    "gasTempK": 1150,
+    "pipeTempK": 750,
+    "rasp": 0.25,
     "collectors": [
-      { "name": "front", "cylinders": [1, 2, 3], "primaryLengthM": 0.35, "lengthSpreadM": 0.03 },
-      { "name": "rear", "cylinders": [4, 5, 6], "primaryLengthM": 0.35, "lengthSpreadM": 0.03 }
+      {"name": "front_1_3", "cylinders": [1, 2, 3], "primaryLengthM": 0.25, "lengthSpreadM": 0.04},
+      {"name": "rear_4_6", "cylinders": [4, 5, 6], "primaryLengthM": 0.25, "lengthSpreadM": 0.04}
     ],
-    "merge": { "type": "hpipe", "crossover": 0.2, "crossoverHz": 300, "pathM": 0.4 },
+    "merge": {"type": "hpipe", "crossover": 0.25, "crossoverHz": 300, "pathM": 0.5},
     "outlets": [
-      { "collectors": ["front"], "pipeLengthM": 3.0, "tailLengthM": 0.3, "diameterM": 0.08 },
-      { "collectors": ["rear"], "pipeLengthM": 3.0, "tailLengthM": 0.3, "diameterM": 0.08, "offsetM": 0.8 }
+      {"collectors": ["front_1_3"], "pipeLengthM": 3.6, "tailLengthM": 0.25, "diameterM": 0.10, "offsetM": 0.0},
+      {"collectors": ["rear_4_6"], "pipeLengthM": 3.35, "tailLengthM": 0.25, "diameterM": 0.10, "offsetM": 0.1}
     ],
-    "muffler": { "valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.6 }
+    "muffler": {
+      "valves": "auto",
+      "openAboveRpm": 3500,
+      "openAboveLoad": 0.6,
+      "openLowpassHz": 3200,
+      "closedLowpassHz": 1300,
+      "closedCutDb": 7,
+      "chamberAreaRatio": 6,
+      "chamberLengthM": 0.55
+    }
   },
-  "intake": { "level": 0.18 },
+  "intake": {"level": 0.15, "runnerLengthM": 0.25},
+  "mechanical": {"combustion": 0.05, "valvetrain": 0.008, "injectors": 0.008},
+  "idle": {"roughness": 0.08, "lope": 0.0},
+  "overrun": {"pulseLevel": 0.16, "burble": 0.1},
   "forcedInduction": {
-    "type": "Turbo", "count": 2, "pulseDamping": 0.55, "whistleHz": [2500, 8000],
-    "blowOff": { "type": "recirculating", "level": 0.5 }
+    "type": "Turbo",
+    "count": 2,
+    "pulseDamping": 0.6,
+    "dampingHz": 180,
+    "whistleHz": [2500, 8000],
+    "whistleLevel": 0.06,
+    "whooshLevel": 0.08,
+    "blowOff": {"type": "recirculating", "level": 0.3, "variants": 2}
   },
-  "limiter": { "type": "softCut" },
-  "loudness": { "interior": { "idleDbA": 45, "fullThrottleDbA": 80 } },
-  "notes": { "draft": "[E] Draft for testing the format; to be replaced by the car builder from research_notes/cars/RefM3G80." }
+  "limiter": {
+    "type": "fuelCut",
+    "rpm": 7250,
+    "free": {"bounceHz": 9.0, "dropRpm": 250, "cutShare": 0.45},
+    "load": {"bounceHz": 7.0, "dropRpm": 120, "cutShare": 0.35},
+    "popChance": 0.0,
+    "cutLevel": 0.12
+  },
+  "loops": {"rpmPoints": [700, 900, 1200, 1550, 2000, 2550, 3300, 4300, 5600, 7250], "seconds": 1.0, "limiterSeconds": 1.25},
+  "loudness": {
+    "interior": {
+      "idleDbA": 45,
+      "fullThrottleDbA": 79,
+      "cruiseDbA": 70,
+      "source": "auto motor und sport test 04/2021 (EU car, automatic, Active Sound Design on): idle 45, full throttle 82, 100 km/h 70, 130 km/h 73 dB(A); Car and Driver 2021 (US car): 84 dBA full throttle, 72 dBA at 70 mph. fullThrottleDbA is the natural engine level: 82 minus the 3 dB that Active Sound Design adds under load (research estimate: about half of the cabin engine sound under load comes from the speakers). The cockpit camera adds it back (config audio.interior.engine)."
+    },
+    "exterior": {
+      "stationaryDbA": 89,
+      "atRpm": 3750,
+      "source": "BMW market technical-data pages (search extracts, low confidence); not used by the level model"
+    },
+    "loadRangeDb": 12.0
+  },
+  "notes": {
+    "engine.firingOrder": "[P] 1-5-3-6-2-4, the BMW inline-six standard in BMW training material (research source FIRING); not seen in an S58-specific document, so [A] for this engine.",
+    "engine.banks": "[F] Inline-6, cylinder 1 at the front (belt end), 6 at the gearbox end (BMW ST1926 and BMW convention).",
+    "engine.crank": "[A] Even-firing inline-6 with throws 120 degrees apart: a firing every 120 degrees, firing frequency rpm / 20 Hz (35 Hz at idle, 362 Hz at the limiter).",
+    "engine.displacementCc": "[F] BMW specifications (BMW_SPEC_M3).",
+    "engine.idleRpm": "[E] Not published; warm idle of BMW's B58/S58 automatics is about 650-750 rpm (research). Matches the car config.",
+    "engine.limiterRpm": "[P] evo: 'the limiter coming in at 7250rpm'; redline 7,200 rpm [F]. Matches the car config.",
+    "engine.cylinderSpread": "[E] Shared calibrated default (docs/AUDIO.md).",
+    "exhaust.collectors": "[F] Two mono-scroll turbochargers fed by cylinders 1-3 and 4-6 (BMW press kit), each turbine housing cast together with its 3-into-1 manifold (BMW ST1926). With 1-5-3-6-2-4 each branch gets a pulse every 240 degrees (order 1.5), the two branches 120 degrees apart. [E] Short cast primaries, 0.25 m with 0.04 m spread (the middle runner is shorter).",
+    "exhaust.gasTempK": "[E] About 1,150 K ahead of the close-coupled turbines at full load (gasoline turbo).",
+    "exhaust.pipeTempK": "[E] About 750 K after the turbines, catalysts and (EU) particulate filters.",
+    "exhaust.rasp": "[E] Below the shared default 0.35: the turbines take the sharp part out of the pulses, and testers describe a 'silky inline-six growl' (Car and Driver) with a 'rather muted tone' from the emission filters (evo).",
+    "exhaust.evoDeg": "[E] Shared default.",
+    "exhaust.pulseRiseDeg": "[E] Shared calibrated default.",
+    "exhaust.pulseDecayDeg": "[E] Shared calibrated default.",
+    "exhaust.merge": "[F] Dual-branch 'cylinder-dependent twin-pipe design' (cylinders 1-3 / 4-6) into a large rear silencer whose tailpipes are interconnected, so gas always leaves through all four (BMW ST1926, press kit). [E] That shared silencer modelled as an H-pipe: 25% crossover below about 300 Hz, 0.5 m path.",
+    "exhaust.outlets": "[F] Four 100 mm tailpipes in two pairs. [E] One outlet per branch: about 3.6 m of pipe from the front turbo and 3.35 m from the rear one (the turbos sit about 0.27 m apart along the engine) to the rear silencer, 0.25 m tails; the far pair 0.1 m further from the listener.",
+    "exhaust.muffler": "[F] Two electric flaps in the outer tailpipes, binary, closed at low rpm and load, open at high rpm and load; SPORT and SPORT+ change timbre, M Sound Control keeps them closed (BMW ST1926, press kit). [E] This is SPORT, the game's default: open above 3,500 rpm or 60% load. openLowpassHz 3,200 (shared default 3,800): EU cars carry a particulate filter in each branch, which evo blames for the muted tone. Rear silencer chamber 0.55 m ('large rear silencer' [F]).",
+    "intake.level": "[E] Front engine; induction passes the turbo compressors and the air-to-water charge cooler in the plenum [F], which muffle it.",
+    "intake.runnerLengthM": "[E] Short runners from the plenum with the integrated charge-air cooler.",
+    "mechanical": "[E] Shared calibrated defaults; injector ticks a little above the default for 350-bar direct injection [F]. Chain-driven DOHC [F].",
+    "idle": "[E] No big-cam lope (VALVETRONIC and Double-VANOS [F]); shared default roughness.",
+    "overrun.burble": "[E] Mild. Not documented by BMW; research estimate for SPORT: a light burble on lift-off from mid rpm, more in SPORT+, muted on EU cars with particulate filters. evo: 'fires with a satisfying burble' at start-up.",
+    "forcedInduction": "[F] Two MHI mono-scroll turbochargers with electric wastegates; 1.7 bar maximum boost [P]. [E] pulseDamping 0.6 (each turbine is fed by three cylinders 240 degrees apart, and the manifold is part of the turbine housing). whistleHz and whistleLevel: no turbo whistle is described by any tester (they note lag below 2,750 rpm instead), so the whistle is kept low.",
+    "forcedInduction.blowOff": "[E] No atmospheric blow-off valve is documented and stock cars make no 'pssh'; any compressor recirculation is internal (research). So a quiet recirculating whoosh, two variants.",
+    "limiter": "[P] 7,250 rpm (evo); in manual mode the gearbox holds the limiter instead of upshifting [F]. [E] Fuel cut (BMW; no afterfire pops documented); a quick bounce, 9 a second free-revving and 7 a second in gear, as a tight cut sounds.",
+    "loops.rpmPoints": "[E] Ten speeds from idle to the limiter, about 1.3x apart, with points at 2,000, 2,550 and 3,300 rpm where boost arrives (the research expects the timbre to change most at 2,000-3,000 rpm).",
+    "loudness.interior": "[M] auto motor und sport (idle 45, full throttle 82 dB(A)), with [E] 3 dB taken off full throttle for Active Sound Design (see source). Car and Driver measured 84 dBA at full throttle on a US car (no particulate filter).",
+    "loudness.loadRangeDb": "[E] Shared default: level difference between closed and full throttle at the same rpm."
+  }
 }

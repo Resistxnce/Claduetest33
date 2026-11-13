@@ -1,36 +1,113 @@
 {
   "id": "RefM5F90",
-  "displayName": "(draft) BMW M5 Competition F90 reference",
-  "reference": "BMW M5 Competition (F90), S63 4.4 L twin-turbo hot-V cross-plane V8. Engineering reference only.",
+  "displayName": "Brandt Nordwind RS",
+  "reference": "BMW M5 Competition (F90, LCI), S63B44T4 4.4 L twin-turbo hot-V cross-plane V8 with cross-bank exhaust manifolds, valved M Sport exhaust, EU specification. Engineering reference only.",
   "engine": {
-    "cylinders": 8, "layout": "V", "bankAngleDeg": 90, "crank": "crossplane",
+    "cylinders": 8,
+    "layout": "V",
+    "bankAngleDeg": 90,
+    "crank": "crossplane",
     "firingOrder": [1, 5, 4, 8, 6, 3, 7, 2],
-    "banks": {"A": [1, 2, 3, 4], "B": [5, 6, 7, 8]},
-    "idleRpm": 600, "limiterRpm": 7200, "aspiration": "Turbo"
+    "banks": {"R": [1, 2, 3, 4], "L": [5, 6, 7, 8]},
+    "displacementCc": 4395,
+    "idleRpm": 600,
+    "limiterRpm": 7200,
+    "aspiration": "Turbo",
+    "cylinderSpread": 0.06
   },
   "exhaust": {
-    "rasp": 0.3,
+    "evoDeg": 130,
+    "pulseRiseDeg": 4,
+    "pulseDecayDeg": 30,
+    "gasTempK": 1150,
+    "pipeTempK": 750,
+    "rasp": 0.25,
     "collectors": [
-      {"name": "turbo1", "cylinders": [1, 4, 6, 7], "primaryLengthM": 0.6, "lengthSpreadM": 0.03},
-      {"name": "turbo2", "cylinders": [2, 3, 5, 8], "primaryLengthM": 0.6, "lengthSpreadM": 0.03}
+      {"name": "turboL_scroll_1_6", "cylinders": [1, 6], "primaryLengthM": 0.40, "lengthSpreadM": 0.05},
+      {"name": "turboL_scroll_4_7", "cylinders": [4, 7], "primaryLengthM": 0.40, "lengthSpreadM": 0.05},
+      {"name": "turboR_scroll_2_8", "cylinders": [2, 8], "primaryLengthM": 0.40, "lengthSpreadM": 0.05},
+      {"name": "turboR_scroll_3_5", "cylinders": [3, 5], "primaryLengthM": 0.40, "lengthSpreadM": 0.05}
     ],
-    "merge": {"type": "hpipe", "crossover": 0.2, "crossoverHz": 300, "pathM": 0.4},
+    "merge": {"type": "hpipe", "crossover": 0.12, "crossoverHz": 250, "pathM": 0.5},
     "outlets": [
-      {"collectors": ["turbo1"], "pipeLengthM": 3.4, "tailLengthM": 0.3, "diameterM": 0.08},
-      {"collectors": ["turbo2"], "pipeLengthM": 3.4, "tailLengthM": 0.3, "diameterM": 0.08, "offsetM": 1.0}
+      {"collectors": ["turboL_scroll_1_6", "turboL_scroll_4_7"], "pipeLengthM": 3.45, "tailLengthM": 0.25, "diameterM": 0.076, "offsetM": 0.0},
+      {"collectors": ["turboR_scroll_2_8", "turboR_scroll_3_5"], "pipeLengthM": 3.45, "tailLengthM": 0.25, "diameterM": 0.076, "offsetM": 0.1}
     ],
-    "muffler": {"valves": "auto", "openAboveRpm": 3000, "openAboveLoad": 0.6}
+    "muffler": {
+      "valves": "auto",
+      "openAboveRpm": 3500,
+      "openAboveLoad": 0.5,
+      "openLowpassHz": 3800,
+      "closedLowpassHz": 1300,
+      "closedCutDb": 7
+    }
   },
-  "intake": {"level": 0.15},
+  "intake": {"level": 0.15, "runnerLengthM": 0.25},
+  "mechanical": {"combustion": 0.05, "valvetrain": 0.008, "injectors": 0.008},
+  "idle": {"roughness": 0.08, "lope": 0.0},
+  "overrun": {"pulseLevel": 0.16, "burble": 0.12},
   "forcedInduction": {
-    "type": "Turbo", "count": 2, "pulseDamping": 0.6, "whistleHz": [2200, 7500],
-    "blowOff": {"type": "recirculating", "level": 0.5}
+    "type": "Turbo",
+    "count": 2,
+    "pulseDamping": 0.6,
+    "dampingHz": 180,
+    "whistleHz": [2200, 7500],
+    "whistleLevel": 0.08,
+    "whooshLevel": 0.08,
+    "blowOff": {"type": "none", "level": 0.0, "variants": 0}
   },
-  "limiter": {"type": "fuelCut"},
-  "overrun": {"burble": 0.25},
-  "loudness": {"interior": {"idleDbA": 45, "fullThrottleDbA": 78}},
+  "limiter": {
+    "type": "fuelCut",
+    "rpm": 7200,
+    "free": {"bounceHz": 14.0, "dropRpm": 250, "cutShare": 0.45},
+    "load": {"bounceHz": 10.0, "dropRpm": 150, "cutShare": 0.35},
+    "popChance": 0.0,
+    "cutLevel": 0.12
+  },
+  "loops": {"rpmPoints": [600, 800, 1050, 1400, 1800, 2400, 3150, 4150, 5500, 7200], "seconds": 1.0, "limiterSeconds": 1.25},
+  "loudness": {
+    "interior": {"idleDbA": 47, "fullThrottleDbA": 79, "cruiseDbA": 67, "source": "research estimate of Car and Driver-comparable levels for the M5 Competition (C/D 2018 base M5: 74 dBA full throttle, 80 peak in Sport, 66 at 70 mph; auto motor und sport LCI Competition: idle 48, max 81, 69 at 100 km/h, 71 at 130 km/h)"},
+    "exterior": {"stationaryDbA": 86, "atRpm": 3750, "source": "BMW stationary noise via auto motor und sport; test speed from the UN R51.03 rule (estimate)"},
+    "loadRangeDb": 12.0
+  },
   "notes": {
-    "draft": "[E] Draft written to test the hot-V format; the car builder replaces it from research_notes/cars/RefM5F90.",
-    "exhaust.collectors": "[E] Hot-V cross-bank manifold: each twin-scroll turbo takes the four cylinders that fire 180 degrees apart (derived from the firing order), so each turbo sees evenly spaced pulses."
+    "engine.firingOrder": "[P] 1-5-4-8-6-3-7-2, BMW technical training manual ST1202 (S63TU, F10 M5), table for S63 and S63TU; the F90's cross-bank manifold only works with this order, so carry-over to the S63B44T4 is near certain [A].",
+    "engine.banks": "[P] BMW numbering (ST1202): cylinder 1 at the front of the RIGHT bank (passenger side of a left-hand-drive car, looking forward); right bank 1-2-3-4 and left bank 5-6-7-8, front to rear. Per-bank pulse gaps 180-270-180-90 (right) and 180-90-180-270 (left): the classic cross-plane pattern.",
+    "engine.crank": "[P] Cross-plane forged crank, 5 main bearings (ST1202, S63TU), assumed carried over [A]. Even 90-degree firing.",
+    "engine.bankAngleDeg": "[P] 90-degree V (Wikipedia N63/S63).",
+    "engine.displacementCc": "[F] BMW 06/2020 specifications.",
+    "engine.idleRpm": "[E] Not published; warm idle of the N63/S63 family 550-650 rpm (research). Matches the car config.",
+    "engine.limiterRpm": "[F] BMW NA (M5 CS, same engine): redline 7,200 rpm; [P] ST1202: cut-off speed 7,200 rpm. Matches the car config.",
+    "engine.cylinderSpread": "[E] Shared calibrated default (docs/AUDIO.md).",
+    "exhaust.collectors": "[P] Hot-V cross-bank manifolds (ST1202, kept on the F90 per BMW 2017/2020): the twin-scroll turbo over the left bank (5-8) takes cylinders 1/6 (front scroll) and 4/7 (rear scroll); the turbo over the right bank (1-4) takes 2/8 (front) and 3/5 (rear). Each scroll gets a pulse every 360 degrees (BMW: '360 degrees of crankshaft angle between the two exhaust cycles within the exhaust flute'), each turbo every 180 degrees, the two turbos 90 degrees apart. [E] Primary lengths: short hot-V runners, about 0.3 m from the near bank to 0.5 m crossing the V; 0.40 m mean with 0.05 m spread.",
+    "exhaust.gasTempK": "[E] About 1,150 K ahead of close-coupled turbines at full load (gasoline turbo).",
+    "exhaust.pipeTempK": "[E] About 750 K after the turbines and close-coupled catalysts.",
+    "exhaust.rasp": "[E] Lower than the shared default 0.35: the turbines take the sharp part out of the pulses and reviewers call the stock note smooth and 'mellow' from inside.",
+    "exhaust.evoDeg": "[E] Shared default.",
+    "exhaust.pulseRiseDeg": "[E] Shared calibrated default (docs/AUDIO.md, calibration).",
+    "exhaust.pulseDecayDeg": "[E] Shared calibrated default.",
+    "exhaust.merge": "[F] Dual-branch M Sport exhaust, one branch per turbo, with a Helmholtz resonator between the two rear silencers (BMW NA 2018). [E] The shared resonator modelled as a weak low-frequency coupling (an H-pipe, 12 % below about 250 Hz).",
+    "exhaust.outlets": "[F] Four tailpipes, two per side (one branch per side). [E] About 3.45 m of pipe from each turbo in the V to its rear silencer, mirror-image branches of equal length, 0.25 m tails, 76 mm pipes; the far branch 0.1 m further from the listener (about the path difference at the driver's seat). The two branches carry the turbos' 180-degree pulse trains 90 degrees apart, so their orders 2 and 6 largely cancel when both are heard equally: measured with unequal branches (3.4 / 3.5 m, 0.2 m offset) order 2 rose to +5 dB over the firing order at 7,200 rpm near the pipes' third resonance (about 235 Hz), against the research's 'orders 4 and 8 dominate, weaker 2 and 6'.",
+    "exhaust.muffler": "[F] Electrically actuated flaps following EFFICIENT / SPORT / SPORT+ (M Sound Control forces the quiet setting). [E] This is SPORT, the game's default: open under load (above 50 % load) and above 3,500 rpm; filter values are the shared defaults.",
+    "intake.level": "[E] Front engine with the intakes outside the V, far from the cabin; turbo compressors and water-to-air charge cooling muffle the induction.",
+    "intake.runnerLengthM": "[E] Short runners on the outside of the hot-V.",
+    "mechanical": "[E] Shared calibrated defaults; injector ticks a little above default for 350-bar direct injection [F].",
+    "idle": "[E] No big-cam lope (VALVETRONIC and Double-VANOS [F]); shared default roughness.",
+    "overrun.burble": "[E] SPORT: occasional light burble on lift-off (research); SPORT+ would be about 0.3. EU cars have a particulate filter [F], which softens crackle [E].",
+    "overrun.pulseLevel": "[E] Shared default.",
+    "forcedInduction.count": "[F] Two twin-scroll turbochargers ('M TwinScroll TwinTurbo').",
+    "forcedInduction.pulseDamping": "[E] Twin-scroll turbines inside the V smooth the pulses a little more than the shared default.",
+    "forcedInduction.whistleHz": "[E] Subdued whistle on the stock car (research); pitch range kept in the audible band.",
+    "forcedInduction.whistleLevel": "[E] Below the shared default 0.10: subdued whistle.",
+    "forcedInduction.whooshLevel": "[E] Shared default.",
+    "forcedInduction.blowOff": "[P] No blow-off valve: BMW (ST1202): the S63TU 'does not use a blow-off valve. The use of Valvetronic and special tuning rendered it unnecessary'; compressors 'not sensitive to pump'. Carry-over assumed [A]. variants 0 makes no blow-off sounds.",
+    "limiter.type": "[E] Cut style not published (fuel or ignition cut); a fuel cut without afterfire pops.",
+    "limiter.rpm": "[F] 7,200 rpm (see engine.limiterRpm). In manual the gearbox doesn't upshift at the limiter, so the engine bounces on it [F]; in D it upshifts just before.",
+    "limiter.free": "[E] Research suggests a 10-15 Hz bounce of 150-250 rpm; free revving bounces faster and deeper (14 Hz, 250 rpm).",
+    "limiter.load": "[E] In gear, 10 Hz and 150 rpm (the car's inertia holds the engine up).",
+    "loops.rpmPoints": "[E] Idle to the limiter, about 1.33 x apart (the shared default spacing).",
+    "loudness.interior": "[E] Research estimate for Car and Driver-comparable figures (gap: C/D's Competition levels weren't found): idle 47, full throttle 79, 67 dBA at 70 mph. Corroborated by auto motor und sport's measured LCI Competition (idle 48, max 81) [M]. These cabin levels include BMW Active Sound Design, which in SPORT adds at most about 6 dB at full throttle [E] (C/D: 74 dBA, 80 peak in Sport, base M5). The cruise figure is road, wind and engine together; the level model uses idle and full throttle only.",
+    "loudness.exterior": "[F] 86 dBA stationary (BMW via auto motor und sport); [E] at 3,750 rpm (UN R51.03 rule for engines rated at 5,000-7,500 rpm, to verify). For reference; not used by the level model.",
+    "loudness.loadRangeDb": "[E] Shared default."
   }
 }

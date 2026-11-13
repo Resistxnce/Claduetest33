@@ -1,26 +1,92 @@
 {
   "id": "RefCamaroZL1",
-  "displayName": "(draft) Chevrolet Camaro ZL1 reference",
-  "reference": "Chevrolet Camaro ZL1, LT4 6.2 L supercharged pushrod cross-plane V8. Engineering reference only.",
+  "displayName": "Ridgeway Ironside SC",
+  "reference": "Chevrolet Camaro ZL1 coupe (6th generation), LT4 6.2 L supercharged pushrod cross-plane V8 with the Eaton R1740 TVS blower and the dual-mode (valved) exhaust. Engineering reference only.",
   "engine": {
-    "cylinders": 8, "layout": "V", "bankAngleDeg": 90, "crank": "crossplane",
+    "cylinders": 8,
+    "layout": "V",
+    "bankAngleDeg": 90,
+    "crank": "crossplane",
     "firingOrder": [1, 8, 7, 2, 6, 5, 4, 3],
-    "banks": { "L": [1, 3, 5, 7], "R": [2, 4, 6, 8] },
-    "idleRpm": 650, "limiterRpm": 6500, "aspiration": "Supercharger"
+    "banks": {"L": [1, 3, 5, 7], "R": [2, 4, 6, 8]},
+    "displacementCc": 6162,
+    "idleRpm": 650,
+    "limiterRpm": 6600,
+    "aspiration": "Supercharger",
+    "cylinderSpread": 0.06
   },
   "exhaust": {
-    "rasp": 0.4,
-    "merge": { "type": "xpipe", "crossover": 0.35, "crossoverHz": 500, "pathM": 0.3 },
-    "outlets": [
-      { "collectors": ["L"], "pipeLengthM": 3.2, "tailLengthM": 0.3, "diameterM": 0.1 },
-      { "collectors": ["R"], "pipeLengthM": 3.2, "tailLengthM": 0.3, "diameterM": 0.1, "offsetM": 1.0 }
+    "evoDeg": 130,
+    "gasTempK": 1050,
+    "pipeTempK": 750,
+    "rasp": 0.45,
+    "collectors": [
+      {"name": "L", "cylinders": [1, 3, 5, 7], "primaryLengthM": 0.45, "lengthSpreadM": 0.05},
+      {"name": "R", "cylinders": [2, 4, 6, 8], "primaryLengthM": 0.45, "lengthSpreadM": 0.05}
     ],
-    "muffler": { "valves": "open" }
+    "merge": {"type": "xpipe", "crossover": 0.35, "crossoverHz": 500, "pathM": 0.3},
+    "outlets": [
+      {"collectors": ["L"], "pipeLengthM": 3.0, "tailLengthM": 0.3, "diameterM": 0.076, "offsetM": 0.0},
+      {"collectors": ["R"], "pipeLengthM": 3.1, "tailLengthM": 0.3, "diameterM": 0.076, "offsetM": 0.0}
+    ],
+    "muffler": {
+      "valves": "auto",
+      "openAboveRpm": 3500,
+      "openAboveLoad": 0.5,
+      "openLowpassHz": 3800,
+      "closedLowpassHz": 1300,
+      "closedCutDb": 7
+    }
   },
-  "intake": { "level": 0.15 },
-  "forcedInduction": { "type": "Supercharger", "kind": "roots", "rotorLobes": 4, "driveRatio": 2.4, "whineLevel": 0.12 },
-  "limiter": { "type": "fuelCut" },
-  "overrun": { "burble": 0.4 },
-  "loudness": { "interior": { "idleDbA": 50, "fullThrottleDbA": 85 } },
-  "notes": { "draft": "[E] Draft for testing the format; to be replaced by the car builder from research_notes/cars/RefCamaroZL1." }
+  "intake": {"level": 0.15, "runnerLengthM": 0.2, "airboxHz": 110, "snorkelLengthM": 0.6},
+  "mechanical": {"combustion": 0.05, "valvetrain": 0.01, "injectors": 0.008},
+  "idle": {"roughness": 0.08, "lope": 0.08},
+  "overrun": {"pulseLevel": 0.16, "burble": 0.4},
+  "forcedInduction": {
+    "type": "Supercharger",
+    "kind": "roots",
+    "rotorLobes": 4,
+    "driveRatio": 3.1,
+    "pulsesPerRev": 8,
+    "whineRpm": [1200, 4000]
+  },
+  "limiter": {
+    "type": "fuelCut",
+    "free": {"bounceHz": 8.0, "dropRpm": 350, "cutShare": 0.45},
+    "load": {"bounceHz": 10.0, "dropRpm": 150, "cutShare": 0.4},
+    "cutLevel": 0.12
+  },
+  "loops": {"seconds": 1.0, "limiterSeconds": 1.25},
+  "loudness": {
+    "interior": {"idleDbA": 54, "fullThrottleDbA": 85, "cruiseDbA": 70, "source": "estimate (research notes): previous-generation 2013 ZL1 convertible measured by Edmunds 53.6 / 81.9 / 69.9, adjusted for the coupe and its valved exhaust"},
+    "loadRangeDb": 12
+  },
+  "notes": {
+    "engine.firingOrder": "[P] 1-8-7-2-6-5-4-3, the order of every Gen III-V GM small-block (rerev.com, Summit Racing; research_notes/cars/RefCamaroZL1).",
+    "engine.banks": "[P] GM numbering (Summit Racing): cylinders front to back, odd 1-3-5-7 on the left (driver's) bank, even 2-4-6-8 on the right; No. 1 is the front cylinder of the left bank.",
+    "engine.bankAngleDeg": "[F] 90-degree V8 (LT4).",
+    "engine.crank": "[E] Cross-plane: deduced from the even 90-degree firing order (every GM small-block uses one; the LT4's crank is forged steel [P]). Each bank fires at 180-270-180-90 degrees: the burble.",
+    "engine.displacementCc": "[F] 6,162 cc, bore x stroke 103.25 x 92.0 mm.",
+    "engine.idleRpm": "[E] Warm idle, not published (Gen V LT V8s idle at about 600-700 rpm); matches the car config. The reference LT4 recording's cold start holds about 1,630 rpm.",
+    "engine.limiterRpm": "[P] GM's 6,600 rpm maximum engine speed for the LT4 (tachometer redline 6,500 rpm [P]); fuel-cut limiter assumed there [E]. Matches the car config.",
+    "engine.cylinderSpread": "[E] Default (calibrated against a recording, docs/AUDIO.md).",
+    "exhaust.collectors": "[F]/[E] GM: Tri-Y exhaust manifolds that improve 'torque production and sound quality' (bulletin 17-NA-251). Modelled as one collector per bank; short cast-manifold primaries (0.45 m, unequal by +/-0.05 m) are estimates.",
+    "exhaust.merge": "[E] The crossover (X-pipe, H-pipe or none) is not confirmed for the factory system (research gap). An X-pipe with 0.35 crossover, as for GM's other cross-plane cars here: the reference LT4 recording heard from behind shows strong even orders and half orders 24-40 dB below the firing order, a strongly merged sound.",
+    "exhaust.outlets": "[P] Two outlets, each to a pair of tips at the outer corners of the diffuser (quad tips, Commons photo). Pipe lengths from the 4.8 m body (manifolds behind the front axle, mufflers at the rear) and the 76 mm (3 in) pipe diameter are estimates; the right pipe is 0.1 m longer (routing). Both outlets are equidistant from the listener (offsetM 0, a chase camera behind the car): heard from behind, the two banks sum almost in phase, so the half orders stay 15-30 dB under the firing order on throttle, as in the reference LT4 recording (9-28 dB under in free revs, 21-41 under driving away). A 0.25 m offset put them above the firing order.",
+    "exhaust.muffler": "[P]/[E] Dual-mode exhaust: electronically actuated valves let the gas bypass the rear mufflers; open on demand (Sport) and always in Track. Modelled as Sport: valves shut at light load below 3,500 rpm, open on throttle or above it. Filter values are the defaults.",
+    "exhaust.evoDeg": "[E] Default; LT4 cam 189/223 degrees at 0.050 in, 120-degree lobe separation [P] puts exhaust opening near 130 degrees after firing.",
+    "exhaust.gasTempK": "[E] Slightly above the default: supercharged engine at full load.",
+    "exhaust.rasp": "[E] 'Angry, hard-edged growl' (review snippet): a little more than the default 0.35.",
+    "intake": "[E] The intake breathes through the blower (throttle, rotors, intercooler bricks), which smooths the induction pulses: low level. Short runners in the blower lid; airbox fed from the front fascia.",
+    "mechanical": "[E] Pushrod OHV with hydraulic roller lifters (valvetrain slightly above the default), direct injection (injector ticks on) [F].",
+    "idle.lope": "[E] Mild cam (wide 120-degree lobe separation [P]): little lope.",
+    "overrun.burble": "[F]/[E] GM bulletin 17-NA-078: 'pop' or 'backfire' sounds during wide-open-throttle manoeuvres in Sport or Track are normal; reviewers mention 'exhaust blatting on the overrun'. Burble level 0.4 is an estimate.",
+    "forcedInduction": "[P] Eaton R1740 TVS: twin-rotor Roots type, two 4-lobe rotors with 160-degree twist, driven at 3.10 x crank speed (20,150 rotor rpm at 6,500) (EngineLabs, Corvette Action Center).",
+    "forcedInduction.pulsesPerRev": "[E] 8 pulses per rotor turn (2 rotors x 4 lobes), the standard twin-rotor relation: whine = rpm / 60 x 3.10 x 8 = 0.4133 x rpm Hz (engine order 24.8, 6.2 x the firing frequency): 269 Hz at idle, 1,240 Hz at 3,000 rpm, 2,728 Hz at 6,600. The weaker single-rotor line at half that pitch is not modelled (the synthesizer has no subharmonic option).",
+    "forcedInduction.whineRpm": "[E] Whine loops made at 1,200 and 4,000 rpm so the game's playback speed stays within 0.54-1.65 from idle to the limiter.",
+    "limiter": "[E] Not documented: fuel cut at about 6,600 rpm. Free revving bounces deeper and a little slower than in gear. Rates and drops are estimates.",
+    "loops": "[E] Default rpm points (idle to the limiter, about 1.29x apart).",
+    "loudness.interior": "[E] Research estimate: idle about 54 dBA, full throttle about 85, 70 mph about 70 (from Edmunds' previous-generation ZL1 convertible, 53.6 / 81.9 / 69.9 dB, adjusted for the coupe's louder valved exhaust). Car and Driver's figures for this car could not be read (gap). cruiseDbA is for reference; the level model uses idle and full throttle.",
+    "loudness.loadRangeDb": "[E] Default difference between closed and full throttle at the same rpm."
+  }
 }
