@@ -8,21 +8,22 @@ changes, driver profiles and the multi-lane road simulation). Keep it in step wi
   Lane changes:  MOBIL (Kesting, Treiber and Helbing, 2007), with a keep-right bias and a safety
                  limit on how hard the new follower would have to brake.
 
-Runs these tests on the 4-lane, 8,484 m proving-ground loop:
-  1. light and 2. heavy traffic for 10 simulated minutes: collisions, speeds, flow, lane use, lane
-     change rate;
+Runs these tests on every map (the 4-lane oval and the 3-lane city loop, with their real lengths
+and curve speed limits, read from the game's map data by tools/road_geometry.py):
+  1. light and 2. heavy traffic (10 and 5 simulated minutes): collisions, speeds, flow, lane use,
+     lane change rate, and sideways acceleration in curves against each driver's comfort limit;
   3. a stopped car (a crashed player) blocking a lane: traffic queues and merges around it;
   4. a player at 300 km/h coming up behind traffic: nobody pulls out in front of it;
   5. a slow player blocking the fast lane: traffic passes on the right.
 
-Usage: python3 tools/traffic_model.py
+Usage: python3 tools/traffic_model.py [Oval|City]
 """
 import bisect
 import math
+import pathlib
 import random
+import sys
 
-LAP = 2 * 2200 + 2 * math.pi * 650  # proving-ground loop, metres
-LANES = 4
 MAX_DECEL = 9.0  # m/s^2, the hardest any car can brake
 
 # ---------------------------------------------------------------------------------------------
@@ -30,17 +31,17 @@ MAX_DECEL = 9.0  # m/s^2, the hardest any car can brake
 # ---------------------------------------------------------------------------------------------
 # speed: desired speed (km/h) range; gap: desired time gap (s); minGap: standstill gap (m);
 # accel, decel: comfortable acceleration and braking (m/s^2); politeness: MOBIL p;
-# threshold: MOBIL switching threshold (m/s^2); laneMin: rightmost-only vehicles can't use lanes
-# left of this; share: how common the profile is.
+# threshold: MOBIL switching threshold (m/s^2); lateral: most sideways acceleration accepted in a
+# curve (m/s^2); rightLanes: only this many lanes on the right (trucks); share: how common.
 PROFILES = {
     "cautious": dict(speed=(95, 110), gap=1.8, minGap=2.5, accel=1.0, decel=1.5, politeness=0.5,
-                     threshold=0.3, length=4.6, width=1.8, laneMin=1, share=0.25),
+                     threshold=0.3, length=4.6, width=1.8, lateral=2.0, share=0.25),
     "normal": dict(speed=(110, 130), gap=1.4, minGap=2.0, accel=1.4, decel=2.0, politeness=0.3,
-                   threshold=0.2, length=4.7, width=1.85, laneMin=1, share=0.45),
+                   threshold=0.2, length=4.7, width=1.85, lateral=2.4, share=0.45),
     "aggressive": dict(speed=(130, 155), gap=0.9, minGap=1.5, accel=2.0, decel=2.5, politeness=0.1,
-                       threshold=0.1, length=4.6, width=1.85, laneMin=1, share=0.15),
+                       threshold=0.1, length=4.6, width=1.85, lateral=3.0, share=0.15),
     "truck": dict(speed=(80, 90), gap=1.8, minGap=3.0, accel=0.6, decel=1.5, politeness=0.5,
-                  threshold=0.3, length=14.0, width=2.5, laneMin=3, share=0.15),
+                  threshold=0.3, length=14.0, width=2.5, lateral=1.6, rightLanes=2, share=0.15),
 }
 KEEP_RIGHT_BIAS = 0.25  # m/s^2 added to the incentive for moving right (US-style keep right)
 SAFE_DECEL = 4.0  # m/s^2, the most a new follower may have to brake for a lane change
@@ -48,6 +49,10 @@ LANE_CHANGE_TIME = 3.0  # seconds to move across one lane
 DECISION_INTERVAL = (1.0, 2.0)  # seconds between a driver's lane-change decisions
 MIN_TIME_IN_LANE = 4.0  # seconds after a lane change before the next one
 OBSTACLE_PARAMS = dict(gap=1.0, minGap=2.0, accel=3.0, decel=6.0)  # how traffic expects a player to brake
+LIMIT_STEP = 10  # m, speed limits are kept for each stretch this long
+CURVE_DECEL = 1.0  # m/s^2, how hard traffic slows for a curve ahead
+CURVE_LOOKAHEAD = 1.0  # s, drivers aim for the limit this far ahead
+CURVE_RESPONSE = 1.0  # s, and close the difference over this time
 
 
 # ---------------------------------------------------------------------------------------------
@@ -76,6 +81,25 @@ class Sim:
         self.next_id = 1
         self.lane_changes = 0
         self.order = {}
+        self.limits = None  # profile name -> speed limit (m/s) for each limit_step metres of road
+        self.limit_step = LIMIT_STEP
+
+    def set_speed_limits(self, limits, step):
+        self.limits = limits
+        self.limit_step = step
+
+    def limit_at(self, s, profile_name):
+        """The speed limit for a profile at distance s, or None without limits."""
+        limit = self.limits and self.limits.get(profile_name)
+        if limit is None:
+            return None
+        if self.loop:
+            s %= self.length
+        return limit[min(max(math.floor(s / self.limit_step) + 1, 1), len(limit)) - 1]
+
+    def lane_min(self, p):
+        """The leftmost lane a profile may use (trucks keep to the lanes on the right)."""
+        return max(1, self.lanes - p["rightLanes"] + 1) if p.get("rightLanes") else 1
 
     # --- setup ---
     def pick_profile(self):
@@ -89,7 +113,10 @@ class Sim:
     def add(self, s, lane, profile_name, v=None):
         p = PROFILES[profile_name]
         v0 = self.rng.uniform(*p["speed"]) / 3.6
-        veh = dict(id=self.next_id, s=s % self.length, v=v0 * 0.85 if v is None else v, a=0.0, lane=lane,
+        if v is None:
+            limit = self.limit_at(s, profile_name)
+            v = min(v0 * 0.85, limit if limit is not None else math.inf)
+        veh = dict(id=self.next_id, s=s % self.length, v=v, a=0.0, lane=lane,
                    lanePos=float(lane), fromLane=lane, change=0.0, profile=p, name=profile_name, v0=v0,
                    decision=self.rng.uniform(*DECISION_INTERVAL), sinceChange=MIN_TIME_IN_LANE)
         self.next_id += 1
@@ -102,7 +129,7 @@ class Sim:
             spacing = self.length / max(count, 1)
             for k in range(count):
                 name = self.pick_profile()
-                if PROFILES[name]["laneMin"] > lane:
+                if self.lane_min(PROFILES[name]) > lane:
                     name = "normal"
                 self.add(k * spacing + self.rng.uniform(0, spacing * 0.4), lane, name)
 
@@ -177,7 +204,7 @@ class Sim:
     # --- MOBIL ---
     def wants_change(self, veh, target):
         p = veh["profile"]
-        if target < max(1, p["laneMin"]) or target > self.lanes:
+        if target < self.lane_min(p) or target > self.lanes:
             return False
         lead_old, gap_old, follow_old, gap_follow_old = self.neighbours(veh, veh["lane"])
         lead_new, gap_new, follow_new, gap_follow_new = self.neighbours(veh, target)
@@ -212,6 +239,10 @@ class Sim:
             if veh["change"] > 0 and veh["fromLane"] != veh["lane"]:
                 lead2, gap2, _, _ = self.neighbours(veh, veh["fromLane"])
                 a = min(a, self.accel(veh, lead2, gap2))
+            limit = self.limit_at(veh["s"] + veh["v"] * CURVE_LOOKAHEAD, veh["name"])
+            if limit is not None:
+                # slow for the curve ahead
+                a = min(a, max((limit - veh["v"]) / CURVE_RESPONSE, -MAX_DECEL))
             veh["a"] = a
             veh["decision"] -= dt
             veh["sinceChange"] += dt

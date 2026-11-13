@@ -283,6 +283,9 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	-- automatic gear choice, from the speed the wheels imply at the gearbox input
 	local inputRpmNow = Units.radPerSecToRpm(math.abs(self:_inputOmega(Transmission.ratio(tr))))
 	Transmission.updateAuto(tr, dt, inputRpmNow, pedal)
+	if automatic then
+		Transmission.updateLockup(tr, dt, math.abs(forwardSpeed) * 3.6, Engine.rpm(engine), cfg.engine.idleRpm)
+	end
 
 	-- drivetrain and tyres, in sub-steps
 	local h = dt / SUBSTEPS
@@ -291,6 +294,8 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	local minOmega = Units.rpmToRadPerSec(cfg.engine.idleRpm * 0.55)
 	local maxOmega = Units.rpmToRadPerSec(cfg.engine.limiterRpm + 400)
 	local engineTorqueSum, clutchTorqueSum, engagementSum = 0, 0, 0
+	local frontTorqueSum, driveTorqueSum = 0, 0
+	local turbineOmega = 0
 	for _, id in WHEEL_IDS do
 		local w = self.wheels[id]
 		w.fxSum = 0
@@ -300,9 +305,35 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 	for _ = 1, SUBSTEPS do
 		local ratio = Transmission.ratio(tr)
 		local inputOmega = self:_inputOmega(ratio)
-		local engagement = Transmission.engagement(tr, Engine.rpm(engine), Units.radPerSecToRpm(math.abs(inputOmega)), pedal, cfg.engine.idleRpm)
-		local capacity = engagement * cfg.transmission.clutchMaxTorque
-		local engineTorque = Engine.netTorque(engine, pedal, h)
+		local engagement, capacity, engineTorque
+		local turbineNext = nil
+		if automatic then
+			-- The gearbox input (the converter's turbine) turns with the wheels, except in a shift,
+			-- when the shift clutches carry it from the old gear's speed to the new one's.
+			turbineOmega = inputOmega
+			local direction = Transmission.shiftDirection(tr)
+			if direction ~= 0 then
+				local fromOmega = self:_inputOmega(Transmission.gearRatio(tr, tr.fromGear))
+				local progress = tr.shiftElapsed / tr.shiftDuration
+				local progressNext = math.min((tr.shiftElapsed + h) / tr.shiftDuration, 1)
+				turbineOmega = fromOmega + (inputOmega - fromOmega) * progress
+				turbineNext = fromOmega + (inputOmega - fromOmega) * progressNext
+			end
+			engagement = tr.lockup
+			capacity = engagement * tr.spec.lockup.maxTorque
+			local shiftPedal = enginePedal
+			if direction < 0 and engine.omega < inputOmega then
+				shiftPedal = math.max(enginePedal, tr.spec.downshiftBlip or 0) -- blip to match revs
+			end
+			engineTorque = Engine.netTorque(engine, shiftPedal, h)
+			if direction > 0 and engineTorque > 0 then
+				engineTorque *= 1 - tr.spec.shiftTorqueReduction -- ignition cut back through the shift
+			end
+		else
+			engagement = Transmission.engagement(tr, Engine.rpm(engine), Units.radPerSecToRpm(math.abs(inputOmega)), pedal, cfg.engine.idleRpm)
+			capacity = engagement * cfg.transmission.clutchMaxTorque
+			engineTorque = Engine.netTorque(engine, enginePedal, h)
+		end
 
 		-- Traction control, acting like a launch and traction system: it caps engine and clutch
 		-- torque at what the driven tyres can put down (plus headroom), then trims further while
@@ -328,7 +359,12 @@ function VehicleSimulation:step(dt: number, input, contacts, forwardSpeed: numbe
 				self.tcCut = math.max(0, self.tcCut - h * tc.recovery)
 			end
 			local limit = available / (math.abs(ratio) * efficiency) * tc.headroom * (1 - self.tcCut)
-			engineTorque = math.min(engineTorque, limit)
+			if automatic then
+				-- a slipping converter multiplies the engine's torque
+				engineTorque = math.min(engineTorque, limit / Transmission.torqueRatio(tr, engine.omega, turbineOmega))
+			else
+				engineTorque = math.min(engineTorque, limit)
+			end
 			capacity = math.min(capacity, limit)
 		else
 			self.tcCut = 0
