@@ -54,5 +54,21 @@ handbrake, Y for the camera.
 | `default.project.json` | Rojo project |
 | `tools/build_place.py` | Rebuilds the place file from `src/` (Python 3, no other tools needed) |
 | `tools/drivetrain_model.py` | Python copy of the drivetrain code for quick straight-line checks |
+| `tools/luau_check.py` | Checks every script for syntax errors, typos and Roblox API mistakes (see below) |
 
 After editing anything in `src/`, run `python3 tools/build_place.py` to refresh the place file.
+
+## Checking the code without Studio
+
+`tools/luau_check.py` parses every script as Luau and checks it against Roblox's own API list:
+syntax, undefined or misspelled variables, library functions, `require` paths, module members, and the
+classes, services, properties, methods, events and enums the code uses. It needs only Python 3.
+
+```
+curl -s https://setup.rbxcdn.com/versionQTStudio        # prints a version, e.g. version-0123456789abcdef
+curl -o API-Dump.json https://setup.rbxcdn.com/<version>-API-Dump.json
+python3 tools/luau_check.py --api-dump API-Dump.json --verbose
+```
+
+It can't catch everything Roblox's own Script Analysis does (full type checking) or anything that
+only goes wrong while the game runs, so the Play test is still the real test.
