@@ -294,7 +294,13 @@ function EngineMix.update(self, dt: number, input)
 	end
 	if #self.whineLoops > 0 then
 		EngineMix.rpmWeights(self.whineRpm, rpm, self.whineWeights)
-		local level = spec.superchargerVolume * engineGain * (0.2 + 0.8 * boost) * math.clamp(rpm / 2500, 0.3, 1)
+		-- optional shape settings (the defaults give the original shape): the share of the whine left
+		-- with no boost, the engine speed where it reaches full level, and the share left at low rpm
+		local idleShare = spec.superchargerIdleShare or 0.2
+		local fullRpm = spec.superchargerFullRpm or 2500
+		local rpmFloor = spec.superchargerRpmFloor or 0.3
+		local level = spec.superchargerVolume * engineGain * (idleShare + (1 - idleShare) * boost)
+			* math.clamp(rpm / fullRpm, rpmFloor, 1)
 		for k, index in self.whineLoops do
 			self.engineVolume[index] = level * self.whineWeights[k]
 			self.engineSpeed[index] = math.clamp(rpm * self.whineHzPerRpm / self.whineBaseHz[k], 0.25, 4)

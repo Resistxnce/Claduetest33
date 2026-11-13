@@ -297,6 +297,9 @@ SUPERCHARGER = {
     "pulsesPerRev": None,  # default: 2 * rotorLobes for a twin-rotor blower
     "whineLevel": 0.12,
     "whineRpm": [1800, 5200],  # crank speeds the whine loops are made at
+    # weaker line at half the whine pitch (one rotor's lobes passing), as an amplitude relative to
+    # the main line's fundamental: 0 = off, 0.3 = about 10 dB under it
+    "singleRotorLevel": 0.0,
 }
 
 
@@ -853,16 +856,28 @@ def blow_off(fi, rng, variant):
 
 
 def supercharger_whine(fi, crank_rpm, rng):
-    """Rotor whine at one crank speed: each rotor lobe pushes a pocket of air, pulsesPerRev a turn."""
+    """Rotor whine at one crank speed: each rotor lobe pushes a pocket of air, pulsesPerRev a turn.
+
+    With singleRotorLevel above 0 there is also a weaker line at half that pitch, from one rotor's
+    lobes passing on their own (with a little of its third harmonic). Both lines are kept a whole
+    number of cycles per loop, so the loop stays seamless."""
     base = crank_rpm / 60 * fi["driveRatio"] * fi["pulsesPerRev"]
     n = round(0.6 * FS)
     f = freqs(n)
-    tone = periodic_tone(n, base, [(1, 1.0), (2, 0.45), (3, 0.22), (4, 0.1)], [(0.002, 5)], rng)
     period = n / FS
+    single = fi.get("singleRotorLevel") or 0.0
+    if single > 0:
+        base = 2 * round(base / 2 * period) / period  # an even number of cycles, so half of it is whole
+    tone = periodic_tone(n, base, [(1, 1.0), (2, 0.45), (3, 0.22), (4, 0.1)], [(0.002, 5)], rng)
     f0 = round(base * period) / period
     air = circular(rng.standard_normal(n) * (1 + 0.6 * np.sin(2 * np.pi * f0 * np.arange(n) / FS)),
                    resonator(f, 2.2 * f0, 1.2) + 0.5 * highpass(f, 3000))
-    return finish(unit(tone) + 0.35 * unit(air)), f0
+    mix = unit(tone) + 0.35 * unit(air)
+    if single > 0:  # amplitudes relative to the main line's fundamental (amplitude 1 in `tone`)
+        scale = 1 / math.sqrt(float(np.mean(tone * tone)))  # the factor unit(tone) applied
+        sub = periodic_tone(n, f0 / 2, [(1, single), (3, 0.3 * single)], [(0.002, 5)], rng)
+        mix = mix + sub * scale
+    return finish(mix), f0
 
 
 # --------------------------------------------------------------------------------------------

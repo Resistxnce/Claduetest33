@@ -230,7 +230,7 @@ return {
 		minPitch = 0.5,
 		maxPitch = 2.0,
 		-- rev limiter: the limiter loops take over while the fuel cut keeps coming back. In gear this
-		-- car's simulated cut returns 3-4 times a second, up to 0.35 s apart (4th gear), so the hold
+		-- car's simulated cut returns 3-4 times a second, up to 0.33 s apart (4th gear), so the hold
 		-- is longer than the GT12's 0.3 s.
 		limiterHold = 0.45,
 		limiterAttack = 40, -- 1/s, how fast the limiter loops come in (about 25 ms)

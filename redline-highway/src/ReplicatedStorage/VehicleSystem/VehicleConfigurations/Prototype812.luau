@@ -193,6 +193,11 @@ return {
 		blowOffVolume = 0.6,
 		blowOffMinBoost = 0.35, -- boost (0-1) needed for a blow-off when the throttle shuts
 		superchargerVolume = 0.3, -- whine at full boost
+		-- optional whine shape (these values are the defaults): the share left with no boost, the
+		-- engine speed where the whine reaches full level, and the share left at very low rpm
+		superchargerIdleShare = 0.2,
+		superchargerFullRpm = 2500,
+		superchargerRpmFloor = 0.3,
 		shiftCutTime = 0.08, -- seconds of ignition cut heard on a full-throttle upshift
 		shiftCutMinRpm = 4500,
 		shiftCutVolume = 0.6,

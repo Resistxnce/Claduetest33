@@ -125,12 +125,12 @@ return {
 		finalDrive = 3.30, -- [P] (the 750S's is 15% shorter [P])
 		efficiency = 0.92, -- [E] typical for a dual-clutch gearbox and final drive
 		shiftTime = 0.05, -- [E] not published; ignition-cut shifts [F]
-		-- [E] Share of clutch capacity kept during a shift. A seamless dual-clutch with ignition-cut
-		-- upshifts pulls the engine down to the new gear's speed; it doesn't let it flare. At the GT12's
-		-- 0.35 (400 Nm against this engine's 620-770 Nm) every full-throttle upshift flared about
-		-- 300 rpm into the limiter, and the cut dumped half the boost (an artefact for a turbo engine).
-		-- At 0.6 (690 Nm) the clutch holds the engine and boost is kept through the shift.
-		shiftTorqueFraction = 0.6,
+		-- [E] Share of clutch capacity kept during a shift, as the GT12. Known artefact (reported as a
+		-- shared-code problem, docs/cars/Ref720S.md): 0.35 x 1,150 = 400 Nm is less than this engine's
+		-- 620-770 Nm, so each full-throttle upshift flares about 200 rpm into the limiter, whose cut closes
+		-- the throttle and dumps about half the boost. A real ignition-cut upshift keeps the boost. At 0.6
+		-- the flare and the dump go away, but 0-200 km/h then runs 0.3 s under McLaren's figure.
+		shiftTorqueFraction = 0.35,
 		clutchMaxTorque = 1150, -- [E] Nm, about 1.5 x peak torque
 		clutchStiffness = 400, -- [E] Nm per rad/s of slip
 		-- [E] engine speed the launch clutch holds, by pedal. Launch control [F]; its rpm isn't published

@@ -189,7 +189,7 @@ return {
 	},
 
 	steering = {
-		maxAngleLowSpeed = 30, -- [E] road-wheel degrees when slow; with ackermann 0.6 this gives about the factory 11.6 m turning circle [F] (S01)
+		maxAngleLowSpeed = 31, -- [E] road-wheel degrees when slow: with ackermann 0.6 the outer front tyre then traces the factory 11.6 m kerb-to-kerb turning circle [F] (S01)
 		maxAngleHighSpeed = 4.5, -- [E] at highSpeedKmh and above, keyboard-friendly as the GT12
 		highSpeedKmh = 250, -- [E]
 		rate = 220, -- [E] degrees per second the road wheels can turn
@@ -246,7 +246,10 @@ return {
 		whineTeeth = 6.19,
 		-- cockpit camera: level changes and an equaliser (dB). The engine sits right behind the seats
 		-- (mid-engine, rear-facing intake, S07), so the cabin hears more engine and less treble cut.
-		interior = { engine = 0.9, wind = 0.45, road = 1.25, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -9 },
+		-- road 2.2: Car and Driver measured 74 dBA in the cabin at 70 mph [M] (S16), when the engine's
+		-- modelled share in 8th is about 63 dBA, so tyre and wind noise lead the engine by about 11 dB,
+		-- 5.5 dB at the game's level compression (1.25 gave 0.8 dB; measured with tools/audio_preview.py).
+		interior = { engine = 0.9, wind = 0.45, road = 2.2, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -9 },
 	},
 
 	-- Published figures the telemetry overlay and tools/drivetrain_model.py compare against. US figures

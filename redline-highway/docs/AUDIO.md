@@ -155,8 +155,12 @@ Every frame:
     pressure, between the definition's low and high whistle pitch.
   - A blow-off plays when the pedal comes off (it was above 0.6 within the last moment, now below
     0.2) while boost was above `blowOffMinBoost`.
-- **Supercharger.** The whine is pitched by rpm (crank to rotor ratio, rotor pulses per turn) and grows
-  with boost.
+- **Supercharger.** The whine is pitched by rpm (crank to rotor ratio, rotor pulses per turn).
+  Its level is
+  `superchargerVolume x (superchargerIdleShare + (1 - superchargerIdleShare) x boost) x clamp(rpm / superchargerFullRpm, superchargerRpmFloor, 1)`.
+  The defaults are 0.2, 2,500 rpm and 0.3. Raise the idle share or the floor, or lower the full rpm,
+  for a whine that stays clear at idle and part throttle. Real twin-rotor blowers are often heard best
+  there.
 - **Events and driving sounds.** These are unchanged:
   - the shift crack and clunk;
   - crackles after a high-rpm lift-off;
@@ -312,7 +316,7 @@ of `tools/synth_audio.py`. Units: metres, Kelvin, rpm, crank degrees, Hz, dB.
 | `idle` | `roughness` (cycle-to-cycle variation), `lope` (0-1, big-cam lope). |
 | `overrun` | `pulseLevel` (off-throttle pulse strength), `burble` (0-1, overrun pops). |
 | `forcedInduction`, turbo | `{"type": "Turbo", count, pulseDamping (0-1), dampingHz, whistleHz: [low, high], blowOff: {type: "atmospheric" \| "recirculating" \| "flutter", level, variants}}` |
-| `forcedInduction`, supercharger | `{"type": "Supercharger", kind: "roots", rotorLobes, driveRatio, pulsesPerRev (default 2 x lobes), whineRpm: [low, high]}` |
+| `forcedInduction`, supercharger | `{"type": "Supercharger", kind: "roots", rotorLobes, driveRatio, pulsesPerRev (default 2 x lobes), whineRpm: [low, high], singleRotorLevel}`.<br>`singleRotorLevel` adds the weaker line at half the whine pitch, from one rotor's lobes passing, with a little of its third harmonic. It is an amplitude relative to the main line's fundamental: 0 (the default) is off; 0.3 is about 10 dB under. |
 | `limiter` | `type`: `"fuelCut"`, `"ignitionCut"` (afterfire pops, `popChance`) or `"softCut"`.<br>`free` and `load`: `{bounceHz, dropRpm, cutShare}` for free revving and in gear.<br>`cutLevel`: pulse strength of a cut cylinder. |
 | `loops` | `rpmPoints` (default: idle to limiter, about 1.33x apart), `seconds` (1.0), `limiterSeconds` (1.25), `offThrottle` and `limiter` (false to skip, as traffic does). |
 | `loudness` | `interior: {idleDbA, fullThrottleDbA, cruiseDbA, source}` from magazine tests, `exterior: {stationaryDbA, atRpm, source}`, `loadRangeDb`. The gains use the interior idle and full-throttle levels. The cruise and exterior figures are kept for reference: cruise mixes in road and wind noise, and exterior figures aren't available for every car. |
@@ -415,6 +419,7 @@ Engine orders at idle (dB relative to the firing order, 4):
 | `minPitch`, `maxPitch` | Playback-speed limits. |
 | `limiterHold` (0.3 s), `limiterAttack` (40/s, about 25 ms), `limiterRelease` (10/s) | The limiter switch. The simulation cuts fuel about 4 times a second on the limiter, so the hold must bridge the gaps. |
 | `turboVolume`, `blowOffVolume`, `blowOffMinBoost`, `superchargerVolume` | Forced-induction layers. Only turbo or supercharged engine sheets use them. |
+| `superchargerIdleShare` (0.2), `superchargerFullRpm` (2,500), `superchargerRpmFloor` (0.3) | Optional whine shape: the share left with no boost, the rpm where it reaches full level, and the share left at very low rpm. Leaving them out gives these defaults. |
 | `shiftCut*`, `shiftClunkVolume`, `crackle*`, `bump*`, `squeal*`, `roadVolume`, `windVolume`, `whine*` | As before. |
 | `interior` | Cockpit-camera levels and equaliser. |
 | `idleLevel`, `rpmCurve`, `redlineRpm`, `offThrottleLevel` | Only for an old-style sheet without gains. |

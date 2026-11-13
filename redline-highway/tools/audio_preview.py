@@ -242,7 +242,11 @@ class EngineMix:
             self.event(name, spec["blowOffVolume"] * engine_gain * self.boost_peak, 0.95 + 0.1 * self.random.random(), "engine")
         if self.whine_loops:
             rpm_weights(self.whine_rpm, rpm, self.whine_weights)
-            level = spec["superchargerVolume"] * engine_gain * (0.2 + 0.8 * boost) * clamp(rpm / 2500, 0.3, 1)
+            idle_share = spec.get("superchargerIdleShare", 0.2)
+            full_rpm = spec.get("superchargerFullRpm", 2500)
+            rpm_floor = spec.get("superchargerRpmFloor", 0.3)
+            level = (spec["superchargerVolume"] * engine_gain * (idle_share + (1 - idle_share) * boost)
+                     * clamp(rpm / full_rpm, rpm_floor, 1))
             for k, index in enumerate(self.whine_loops):
                 self.engine_volume[index] = level * self.whine_weights[k]
                 self.engine_speed[index] = clamp(rpm * self.whine_hz_per_rpm / self.whine_base_hz[k], 0.25, 4)

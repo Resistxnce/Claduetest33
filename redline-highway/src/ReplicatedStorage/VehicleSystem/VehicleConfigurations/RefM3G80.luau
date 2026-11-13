@@ -252,8 +252,9 @@ return {
 		minPitch = 0.5,
 		maxPitch = 2.0,
 		-- rev limiter: the limiter loops take over while the fuel cut keeps coming back. This car's
-		-- simulation cuts 4.5 times a second free-revving and 3.2-3.5 times in gear (gaps up to 0.31 s),
-		-- so the hold is longer than the GT12's 0.3 s.
+		-- simulation cuts 4.5 times a second free-revving and 2.7-3.8 times in 2nd-4th, with at most 0.15 s
+		-- between cuts; in 5th (manual) the engine needs about 0.35 s to climb back to the cut, so the
+		-- hold is 0.4 s rather than the GT12's 0.3 s.
 		limiterHold = 0.4,
 		limiterAttack = 40, -- 1/s, how fast the limiter loops come in (about 25 ms)
 		limiterRelease = 10, -- 1/s, and go out
@@ -284,9 +285,10 @@ return {
 		whineTeeth = 13, -- [E] final drive 3.154 = 41:13, so a 13-tooth pinion sets the whine pitch
 		-- cockpit camera. Active Sound Design plays engine orders through the speakers [F]: about half of the
 		-- cabin engine sound under load (research estimate), +3 dB, which is +1.5 dB at the game's 0.5 level
-		-- compression, so engine = 1.19. The equaliser lifts the low orders the speakers add and cuts the
-		-- treble the cabin keeps out.
-		interior = { engine = 1.19, wind = 0.6, road = 2.0, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
+		-- compression, so engine = 1.19. road and wind set so steady 100 and 130 km/h sit about 11.5 and
+		-- 14.4 dB (A) over idle in the preview's mix, against the measured 12.5 and 14.0 (auto motor und sport,
+		-- halved). The equaliser lifts the low orders the speakers add and cuts the treble the cabin keeps out.
+		interior = { engine = 1.19, wind = 0.55, road = 1.6, squeal = 0.7, lowGain = 4, midGain = -1, highGain = -12 },
 	},
 
 	-- [F] Factory figures (zeroTo60Mph, zeroTo100, zeroTo200, topSpeedKmh) and [M] magazine figures. US
