@@ -1,0 +1,1937 @@
+{
+  "id": "RefCamaroZL1",
+  "reference": "Chevrolet Camaro ZL1 coupe, 6th generation, 2017-2024 (engineering reference only; the game car gets a fictional name)",
+  "researched": "2026-11-13",
+  "tag_legend": {
+    "F": "manufacturer figure (GM press material, product guide or GM service bulletin)",
+    "P": "published spec from a third party (spec site, Wikipedia, enthusiast press, parts makers)",
+    "M": "measured in a test (magazine instrumented test, dyno sheet)",
+    "E": "estimate made here; the note says how",
+    "A": "assumption"
+  },
+  "identity": {
+    "make_model": {
+      "value": "Chevrolet Camaro ZL1",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "body": {
+      "value": "2-door, 4-seat (2+2) fastback coupe; convertible also offered",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "generation_platform": {
+      "value": "6th-generation Camaro (GM Alpha platform)",
+      "unit": "",
+      "tag": "P",
+      "source": "WIKI_CAMARO6",
+      "note": ""
+    },
+    "model_years": {
+      "value": "2017-2024",
+      "unit": "",
+      "tag": "P",
+      "source": "WIKI_CAMARO6",
+      "note": "6th-gen production ended 14 Dec 2023; 2024 was the last model year."
+    },
+    "layout": {
+      "value": "front-engine, longitudinal, rear-wheel drive",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "drive_side": {
+      "value": "Left",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "US market. A right-hand-drive conversion was sold in Australia/NZ (GMSV); not researched."
+    },
+    "launch_rating_history": {
+      "value": "Announced at an estimated 640 hp / 640 lb-ft; SAE-certified at 650 hp / 650 lb-ft in Aug 2016 before sales",
+      "unit": "",
+      "tag": "P",
+      "source": "GMAUTH_2016;WIKI_CAMARO6",
+      "note": "Explains why some GM documents still give 868 Nm (= 640 lb-ft)."
+    },
+    "model_year_changes": {
+      "value": "2017 launch (manual or 10-speed auto; coupe and convertible). 2018 adds ZL1 1LE (manual only). 2019 refresh: new rear fascia and dual-element taillamps, 8-in infotainment; ZL1 1LE gets the 10L90 from Feb 2019; GM lists length 190.2 in for 2019 vs 188.3 in for 2017. 2024: final year (Collector's Edition; Garage 56 Edition of 56 cars, 1LE-based).",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_19NA038;WIKI_CAMARO6",
+      "note": "2020-2023 changes were small and were not researched in detail."
+    },
+    "convertible_differences": {
+      "value": "Heavier (4,113 lb manual / 4,148 lb automatic vs 3,883 / 3,944 lb coupe); automatic convertible uses a 2.77 final drive instead of 2.85; reported to lack the eLSD.",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;AUTOBLOG_2016",
+      "note": "Weights are GM (F). The 2.77 ratio and the missing eLSD come only from an Autoblog first-drive snippet (P); not confirmed in a GM document."
+    },
+    "variant_1LE": {
+      "value": "ZL1 1LE Extreme Track Performance Package (2018-2024): Multimatic DSSV spool-valve dampers (23 lb lighter than Magnetic Ride, hard-mounted), springs about 4x stiffer, solid subframe mounts, adjustable camber plates, threaded front spring perch (+/-10 mm), 3-position rear anti-roll bar (+15% / -10%), 19x11 / 19x12 forged wheels with Goodyear Eagle F1 Supercar 3R 305/30ZR19 / 325/30ZR19, carbon rear wing (300 lb downforce at 150 mph), front splitter and dive planes, about 60 lb lighter (3,820 lb est.), 1.10 g. Manual only for 2018; 10L90 from Feb 2019. Nurburgring 7:16.04 (2017), 13.6 s faster than the standard ZL1.",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251;GM_TSB_19NA038;GM_PG2019;WIKI_CAMARO6",
+      "note": "'4x stiffer springs' is from Wikipedia citing Car and Driver (P)."
+    }
+  },
+  "engine": {
+    "code": {
+      "value": "LT4 (RPO LT4), Gen V small-block",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_17NA251",
+      "note": ""
+    },
+    "layout": {
+      "value": "90-degree V8",
+      "unit": "",
+      "tag": "F",
+      "source": "CAC_Z06_LT4",
+      "note": "Bank angle from the Corvette Z06 LT4 overview (same engine family)."
+    },
+    "crank_type": {
+      "value": "cross-plane (90-degree) crankshaft, forged steel",
+      "unit": "",
+      "tag": "E",
+      "source": "ENGINELABS_2014;CAC_Z06_LT4",
+      "note": "Forged steel crank is stated for the LT4. 'Cross-plane' is deduced: the even-firing 1-8-7-2-6-5-4-3 order needs it, and every GM small-block V8 uses one."
+    },
+    "displacement": {
+      "value": 6162,
+      "unit": "cc",
+      "tag": "F",
+      "source": "GM_PS_LT4;ENGINELABS_2014",
+      "note": "376 cu in; '6.2L' in GM naming."
+    },
+    "bore": {
+      "value": 103.25,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "4.06 in"
+    },
+    "stroke": {
+      "value": 92.0,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "3.62 in"
+    },
+    "bore_spacing": {
+      "value": 4.4,
+      "unit": "in",
+      "tag": "P",
+      "source": "CAC_Z06_LT4",
+      "note": "111.76 mm"
+    },
+    "compression_ratio": {
+      "value": 10.0,
+      "unit": ":1",
+      "tag": "F",
+      "source": "GM_PS_LT4;CAC_Z06_LT4;ENGINELABS_2014",
+      "note": "Some spec databases list 11.5:1 (that is the naturally aspirated LT1); ignore."
+    },
+    "valvetrain": {
+      "value": "OHV pushrod, 2 valves per cylinder, hydraulic roller lifters, single cam-in-block with dual-equal VVT (vane phaser)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;CAC_Z06_LT4",
+      "note": ""
+    },
+    "valves": {
+      "value": "intake 54 mm (2.13 in) titanium; exhaust 40.4 mm (1.59 in) hollow sodium-filled; rocker ratio 1.8",
+      "unit": "",
+      "tag": "P",
+      "source": "CAC_Z06_LT4",
+      "note": "Corvette Z06 LT4 data; assumed shared with the Camaro LT4."
+    },
+    "camshaft": {
+      "value": "lift 0.492 / 0.551 in (int/exh); duration at 0.050 in 189 / 223 deg; lobe separation 120 deg",
+      "unit": "",
+      "tag": "P",
+      "source": "CAC_Z06_LT4",
+      "note": "Z06 LT4 data; assumed shared."
+    },
+    "fuel_system": {
+      "value": "direct injection; premium fuel required",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_17NA251",
+      "note": ""
+    },
+    "throttle": {
+      "value": "87 mm single-bore electronic throttle",
+      "unit": "mm",
+      "tag": "P",
+      "source": "CAC_Z06_LT4",
+      "note": "Z06 LT4 data."
+    },
+    "lubrication": {
+      "value": "wet sump (Camaro ZL1)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "The Corvette Z06 LT4 is dry-sump; the Camaro is not."
+    },
+    "cylinder_deactivation": {
+      "value": "not confirmed for the Camaro ZL1",
+      "unit": "",
+      "tag": "A",
+      "source": "",
+      "note": "The Z06 LT4 has Active Fuel Management; not verified for the Camaro."
+    },
+    "max_power": {
+      "value": 485,
+      "unit": "kW",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "650 hp (SAE certified) at 6,400 rpm"
+    },
+    "max_power_rpm": {
+      "value": 6400,
+      "unit": "rpm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "max_torque": {
+      "value": 881,
+      "unit": "Nm",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "650 lb-ft (SAE certified) at 3,600 rpm. GM's 2019 product guide prints 868 Nm, which is the pre-certification 640 lb-ft."
+    },
+    "max_torque_rpm": {
+      "value": 3600,
+      "unit": "rpm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "torque_landmarks": {
+      "value": "457 lb-ft (620 Nm) just off idle; 625 lb-ft (847 Nm) by 2,800 rpm; 90% of peak (585 lb-ft, 793 Nm) from 2,500 to 5,400 rpm",
+      "unit": "",
+      "tag": "P",
+      "source": "ENGINELABS_2014",
+      "note": "EngineLabs quoting GM's launch material for the Z06 LT4."
+    },
+    "torque_curve_wheel_measured": {
+      "value": [
+        [
+          2250,
+          672
+        ],
+        [
+          2500,
+          729
+        ],
+        [
+          2750,
+          742
+        ],
+        [
+          3000,
+          748
+        ],
+        [
+          3250,
+          760
+        ],
+        [
+          3500,
+          762
+        ],
+        [
+          3750,
+          755
+        ],
+        [
+          4000,
+          746
+        ],
+        [
+          4250,
+          705
+        ],
+        [
+          4500,
+          716
+        ],
+        [
+          4750,
+          705
+        ],
+        [
+          5000,
+          696
+        ],
+        [
+          5250,
+          679
+        ],
+        [
+          5500,
+          656
+        ],
+        [
+          5750,
+          651
+        ],
+        [
+          6000,
+          643
+        ],
+        [
+          6250,
+          555
+        ],
+        [
+          6500,
+          534
+        ]
+      ],
+      "unit": "rpm, Nm at the rear wheels",
+      "tag": "M",
+      "source": "KN_DYNO_2017",
+      "note": "READ FROM A CHART: blue 'stock' trace of K&N's Dynojet sheet, stock 2017 ZL1 (8,620 mi), 4th gear, SAE correction (CF 1.02), smoothing 5. Digitised by pixel colour every 250 rpm, cross-checked against the power trace (hp = lb-ft x rpm / 5252 agrees within 1%). Transmission type not stated. The run starts at 2,000 rpm. Peak about 562 lb-ft (762 Nm) at 3,300-3,500 rpm and about 546 whp at 6,100 rpm. The drop above 6,100 rpm is real in the chart but conflicts with GM's 650 hp at 6,400 (likely heat soak or calibration on the dyno)."
+    },
+    "torque_curve_crank_estimate": {
+      "value": [
+        [
+          1000,
+          620
+        ],
+        [
+          1500,
+          705
+        ],
+        [
+          2000,
+          770
+        ],
+        [
+          2500,
+          813
+        ],
+        [
+          3000,
+          861
+        ],
+        [
+          3500,
+          879
+        ],
+        [
+          3600,
+          881
+        ],
+        [
+          4000,
+          872
+        ],
+        [
+          4500,
+          851
+        ],
+        [
+          5000,
+          830
+        ],
+        [
+          5500,
+          800
+        ],
+        [
+          6000,
+          762
+        ],
+        [
+          6400,
+          723
+        ],
+        [
+          6500,
+          708
+        ],
+        [
+          6600,
+          685
+        ]
+      ],
+      "unit": "rpm, Nm at the crank",
+      "tag": "E",
+      "source": "GM_PG2019;ENGINELABS_2014;KN_DYNO_2017",
+      "note": "Built through GM's points (881 Nm at 3,600; 723 Nm at 6,400 = 485 kW; 620 Nm just off idle, put at 1,000 rpm; 847 Nm by 2,800; >= 793 Nm from 2,500 to 5,400), with the mid-range shape taken from the K&N wheel curve. Wheel/crank ratio comes out 0.82-0.90 between 2,500 and 6,000 rpm. Use this for the simulation."
+    },
+    "redline": {
+      "value": 6500,
+      "unit": "rpm",
+      "tag": "P",
+      "source": "WHICHCAR_MAN",
+      "note": "Tachometer redline quoted in an Australian review (manual car). Matches the supercharger's 20,150 rpm limit at a 3.10 drive ratio."
+    },
+    "max_engine_speed": {
+      "value": 6600,
+      "unit": "rpm",
+      "tag": "P",
+      "source": "CHEV_CRATE_LT4",
+      "note": "GM's crate-engine page gives 6,600 rpm max recommended speed (read via search snippet)."
+    },
+    "rev_limiter": {
+      "value": 6600,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "CHEV_CRATE_LT4;WHICHCAR_MAN",
+      "note": "Fuel-cut limiter assumed at the 6,600 rpm max speed; hysteresis about 100-150 rpm (E). Exact factory limiter behaviour not found."
+    },
+    "idle_rpm": {
+      "value": 650,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Not found. Typical warm idle for Gen V LT V8s is about 600-700 rpm; cold start flares to about 1,000-1,200 rpm (E)."
+    },
+    "launch_control": {
+      "value": "Custom Launch Control: driver-set launch rpm, wheel-slip target 5-15%, surface type; works in Track mode with PTM. 1LE automatic bulletin: rpm adjustable down to 800, GM recommends at least 1,200 rpm.",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251;GM_TSB_19NA038",
+      "note": "Default launch rpm not published. Suggested simulation hold: about 2,500-3,000 rpm for the automatic, 3,500-4,000 rpm for the manual (E)."
+    },
+    "firing_order": {
+      "value": "1-8-7-2-6-5-4-3",
+      "unit": "",
+      "tag": "P",
+      "source": "RERUV_FO;SUMMIT_NUM;WIKI_LS_GEN5",
+      "note": "Same order as Gen III/IV LS and Gen V LT V8s."
+    },
+    "cylinder_numbering": {
+      "value": "GM convention: cylinders numbered front to back; odd 1-3-5-7 on the left (driver's, US LHD) bank, even 2-4-6-8 on the right bank; No. 1 is the front cylinder of the left bank",
+      "unit": "",
+      "tag": "P",
+      "source": "SUMMIT_NUM",
+      "note": ""
+    },
+    "per_bank_firing_intervals": {
+      "value": "left bank (1,7,5,3) and right bank (8,2,6,4) each fire at 180-270-180-90 crank-degree intervals (rotated); the whole engine fires evenly every 90 deg",
+      "unit": "deg",
+      "tag": "E",
+      "source": "RERUV_FO",
+      "note": "Derived from the firing order and cross-plane crank. This uneven per-bank train is the source of the V8 burble."
+    },
+    "firing_frequency": {
+      "value": "rpm / 15 (4 firings per crank revolution): 43 Hz at 650 rpm, 200 Hz at 3,000 rpm, 433 Hz at 6,500 rpm",
+      "unit": "Hz",
+      "tag": "E",
+      "source": "",
+      "note": "Engine order 4."
+    },
+    "heat_exchangers": {
+      "value": 11,
+      "unit": "count",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "Track cooling: radiator with dual auxiliary radiators, engine oil, transmission and differential coolers, intercooler circuit."
+    }
+  },
+  "supercharger": {
+    "model": {
+      "value": "Eaton R1740 TVS (Twin Vortices Series)",
+      "unit": "",
+      "tag": "P",
+      "source": "ENGINELABS_2014;CAC_Z06_LT4",
+      "note": "Confirms the starting fact. GM bulletin calls it an Eaton supercharger with a new Camaro-specific lid."
+    },
+    "displacement": {
+      "value": 1.74,
+      "unit": "L per rotor revolution",
+      "tag": "P",
+      "source": "ENGINELABS_2014",
+      "note": "Usually quoted as 1.7 L; the model number means 1,740 cc."
+    },
+    "rotor_type": {
+      "value": "twin-rotor Roots type, 4 lobes on each rotor, 160-degree helical twist",
+      "unit": "",
+      "tag": "P",
+      "source": "ENGINELABS_2014;CAC_Z06_LT4",
+      "note": ""
+    },
+    "drive_ratio": {
+      "value": 3.1,
+      "unit": "x crank speed",
+      "tag": "P",
+      "source": "ENGINELABS_2014",
+      "note": ""
+    },
+    "max_rotor_speed": {
+      "value": 20150,
+      "unit": "rpm",
+      "tag": "P",
+      "source": "ENGINELABS_2014",
+      "note": "= 6,500 engine rpm x 3.10. Corvette Action Center rounds it to 20,000 rpm."
+    },
+    "max_boost": {
+      "value": 9.4,
+      "unit": "psi",
+      "tag": "P",
+      "source": "ENGINELABS_2014",
+      "note": "65 kPa gauge. Corvette Action Center gives 9.71 psi (0.67 bar). GM's Z06 launch material used 9.4 psi."
+    },
+    "intercooler": {
+      "value": "air-to-liquid, two 'bricks' inside the supercharger case, on a separate low-temperature coolant circuit with its own pump and a heat exchanger ahead of the radiator; up to 60 C (140 F) charge cooling",
+      "unit": "",
+      "tag": "P",
+      "source": "CAC_Z06_LT4",
+      "note": "Camaro-specific: a new lid lets the bricks sit higher for better airflow (GM 17-NA-251, F)."
+    },
+    "whine_fundamental": {
+      "value": "8 pulses per rotor revolution (4 lobes x 2 rotors): f = rpm x 3.10 x 8 / 60 = 0.4133 x engine rpm",
+      "unit": "Hz",
+      "tag": "E",
+      "source": "ENGINELABS_2014",
+      "note": "Standard Roots-blower relation (a 2-lobe blower gives 4 pulses per revolution). The single-rotor lobe-pass line (4 per rev, half this frequency) may also be audible. The whine sits at 6.2x the firing frequency (engine order 24.8), so it never locks to the engine's harmonics, which is why it stands out. Timing-gear mesh whine is also possible; tooth count unknown."
+    },
+    "whine_table": {
+      "value": [
+        [
+          650,
+          2015,
+          134,
+          269
+        ],
+        [
+          1000,
+          3100,
+          207,
+          413
+        ],
+        [
+          1500,
+          4650,
+          310,
+          620
+        ],
+        [
+          2000,
+          6200,
+          413,
+          827
+        ],
+        [
+          2500,
+          7750,
+          517,
+          1033
+        ],
+        [
+          3000,
+          9300,
+          620,
+          1240
+        ],
+        [
+          3500,
+          10850,
+          723,
+          1447
+        ],
+        [
+          4000,
+          12400,
+          827,
+          1653
+        ],
+        [
+          4500,
+          13950,
+          930,
+          1860
+        ],
+        [
+          5000,
+          15500,
+          1033,
+          2067
+        ],
+        [
+          5500,
+          17050,
+          1137,
+          2273
+        ],
+        [
+          6000,
+          18600,
+          1240,
+          2480
+        ],
+        [
+          6500,
+          20150,
+          1343,
+          2687
+        ],
+        [
+          6600,
+          20460,
+          1364,
+          2728
+        ]
+      ],
+      "unit": "engine rpm, rotor rpm, 4x lobe-pass Hz, 8x pulse Hz",
+      "tag": "E",
+      "source": "ENGINELABS_2014",
+      "note": "Computed from the 3.10 drive ratio."
+    },
+    "whine_character": {
+      "value": "Prominent at low revs and part throttle, a 'characterful' whine under the exhaust; masked by exhaust noise at high revs and by wind with the convertible roof down above about 75 mph",
+      "unit": "",
+      "tag": "P",
+      "source": "MOTOR1_2017;MOTORWEEK_2017;REVIEW_SNIPPETS",
+      "note": ""
+    }
+  },
+  "transmission": {
+    "main_spec": {
+      "value": "Hydra-Matic 10L90 10-speed automatic with paddles (RPO MGL)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_19NA038;GM_10SPD_2016",
+      "note": "Co-developed with Ford. GM bulletin 19-NA-038 and NHTSA listings for 2017-2018 ZL1 use RPO MGL; one secondary source says MX0."
+    },
+    "gear_ratios_10L90": {
+      "value": [
+        4.7,
+        2.99,
+        2.15,
+        1.8,
+        1.52,
+        1.28,
+        1.0,
+        0.85,
+        0.69,
+        0.64
+      ],
+      "unit": ":1 (1st-10th)",
+      "tag": "F",
+      "source": "GM_10SPD_2016",
+      "note": "Overall spread 7.39. Cross-check: 1,859 rpm at 80 mph in 10th by calculation vs C/D's 'less than 1900 rpm'."
+    },
+    "reverse_10L90": {
+      "value": 4.87,
+      "unit": ":1",
+      "tag": "F",
+      "source": "GM_10SPD_2016",
+      "note": ""
+    },
+    "final_drive_auto_coupe": {
+      "value": 2.85,
+      "unit": ":1",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "final_drive_auto_convertible": {
+      "value": 2.77,
+      "unit": ":1",
+      "tag": "P",
+      "source": "AUTOBLOG_2016",
+      "note": "Also listed on press-style spec sheets per search snippets."
+    },
+    "torque_converter": {
+      "value": "260 mm, integral turbine clutch, lock-up clutch with electronically controlled capacity clutch (ECCC) slip control",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_10SPD_2016",
+      "note": ""
+    },
+    "converter_stall_rpm": {
+      "value": 2600,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Estimate for a 260 mm converter behind 881 Nm."
+    },
+    "clutches": {
+      "value": "6 (4 rotating, 2 brake) incl. a triple-clutch assembly",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_10SPD_2016",
+      "note": ""
+    },
+    "shift_times": {
+      "value": "GM: 1-2 upshift 36% quicker, 2-3 27% quicker, 3-4 26% quicker than Porsche's PDK; no absolute times published",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_10SPD_2016",
+      "note": ""
+    },
+    "shift_time_sim": {
+      "value": 0.1,
+      "unit": "s",
+      "tag": "E",
+      "source": "",
+      "note": "Suggested torque-interruption time for the simulation; secondary press quoted 'about 100 ms' (unverified)."
+    },
+    "shift_logic": {
+      "value": "Sport/Track: holds gears in hard driving, holds gear after a sudden lift until near redline, downshifts under braking keeping above about 3,000 rpm, upshifts one gear at a time back to 10th when cruising. 1LE auto Track pattern: upshifts about 3,000 rpm and downshifts about 2,000 rpm in normal driving; rev-matches all downshifts.",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_19NA038",
+      "note": "Bulletin is for the 2019 ZL1 1LE automatic; the Sport-mode behaviour is described generally."
+    },
+    "speed_per_gear_6500rpm_auto_kmh": {
+      "value": [
+        61,
+        96,
+        134,
+        160,
+        190,
+        225,
+        288,
+        339,
+        418,
+        450
+      ],
+      "unit": "km/h",
+      "tag": "E",
+      "source": "",
+      "note": "Rear tyre 305/30ZR20 (691 mm), rolling radius 0.335 m (3% under static, E). 1st ends near 38 mph; 2nd ends at 60-61 mph (6,500-6,600 rpm), so 0-60 mph needs exactly one upshift."
+    },
+    "top_speed_gear": {
+      "value": "8th, about 6,100 rpm at 198 mph",
+      "unit": "",
+      "tag": "E",
+      "source": "THEDRIVE_180",
+      "note": "The Drive: the car never needs more than 8th; calculation agrees."
+    },
+    "manual_variant": {
+      "value": "TREMEC TR-6060 6-speed manual (RPO MH3) with Active Rev Match",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251;GM_PG2019",
+      "note": ""
+    },
+    "gear_ratios_manual": {
+      "value": [
+        2.29,
+        1.61,
+        1.21,
+        1.0,
+        0.82,
+        0.68
+      ],
+      "unit": ":1 (1st-6th)",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "Bulletin is for the 2018 ZL1 1LE (MH3). Also fits the 2017 ZL1 manual: '60 mph in first' (The Drive) and about 100 km/h in 1st at 6,500 rpm (WhichCar) both match 2.29 x 3.73."
+    },
+    "reverse_manual": {
+      "value": 3.11,
+      "unit": ":1",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "final_drive_manual": {
+      "value": 3.73,
+      "unit": ":1",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_17NA251",
+      "note": ""
+    },
+    "manual_torque_capacity": {
+      "value": 881,
+      "unit": "Nm",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "speed_per_gear_6500rpm_manual_kmh": {
+      "value": [
+        96,
+        137,
+        182,
+        220,
+        269,
+        324
+      ],
+      "unit": "km/h",
+      "tag": "E",
+      "source": "",
+      "note": "Same tyre assumptions; 6th is drag-limited (about 6,400 rpm at 198 mph)."
+    }
+  },
+  "drivetrain": {
+    "layout": {
+      "value": "RWD",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "differential": {
+      "value": "Electronic limited-slip differential (eLSD), 226 mm ring gear, hydraulically actuated clutch pack",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251;GM_PG2019",
+      "note": "Bulletin text is for the 1LE; it says the 1LE eLSD differs only in calibration."
+    },
+    "elsd_capacity": {
+      "value": "0-200 Nm breakaway torque between the rear wheels, infinitely variable",
+      "unit": "Nm",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "GM's wording; treat as clutch preload/locking capacity."
+    },
+    "elsd_response": {
+      "value": 0.15,
+      "unit": "s to full engagement",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "elsd_modes": {
+      "value": "Mode 1 stability (default, PTM Wet); Mode 2 TCS and StabiliTrak off (more turn-in, exit traction); Mode 3 PTM Dry/Sport 1/Sport 2/Race; Mode 4 TCS off, StabiliTrak on",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "traction_system": {
+      "value": "Performance Traction Management, 5 modes: Wet, Dry, Sport 1, Sport 2, Race; StabiliTrak; Competitive Driving Mode; Line Lock",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "sim_suggestion": {
+      "value": {
+        "type": "LimitedSlip",
+        "preload": 100,
+        "powerLock": 0.35,
+        "coastLock": 0.2
+      },
+      "unit": "Nm / share of input torque",
+      "tag": "E",
+      "source": "GM_TSB_17NA251",
+      "note": "Clutch-type approximation of the eLSD for the game's differential model (GM's range is 0-200 Nm); tune in testing."
+    }
+  },
+  "mass": {
+    "curb_coupe_auto": {
+      "value": 1789,
+      "unit": "kg",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "3,944 lb; GM curb weight (US convention: full fluids, no driver)."
+    },
+    "curb_coupe_manual": {
+      "value": 1761,
+      "unit": "kg",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "3,883 lb"
+    },
+    "curb_convertible_auto": {
+      "value": 1882,
+      "unit": "kg",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "4,148 lb"
+    },
+    "curb_convertible_manual": {
+      "value": 1866,
+      "unit": "kg",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "4,113 lb"
+    },
+    "curb_1LE": {
+      "value": 1732,
+      "unit": "kg",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "3,820 lb, GM estimate"
+    },
+    "measured_coupe_auto": {
+      "value": 1784,
+      "unit": "kg",
+      "tag": "M",
+      "source": "CD_2017_AUTO",
+      "note": "3,933 lb, Car and Driver test car (read from a search snippet; C/D blocks this agent)."
+    },
+    "weight_distribution_front": {
+      "value": 0.53,
+      "unit": "share",
+      "tag": "E",
+      "source": "",
+      "note": "Not found. Estimate for a front-engined supercharged V8 coupe with 11 heat exchangers up front; the 6th-gen Camaro SS is usually quoted near 52/48. Verify."
+    },
+    "sim_mass": {
+      "value": 1864,
+      "unit": "kg",
+      "tag": "A",
+      "source": "GM_PG2019",
+      "note": "Coupe automatic curb weight plus a 75 kg driver, as for the GT12 prototype."
+    }
+  },
+  "dimensions": {
+    "length": {
+      "value": 4812,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "190.2 in for 2019+. Wikipedia gives 4,783 mm (188.3 in) for 2017-18."
+    },
+    "width": {
+      "value": 1897,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "74.7 in, excluding mirrors"
+    },
+    "height": {
+      "value": 1330,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "52.4 in. Wikipedia lists 53.1 in generally and 52.0 in for the 1LE."
+    },
+    "wheelbase": {
+      "value": 2811,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "110.7 in"
+    },
+    "track_front": {
+      "value": 1610,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "63.4 in"
+    },
+    "track_rear": {
+      "value": 1591,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "62.6 in"
+    },
+    "front_overhang": {
+      "value": 925,
+      "unit": "mm",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "From the side-view photo's front/rear overhang ratio (190:220 px) applied to length minus wheelbase (2,001 mm)."
+    },
+    "rear_overhang": {
+      "value": 1075,
+      "unit": "mm",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "As above."
+    },
+    "ground_clearance": {
+      "value": 115,
+      "unit": "mm",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Not published. About 110-125 mm under the front splitter, about 130 mm at the sills, from the photo scaled by wheel diameter."
+    },
+    "frontal_area": {
+      "value": 2.14,
+      "unit": "m^2",
+      "tag": "E",
+      "source": "GM_PG2019",
+      "note": "0.85 x width x height. A lap-simulation site uses 2.07 m^2."
+    },
+    "turning_circle": {
+      "value": 11.7,
+      "unit": "m",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "38.4 ft"
+    }
+  },
+  "tyres_wheels": {
+    "front_tyre": {
+      "value": "285/30ZR20",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "Goodyear Eagle F1 Supercar 3, Camaro-specific compound and construction. Diameter 679 mm (calc)."
+    },
+    "rear_tyre": {
+      "value": "305/30ZR20",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "Goodyear Eagle F1 Supercar 3. Diameter 691 mm (calc)."
+    },
+    "front_wheel": {
+      "value": "20 x 10 in forged aluminium",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "rear_wheel": {
+      "value": "20 x 11 in forged aluminium",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "1LE_tyres": {
+      "value": "305/30ZR19 front, 325/30ZR19 rear, Goodyear Eagle F1 Supercar 3R",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251;GM_PG2019",
+      "note": "Footprint about 10% larger than the ZL1; 1.5 kg lighter per corner."
+    },
+    "1LE_wheels": {
+      "value": "19 x 11 in front, 19 x 12 in rear forged aluminium",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "summer_tyre_note": {
+      "value": "summer-only tyres; do not use below -7 C (20 F)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    },
+    "rolling_radius_rear": {
+      "value": 0.335,
+      "unit": "m",
+      "tag": "E",
+      "source": "",
+      "note": "Static radius 0.3455 m minus 3%."
+    },
+    "track_pressures_1LE": {
+      "value": "cold 26 psi (180 kPa), hot target 32-35 psi; 44 psi for sustained high speed",
+      "unit": "psi",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "GM ran 44 psi in the 198 mph test (THEDRIVE_198)."
+    }
+  },
+  "brakes": {
+    "front": {
+      "value": "Brembo six-piston monobloc fixed calipers; 390 x 36 mm two-piece vented rotors",
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_17NA251",
+      "note": "15.35 in. Rotor thickness from the 1LE bulletin."
+    },
+    "rear": {
+      "value": "Brembo four-piston fixed calipers; 365 x 28 mm vented rotors (one-piece)",
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019;GM_TSB_17NA251",
+      "note": "14.4 in"
+    },
+    "abs": {
+      "value": "four-wheel disc, four-channel ABS",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "factory_60_0": {
+      "value": 32.6,
+      "unit": "m",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "107 ft. GM's guide misprints the metric value as 35 m."
+    },
+    "cd_70_0": {
+      "value": 43.6,
+      "unit": "m",
+      "tag": "M",
+      "source": "CD_2017_AUTO",
+      "note": "143 ft, C/D March 2017 automatic coupe (search snippet)."
+    },
+    "mt_60_0_1LE": {
+      "value": 27.7,
+      "unit": "m",
+      "tag": "M",
+      "source": "MT_BDC_2017",
+      "note": "91 ft, ZL1 1LE, Motor Trend Best Driver's Car 2017 (via a mirror of MT's data)."
+    },
+    "sim_suggestion": {
+      "value": {
+        "maxTorqueFront": 4200,
+        "maxTorqueRear": 2200,
+        "frontBias": 0.65
+      },
+      "unit": "Nm per wheel",
+      "tag": "E",
+      "source": "",
+      "note": "Enough to lock the wheels at 1,864 kg; tune so 100-0 km/h is about 33-35 m."
+    }
+  },
+  "aero": {
+    "drag_coefficient": {
+      "value": null,
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "GM has never published a Cd for the 6th-gen ZL1. A lap-simulation site uses 0.364 (with 2.07 m^2)."
+    },
+    "drag_area_topspeed_fit": {
+      "value": 0.9,
+      "unit": "m^2",
+      "tag": "E",
+      "source": "THEDRIVE_198;GM_PG2019",
+      "note": "Fitted so 650 hp gives 198 mph in 8th (~6,100 rpm, ~480 kW): 85-90% driveline efficiency, Crr 0.012-0.016, air 1.20-1.225 kg/m^3 give CdA 0.90-0.99. It absorbs heat soak and high-speed tyre losses. The lap-sim value (0.75) would let the car reach about 210 mph."
+    },
+    "lift_standard_ZL1": {
+      "value": "GM says the package reduces lift with no significant drag penalty (pedestal 'stanchion' spoiler, patent-pending auxiliary transmission cooler); no numbers",
+      "unit": "",
+      "tag": "F",
+      "source": "THEDRIVE_198",
+      "note": "Suggest near-zero net lift (ClA about 0 front, 0.05 rear) for the simulation (E)."
+    },
+    "downforce_1LE": {
+      "value": 1334,
+      "unit": "N at 241 km/h",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "300 lb (136 kg) at 150 mph from the carbon wing; equals ClA of about 0.48 m^2 at the rear (E)."
+    },
+    "wind_tunnel": {
+      "value": "more than 100 hours in two wind tunnels plus CFD",
+      "unit": "",
+      "tag": "P",
+      "source": "REVIEW_SNIPPETS",
+      "note": "Jalopnik via search snippet."
+    }
+  },
+  "suspension_steering": {
+    "front_suspension": {
+      "value": "MacPherson-type strut with dual lower ball joints, monotube struts, direct-acting stabilizer bar, Magnetic Ride Control",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "rear_suspension": {
+      "value": "independent five-link, monotube Magnetic Ride Control shocks, direct-acting stabilizer bar",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "dampers": {
+      "value": "Magnetic Ride Control (magnetorheological), ZL1-specific calibration",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "spring_rates": {
+      "value": null,
+      "unit": "N/m",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. 1LE springs are about 4x the ZL1's (P)."
+    },
+    "track_alignment": {
+      "value": "front camber -2.7 deg, caster 7.9 deg, toe 0.1 deg total; rear camber -2.0 deg, toe 0.1 deg total",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "GM track alignment for ZL1/1LE; street alignment not found."
+    },
+    "ride_height": {
+      "value": null,
+      "unit": "mm",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. 1LE front ride height adjustable +/-10 mm."
+    },
+    "steering_type": {
+      "value": "ZF rack-mounted electric power steering, variable ratio",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "steering_ratio": {
+      "value": null,
+      "unit": ":1",
+      "tag": "E",
+      "source": "",
+      "note": "Not found. Typical for the platform about 12-14:1 variable; about 2.4 turns lock-to-lock (E, unverified)."
+    },
+    "turning_circle": {
+      "value": 11.7,
+      "unit": "m",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "max_road_wheel_angle": {
+      "value": {
+        "outer": 29.5,
+        "inner": 39.9,
+        "bicycle": 34.0
+      },
+      "unit": "deg",
+      "tag": "E",
+      "source": "GM_PG2019",
+      "note": "From the 11.7 m kerb-to-kerb turning circle, 2,811 mm wheelbase and 1,610 mm track."
+    },
+    "magnetic_ride_weight": {
+      "value": "the 1LE's DSSV dampers are 23 lb (10.4 kg) lighter than the ZL1's Magnetic Ride set",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": ""
+    }
+  },
+  "performance": {
+    "factory_0_60": {
+      "value": 3.5,
+      "unit": "s",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "10-speed automatic coupe"
+    },
+    "factory_quarter_mile": {
+      "value": "11.4 s at 127 mph (204 km/h)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "factory_top_speed": {
+      "value": 319,
+      "unit": "km/h",
+      "tag": "F",
+      "source": "THEDRIVE_198;WIKI_CAMARO6",
+      "note": "198 mph, two-way average at Papenburg (Germany), 10-speed car, stock apart from 44 psi tyres; 202.3 mph one way with the wind, 193.3 mph against."
+    },
+    "factory_lateral_g": {
+      "value": 1.02,
+      "unit": "g",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": "1LE: 1.10 g"
+    },
+    "factory_60_0": {
+      "value": "107 ft (32.6 m)",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "factory_0_100kmh": {
+      "value": 3.65,
+      "unit": "s",
+      "tag": "E",
+      "source": "",
+      "note": "Not published by GM; 0-60 mph plus about 0.15 s."
+    },
+    "nurburgring": {
+      "value": "ZL1 about 7:29.6 (13.6 s slower than the 1LE); ZL1 1LE 7:16.04 (2017, GM test, driver Bill Wise)",
+      "unit": "",
+      "tag": "F",
+      "source": "WIKI_CAMARO6",
+      "note": ""
+    },
+    "magazine_tests": {
+      "value": [
+        {
+          "outlet": "Car and Driver",
+          "date": "2017-03",
+          "car": "2017 ZL1 coupe, 10-speed auto",
+          "0_60_s": 3.4,
+          "quarter": "11.5 s @ 125 mph",
+          "braking_70_0_ft": 143,
+          "skidpad_g": 1.04,
+          "top_gear_50_70_s": 2.1,
+          "curb_weight_lb": 3933,
+          "how_read": "0-60/quarter from the 0-60specs aggregator; braking, skidpad, 50-70 and weight from search snippets of the Yahoo-syndicated C/D test"
+        },
+        {
+          "outlet": "Car and Driver",
+          "date": "2017",
+          "car": "2017 ZL1 coupe, 6-speed manual",
+          "0_60_s": 3.7,
+          "quarter": "12.0 s @ 122 mph",
+          "how_read": "search snippet of the Yahoo-syndicated C/D test; C/D notes the manual is 0.3 s slower to 60 than the auto"
+        },
+        {
+          "outlet": "Motor Trend",
+          "date": "2017",
+          "car": "2017 ZL1 coupe, 10-speed auto",
+          "0_60_s": 3.5,
+          "quarter": "11.5 s @ 125.0 mph",
+          "how_read": "0-60specs aggregator"
+        },
+        {
+          "outlet": "Motor Trend",
+          "date": "2017",
+          "car": "2017 ZL1 coupe, 6-speed manual",
+          "0_60_s": 3.8,
+          "quarter": "11.8 s @ 123.9 mph",
+          "how_read": "0-60specs aggregator"
+        },
+        {
+          "outlet": "MotorWeek",
+          "date": "2017",
+          "car": "2017 ZL1 coupe, 10-speed auto",
+          "0_60_s": 3.5,
+          "quarter": "11.5 s @ 127 mph",
+          "how_read": "motorweek.org page, read directly"
+        },
+        {
+          "outlet": "Hennessey Performance (video, stock baseline)",
+          "date": "2017-04",
+          "car": "2017 ZL1 coupe, 10-speed auto",
+          "0_60_s": 3.6,
+          "0_100mph_s": 7.6,
+          "0_179.8mph_s": 26.2,
+          "how_read": "The Drive article on the video"
+        },
+        {
+          "outlet": "Car and Driver",
+          "date": "2018",
+          "car": "2018 ZL1 1LE, manual",
+          "0_60_s": 3.5,
+          "quarter": "11.7 s @ 124 mph",
+          "how_read": "0-60specs aggregator"
+        },
+        {
+          "outlet": "Road & Track",
+          "date": "2018",
+          "car": "2018 ZL1 1LE, manual",
+          "0_60_s": 3.5,
+          "quarter": "11.7 s @ 124 mph",
+          "how_read": "0-60specs aggregator"
+        },
+        {
+          "outlet": "Motor Trend",
+          "date": "2017 (Best Driver's Car)",
+          "car": "2018 ZL1 1LE, manual",
+          "0_60_s": 3.6,
+          "quarter": "11.7 s @ 123.0 mph",
+          "braking_60_0_ft": 91,
+          "figure_eight": "23.0 s @ 0.93 g avg",
+          "how_read": "0-60specs aggregator plus a search snippet of MT's BDC data"
+        },
+        {
+          "outlet": "Car and Driver",
+          "date": "2019",
+          "car": "2019 ZL1 1LE, 10-speed auto",
+          "0_60_s": 3.4,
+          "quarter": "11.5 s @ 124 mph",
+          "how_read": "0-60specs aggregator"
+        }
+      ],
+      "unit": "",
+      "tag": "M",
+      "source": "CD_2017_AUTO;CD_2017_MAN;AGG_060SPECS;MOTORWEEK_2017;THEDRIVE_HENN;MT_BDC_2017",
+      "note": "Car and Driver and Motor Trend block this agent, so their full data boxes (0-100, 0-130, 5-60, sound) could not be read."
+    },
+    "simulation_targets": {
+      "value": {
+        "zeroTo60mph": 3.5,
+        "zeroTo100kmh": 3.65,
+        "quarterMile": 11.4,
+        "zeroTo100mph": 7.6,
+        "topSpeedKmh": 319
+      },
+      "unit": "s / km/h",
+      "tag": "F",
+      "source": "GM_PG2019;THEDRIVE_HENN",
+      "note": "0-100 km/h is E; 0-100 mph is M (Hennessey)."
+    }
+  },
+  "sound": {
+    "exhaust_manifolds": {
+      "value": "Tri-Y design exhaust manifolds, 'improves torque production and sound quality'",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA251",
+      "note": "Z06 LT4 manifolds are cast austenitic stainless steel (P, CAC_Z06_LT4); Camaro material not confirmed."
+    },
+    "catalysts": {
+      "value": "close-coupled catalytic converters",
+      "unit": "",
+      "tag": "A",
+      "source": "CAC_Z06_LT4",
+      "note": "Stated for the Z06 LT4; assumed for the Camaro. Count and position not confirmed."
+    },
+    "crossover": {
+      "value": null,
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "X-pipe vs H-pipe vs none NOT confirmed for the factory ZL1 system. Gap."
+    },
+    "mufflers_and_valves": {
+      "value": "dual-mode 'NPP' exhaust: electronically actuated butterfly valves let exhaust bypass the rear mufflers; valves open on demand and always in Track mode",
+      "unit": "",
+      "tag": "P",
+      "source": "REVIEW_SNIPPETS;GM_TSB_17NA251",
+      "note": "NPP exhaust standard on the 1LE with larger bell-shaped tips (F)."
+    },
+    "tips": {
+      "value": "quad tips: two per side at the outer corners of the rear diffuser (split rear exit)",
+      "unit": "",
+      "tag": "P",
+      "source": "PHOTO_GOLDEN_2020_24",
+      "note": "Seen in a Commons photo; Borla calls the stock exit 'dual split rear', Flowmaster 'factory quad NPP'."
+    },
+    "modes": {
+      "value": "Stealth (quietest, valves closed), Tour, Sport, Track (valves open)",
+      "unit": "",
+      "tag": "P",
+      "source": "REVIEW_SNIPPETS;GM_TSB_17NA078",
+      "note": "Mode names from enthusiast sources; GM documents confirm Sport and Track. Exact valve map per mode not found."
+    },
+    "overrun_and_wot_pops": {
+      "value": "'Pop' or 'backfire' sounds during wide-open-throttle maneuvers in Sport or Track mode are normal; they go away in other modes",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_17NA078",
+      "note": "GM bulletin 17-NA-078, March 2017, 2015-2017 Camaro and Corvette LT4. Reviewers also mention 'exhaust blatting on the overrun'."
+    },
+    "limiter_behaviour": {
+      "value": "not documented; assume fuel cut at about 6,600 rpm with a fast bounce",
+      "unit": "",
+      "tag": "E",
+      "source": "CHEV_CRATE_LT4",
+      "note": "Gap."
+    },
+    "shift_sound": {
+      "value": "10-speed upshifts are very fast with a brief torque dip; 1LE auto rev-matches every downshift",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_10SPD_2016;GM_TSB_19NA038",
+      "note": ""
+    },
+    "launch_sound_note": {
+      "value": "GM: a launch setting below 1,200 rpm 'will produce an unpleasant sound'",
+      "unit": "",
+      "tag": "F",
+      "source": "GM_TSB_19NA038",
+      "note": ""
+    },
+    "cd_interior_dba": {
+      "value": null,
+      "unit": "dBA",
+      "tag": "M",
+      "source": "CD_2017_AUTO",
+      "note": "NOT OBTAINED: Car and Driver's idle / full-throttle / 70 mph figures could not be read (site blocks this agent). Gap."
+    },
+    "proxy_interior_db_previous_gen": {
+      "value": {
+        "idle": 53.6,
+        "full_throttle": 81.9,
+        "cruise_70mph": 69.9,
+        "cruise_70mph_roof_open": 77.3
+      },
+      "unit": "dB (labelled 'Db')",
+      "tag": "M",
+      "source": "EDMUNDS_2013",
+      "note": "2013 Camaro ZL1 convertible (previous generation, supercharged LSA 6.2), Edmunds, Sept 2012. Proxy only."
+    },
+    "estimated_interior_dba": {
+      "value": {
+        "idle": 54,
+        "full_throttle": 85,
+        "cruise_70mph": 70
+      },
+      "unit": "dBA",
+      "tag": "E",
+      "source": "EDMUNDS_2013",
+      "note": "From the previous-gen proxy, adjusted for a coupe with a louder valved exhaust. Replace with C/D data when available."
+    },
+    "exterior_levels": {
+      "value": null,
+      "unit": "dB",
+      "tag": "E",
+      "source": "",
+      "note": "No published pass-by or exterior figures found."
+    },
+    "reviewer_quotes": {
+      "value": [
+        {
+          "quote": "Crank it up, and it sounds hellacious, giving you an auditory taste of the performance potential that lies within.",
+          "source": "MOTORWEEK_2017"
+        },
+        {
+          "quote": "some insanely-sweet supercharger wine [sic]",
+          "source": "MOTORWEEK_2017"
+        },
+        {
+          "quote": "sounds ferocious at times",
+          "source": "MOTOR1_2017"
+        },
+        {
+          "quote": "characterful supercharger whine",
+          "source": "MOTOR1_2017"
+        },
+        {
+          "quote": "it also does a good job of shutting up when you want it to.",
+          "source": "MOTOR1_2017"
+        },
+        {
+          "quote": "It's so loud you can't even hear the supercharger whine.",
+          "source": "MOTOR1_2017",
+          "context": "convertible, roof down, above about 75 mph"
+        },
+        {
+          "quote": "it's the whine of the supercharger that dominates at low revs",
+          "source": "REVIEW_SNIPPETS",
+          "context": "outlet not confirmed"
+        },
+        {
+          "quote": "the angry, hard-edged growl of the 6.2-litre V8",
+          "source": "REVIEW_SNIPPETS",
+          "context": "outlet not confirmed (Australian spelling)"
+        },
+        {
+          "quote": "exhaust blatting on the overrun",
+          "source": "REVIEW_SNIPPETS",
+          "context": "outlet not confirmed"
+        },
+        {
+          "quote": "just a bit of burble reaching your ears, as well as a faint whine from the supercharger",
+          "source": "REVIEW_SNIPPETS",
+          "context": "quiet mode; outlet not confirmed"
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "MOTORWEEK_2017;MOTOR1_2017;REVIEW_SNIPPETS",
+      "note": ""
+    },
+    "reference_videos": {
+      "value": [
+        {
+          "type": "acceleration 0-180 mph, stock, 10-speed (Hennessey)",
+          "url": "https://www.youtube.com/watch?v=cFsK4qgeg70"
+        },
+        {
+          "type": "onboard POV, 2017 ZL1 10-speed",
+          "url": "https://www.youtube.com/watch?v=SS7QG3wdn3I"
+        },
+        {
+          "type": "onboard POV, ZL1 10-speed",
+          "url": "https://www.youtube.com/watch?v=IHm2q30D7ZA"
+        },
+        {
+          "type": "onboard POV, hard pulls and supercharger sound",
+          "url": "https://www.youtube.com/watch?v=ugDW6_VmlmA"
+        },
+        {
+          "type": "onboard POV review, 2022 ZL1 1LE 10-speed",
+          "url": "https://www.youtube.com/watch?v=bQB11vHo6Hg"
+        },
+        {
+          "type": "flyby, stock exhaust, full/partial throttle and revs (2018 ZL1)",
+          "url": "https://www.youtube.com/watch?v=aoYfStHWqBY"
+        },
+        {
+          "type": "cold start and revs with burbles (2018 ZL1)",
+          "url": "https://www.youtube.com/watch?v=E1g3qeTzEMM"
+        },
+        {
+          "type": "cold start and acceleration, stock per description (2023 ZL1)",
+          "url": "https://www.youtube.com/watch?v=L2bNhACnxOU"
+        },
+        {
+          "type": "dyno, stock 2023 ZL1 1LE",
+          "url": "https://www.youtube.com/watch?v=Ar6Ie2rOPKc"
+        },
+        {
+          "type": "dyno, stock 2019 ZL1 vs modified 1LE",
+          "url": "https://www.youtube.com/watch?v=WA0NlUQpeaQ"
+        },
+        {
+          "type": "dyno, 2020 ZL1 1LE (stock baseline per description)",
+          "url": "https://www.youtube.com/watch?v=PbSkse26Jaw"
+        }
+      ],
+      "unit": "url",
+      "tag": "P",
+      "source": "YOUTUBE_SEARCH",
+      "note": "Links only, not downloaded. Stock status is from titles and descriptions; check before use."
+    },
+    "free_recordings": {
+      "value": [
+        {
+          "file": "research_notes/cars/audio/RefCamaroZL1/Commons_Cadillac_CT5-V_Blackwing_LT4_engine_and_exhaust_sound.opus",
+          "what": "Cadillac CT5-V Blackwing: LT4 6.2 supercharged V8 (same engine family, own calibration) with an aftermarket AWE SwitchPath exhaust; start-up, revs, acceleration; 301 s, Opus 48 kHz stereo",
+          "licence": "CC BY 3.0",
+          "author": "Drag Racing Wheels - Forgestar - Weld - Race Stars (YouTube)",
+          "page": "https://commons.wikimedia.org/wiki/File:Cadillac_CT5-V_Blackwing_-_engine_and_exhaust_sound_(YouTube_Dgo5_38A-S0).opus",
+          "sha1": "3e5ca257458ba6bdec706f63a7e8c13f2db1c339"
+        },
+        {
+          "file": "research_notes/cars/audio/RefCamaroZL1/Commons_Chevrolet_Corvette_C6_ZR1_LS9_recorded2010.ogg",
+          "what": "Chevrolet Corvette C6 ZR1 (LS9 6.2 supercharged V8, Eaton TVS R2300 with 4-lobe rotors) pulling away at Goodwood Festival of Speed 2010; 12 s, Vorbis 44.1 kHz stereo",
+          "licence": "CC BY-SA 3.0",
+          "author": "Ed Pond (Wikimedia user Edvvc)",
+          "page": "https://commons.wikimedia.org/wiki/File:Chevrolet_Corvette_C6_ZR1_recorded2010.ogg",
+          "sha1": "6372b0ae13715af27d53f2d5f56642dc2b4d2c4c"
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "COMMONS_AUDIO",
+      "note": "No freely licensed recording of a Camaro ZL1 itself was found on Wikimedia Commons; archive.org items found were unlicensed YouTube copies. Attribution notes are in the audio folder's LICENSES.txt. Check the licences suit a Roblox game before use (BY needs attribution; BY-SA also needs share-alike for derivatives)."
+    }
+  },
+  "visual_blockout": {
+    "body_style": {
+      "value": "long-hood, short-deck 2+2 fastback coupe with a high beltline and a low, narrow greenhouse; wide front fenders with vents; big lower grille, carbon hood vent, front splitter; integrated rear spoiler",
+      "unit": "",
+      "tag": "E",
+      "source": "PHOTO_2020_01;PHOTO_DC_METRO;PHOTO_GREEN_2017_18;PHOTO_GOLDEN_2020_24",
+      "note": "Judged from the photos."
+    },
+    "engine_position": {
+      "value": "front-engined, longitudinal, much of the V8 behind the front axle line",
+      "unit": "",
+      "tag": "A",
+      "source": "",
+      "note": "Typical of the Alpha platform; not measured."
+    },
+    "front_axle_x": {
+      "value": 0.19,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "PHOTO_2020_01;GM_PG2019",
+      "note": "Front overhang about 925 mm of 4,812 mm."
+    },
+    "windscreen_base_x": {
+      "value": 0.34,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Cowl at the body side about 710 mm behind the front wheel centre (photo scaled by the wheelbase)."
+    },
+    "windscreen_top_x": {
+      "value": 0.48,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Roof header; photo is a convertible with the top up."
+    },
+    "roof_peak_x": {
+      "value": 0.57,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Range 0.55-0.60; above the front seat backs."
+    },
+    "rear_window_base_x": {
+      "value": 0.83,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Where the backlight meets the deck."
+    },
+    "rear_axle_x": {
+      "value": 0.78,
+      "unit": "fraction of length from the front",
+      "tag": "E",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "roof_height": {
+      "value": 1330,
+      "unit": "mm",
+      "tag": "F",
+      "source": "GM_PG2019",
+      "note": ""
+    },
+    "beltline_height": {
+      "value": 930,
+      "unit": "mm",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": "Side-window bottom edge; daylight opening only about 370 mm tall."
+    },
+    "hood_height_at_cowl": {
+      "value": 930,
+      "unit": "mm",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": ""
+    },
+    "nose": {
+      "value": "blunt, near-vertical fascia; hood falls from about 930 mm at the cowl to about 770 mm at the leading edge; splitter about 110-125 mm off the ground",
+      "unit": "",
+      "tag": "E",
+      "source": "PHOTO_2020_01;PHOTO_GREEN_2017_18",
+      "note": ""
+    },
+    "tail": {
+      "value": "short, high deck (about 1,040 mm at the spoiler lip), near-vertical tail panel with wide horizontal lamps, diffuser with two pairs of tips at the corners",
+      "unit": "",
+      "tag": "E",
+      "source": "PHOTO_2020_01;PHOTO_GOLDEN_2020_24",
+      "note": ""
+    },
+    "photo_caveat": {
+      "value": "No clean coupe side profile with a free licence was found. Proportions come from a near-side view of a modified convertible (aftermarket wing, decals); perspective shortens the ends, so lengths were scaled from the wheelbase and the published length rather than from end points.",
+      "unit": "",
+      "tag": "E",
+      "source": "PHOTO_2020_01",
+      "note": ""
+    }
+  },
+  "sources": [
+    {
+      "id": "GM_PG2019",
+      "title": "Chevrolet, 2019 Chevrolet Camaro ZL1 product guide and specifications (PDF, created 2018-07-23, author B. Kluczyk), hosted by automobilrevue.cz",
+      "url": "https://www.automobilrevue.cz/priloha/5c52e04a77969/2019-chevrolet-camaro-zl1-product-guide-071618-5c7513e929f7f.pdf",
+      "type": "F"
+    },
+    {
+      "id": "GM_TSB_17NA251",
+      "title": "GM service bulletin 17-NA-251 (Jul 2017), 2018 Chevrolet Camaro ZL1 1LE New Model Features",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2017/MC-10126120-9999.pdf",
+      "type": "F"
+    },
+    {
+      "id": "GM_TSB_19NA038",
+      "title": "GM service bulletin 19-NA-038 (Feb 2019), 2019 Camaro ZL1-1LE with 10-Speed Automatic New Model Features",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2019/MC-10155023-9999.pdf",
+      "type": "F"
+    },
+    {
+      "id": "GM_TSB_17NA078",
+      "title": "GM service bulletin 17-NA-078 (Mar 2017), Corvette and Camaro ZL1 exhaust tone during WOT in Sport or Track",
+      "url": "https://static.nhtsa.gov/odi/tsbs/2017/MC-10138065-9999.pdf",
+      "type": "F"
+    },
+    {
+      "id": "GM_10SPD_2016",
+      "title": "GM press release, 'Holy Shift! A look inside GM's new 10-speed automatic' (11 May 2016), reprint",
+      "url": "https://www.automotiveworld.com/news-releases/holy-shift-look-inside-gms-new-10-speed-automatic/",
+      "type": "F"
+    },
+    {
+      "id": "GM_PS_LT4",
+      "title": "GM Powered Solutions, 6.2L V-8 LT4 Supercharged (403 to the fetcher; figures read from search snippets)",
+      "url": "https://poweredsolutions.gm.com/products/engines/lt4-engine",
+      "type": "F"
+    },
+    {
+      "id": "CHEV_CRATE_LT4",
+      "title": "Chevrolet Performance, LT4 crate engine page (6,600 rpm max speed; read from a search snippet)",
+      "url": "https://www.chevrolet.com/performance-parts/crate-engines/lt-engines/lt4-engine",
+      "type": "F"
+    },
+    {
+      "id": "GMAUTH_2016",
+      "title": "GM Authority, 2017 Chevrolet Camaro ZL1 full performance specs revealed (Aug 2016; read via search snippets)",
+      "url": "https://gmauthority.com/blog/2016/08/2017-chevrolet-camaro-zl1-full-performance-specs-revealed/",
+      "type": "P"
+    },
+    {
+      "id": "WIKI_CAMARO6",
+      "title": "Wikipedia, Chevrolet Camaro (sixth generation), accessed 2026-11-13",
+      "url": "https://en.wikipedia.org/wiki/Chevrolet_Camaro_(sixth_generation)",
+      "type": "P"
+    },
+    {
+      "id": "WIKI_LS_GEN5",
+      "title": "Wikipedia, LS based GM small-block engine (LT4 table row, firing order notes)",
+      "url": "https://en.wikipedia.org/wiki/LS_based_GM_small-block_engine",
+      "type": "P"
+    },
+    {
+      "id": "ENGINELABS_2014",
+      "title": "M. Magda, 'High-revving Supercharger Key to LT4's Impressive Power Curve', EngineLabs, 2 Oct 2014",
+      "url": "https://www.enginelabs.com/engine-tech/high-revving-supercharger-key-lt4s-impressive-power-curve/",
+      "type": "P"
+    },
+    {
+      "id": "CAC_Z06_LT4",
+      "title": "Corvette Action Center, 2015 Corvette Z06: LT4 Engine Overview",
+      "url": "https://www.corvetteactioncenter.com/specs/c7-corvette/2015-c7-corvette/2015-c7-corvette-z06-lt4-engine-overview.html",
+      "type": "P"
+    },
+    {
+      "id": "RERUV_FO",
+      "title": "rerev.com, 6.2L LT4 firing order (via search snippet)",
+      "url": "https://rerev.com/firing-orders/chevrolet/6-2l-lt4/",
+      "type": "P"
+    },
+    {
+      "id": "SUMMIT_NUM",
+      "title": "Summit Racing knowledge base, Gen V LT cylinder numbering (via search snippet)",
+      "url": "https://help.summitracing.com/knowledgebase/article/HE-04970/en-us",
+      "type": "P"
+    },
+    {
+      "id": "KN_DYNO_2017",
+      "title": "K&N Engineering dyno sheet 63-3099: stock 2017 Camaro ZL1 baseline, Dynojet, 21 Feb 2017",
+      "url": "https://sdda.semadata.org/Standard/KN Engineering Inc/63-3099_dyno.pdf",
+      "type": "M"
+    },
+    {
+      "id": "THEDRIVE_198",
+      "title": "The Drive, '2017 Chevy Camaro ZL1 nails an official 198 mph top speed', 20 Feb 2017",
+      "url": "https://www.thedrive.com/new-cars/7756/2017-chevy-camaro-zl1-nails-an-official-198-mph-top-speed",
+      "type": "P"
+    },
+    {
+      "id": "THEDRIVE_180",
+      "title": "The Drive (K. Cheromcha), '10-Speed 2017 Chevy Camaro ZL1 Only Needs 8 Gears to Hit 180 MPH', 19 Apr 2017",
+      "url": "https://www.thedrive.com/article/9472/10-speed-2017-chevy-camaro-zl1-only-needs-8-gears-to-hit-180-mph",
+      "type": "P"
+    },
+    {
+      "id": "THEDRIVE_HENN",
+      "title": "The Drive, 'Watch the 650-HP Chevy Camaro ZL1 10-Speed Accelerate to 180 MPH', 17 Apr 2017",
+      "url": "https://www.thedrive.com/watch-this/9369/watch-the-650-hp-chevy-camaro-zl1-10-speed-accelerate-to-180-mph",
+      "type": "M"
+    },
+    {
+      "id": "THEDRIVE_1ST",
+      "title": "The Drive (W. Sabel Courtney), 'The 2017 Chevrolet Camaro ZL1 will hit 60 mph in 1st gear', 24 Aug 2016",
+      "url": "https://www.thedrive.com/muscle-cars/4976/the-2017-chevrolet-camaro-zl1-will-hit-60-mph-in-1st-gear",
+      "type": "P"
+    },
+    {
+      "id": "MOTORWEEK_2017",
+      "title": "MotorWeek road test, 2017 Chevrolet Camaro ZL1",
+      "url": "https://www.motorweek.org/reviews/road_tests/2017-chevrolet-camaro-zl1",
+      "type": "M"
+    },
+    {
+      "id": "MOTOR1_2017",
+      "title": "Motor1 (Z. Estrada), 2017 Chevy Camaro ZL1 First Drive, 1 Mar 2017",
+      "url": "https://www.motor1.com/reviews/137467/2017-chevy-camaro-zl1-coupe-first-drive/",
+      "type": "P"
+    },
+    {
+      "id": "CD_2017_AUTO",
+      "title": "Car and Driver road test, 2017 Chevrolet Camaro ZL1 (automatic), Mar 2017, Yahoo syndication; only search snippets were readable",
+      "url": "https://autos.yahoo.com/2017-chevrolet-camaro-zl1-165500450.html",
+      "type": "M"
+    },
+    {
+      "id": "CD_2017_MAN",
+      "title": "Car and Driver, 2017 Chevrolet Camaro ZL1 Manual, Yahoo syndication; only search snippets were readable",
+      "url": "https://autos.yahoo.com/2017-chevrolet-camaro-zl1-manual-190100380.html",
+      "type": "M"
+    },
+    {
+      "id": "AGG_060SPECS",
+      "title": "0-60specs.com, Chevrolet Camaro 0-60 times (aggregator naming C/D, MT, MotorWeek, R&T)",
+      "url": "https://www.0-60specs.com/chevrolet/camaro-0-60-times",
+      "type": "M"
+    },
+    {
+      "id": "MT_BDC_2017",
+      "title": "Motor Trend Best Driver's Car 2017 data for the ZL1 1LE (via a blog mirror in search results; MT blocks this agent)",
+      "url": "https://1onebestof1.blogspot.com/2017/09/chevrolet-camaro-zl1-1le-4th-place-2017.html",
+      "type": "M"
+    },
+    {
+      "id": "EDMUNDS_2013",
+      "title": "Edmunds, 2013 Chevrolet Camaro ZL1 Convertible Track Test (proxy sound levels; via search snippet)",
+      "url": "https://www.edmunds.com/car-reviews/track-tests/2013-chevrolet-camaro-zl1-convertible-track-test.html",
+      "type": "M"
+    },
+    {
+      "id": "WHICHCAR_MAN",
+      "title": "WhichCar (Australia), Chevrolet Camaro ZL1 manual review (6,500 rpm redline; via search snippet)",
+      "url": "https://www.whichcar.com.au/reviews/chevrolet-camaro-zl1-manual-review",
+      "type": "P"
+    },
+    {
+      "id": "AUTOBLOG_2016",
+      "title": "Autoblog, 2017 Chevrolet Camaro ZL1 first drive, 16 Dec 2016 (final drives, convertible eLSD; via search snippet)",
+      "url": "https://www.autoblog.com/2016/12/16/2017-chevrolet-camaro-zl1-first-drive-review/",
+      "type": "P"
+    },
+    {
+      "id": "REVIEW_SNIPPETS",
+      "title": "Search-result snippets from 2017-18 reviews (carsales.com.au, motorauthority.com, autoguide.com, topgear.com, autotrader.co.nz, Jalopnik, enthusiast exhaust listings); individual outlet per quote not confirmed",
+      "url": "",
+      "type": "P"
+    },
+    {
+      "id": "YOUTUBE_SEARCH",
+      "title": "YouTube video links found by web search (not downloaded)",
+      "url": "https://www.youtube.com/",
+      "type": "P"
+    },
+    {
+      "id": "COMMONS_AUDIO",
+      "title": "Wikimedia Commons audio files (see sound.free_recordings)",
+      "url": "https://commons.wikimedia.org/",
+      "type": "P"
+    },
+    {
+      "id": "PHOTO_2020_01",
+      "title": "Commons: 2020 Chevrolet Camaro ZL1 - 01.jpg (Oleg Yunakov, CC BY-SA 4.0), near-side view of a modified ZL1 convertible",
+      "url": "https://commons.wikimedia.org/wiki/File:2020_Chevrolet_Camaro_ZL1_-_01.jpg",
+      "type": "P"
+    },
+    {
+      "id": "PHOTO_DC_METRO",
+      "title": "Commons: Chevrolet Camaro ZL1 (Mk VI) Washington DC Metro Area, USA.jpg (OWS Photography, CC BY 4.0), elevated front three-quarter",
+      "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Camaro_ZL1_(Mk_VI)_Washington_DC_Metro_Area,_USA.jpg",
+      "type": "P"
+    },
+    {
+      "id": "PHOTO_GREEN_2017_18",
+      "title": "Commons: 2017-2018 Chevrolet Camaro ZL1, green, Golden Super Cruise 2026-09-05.jpg (Xnatedawgx, CC BY-SA 4.0), front three-quarter",
+      "url": "https://commons.wikimedia.org/wiki/File:2017%E2%80%932018_Chevrolet_Camaro_ZL1,_green,_Golden_Super_Cruise_2026-09-05.jpg",
+      "type": "P"
+    },
+    {
+      "id": "PHOTO_GOLDEN_2020_24",
+      "title": "Commons: 2020-2024 Chevrolet Camaro ZL1, Golden Super Cruise 2026-10-03.jpg (Xnatedawgx, CC BY-SA 4.0), rear three-quarter of a 1LE showing quad tips",
+      "url": "https://commons.wikimedia.org/wiki/File:2020-2024_Chevrolet_Camaro_ZL1,_Golden_Super_Cruise_2026-10-03.jpg",
+      "type": "P"
+    },
+    {
+      "id": "PHOTO_PREVOT",
+      "title": "Commons: Chevrolet Camaro ZL1 Sixth generation (54865460423).jpg (Alexandre Prevot, CC BY-SA 4.0), front three-quarter of a 1LE",
+      "url": "https://commons.wikimedia.org/wiki/File:Chevrolet_Camaro_ZL1_Sixth_generation_(54865460423).jpg",
+      "type": "P"
+    }
+  ],
+  "gaps": [
+    "Car and Driver interior sound levels (idle, full throttle, 70 mph) and its full data box: C/D and Motor Trend block this agent. A 2013 ZL1 (previous generation) proxy and an estimate are given instead.",
+    "GM full-load torque curve chart (crank): not found. The crank curve is an estimate through GM's published points; the measured curve is at the wheels (K&N Dynojet).",
+    "Factory exhaust crossover (X-pipe, H-pipe or none), pipe diameters, catalyst count and position, muffler type for the Camaro ZL1.",
+    "Exact rev-limiter rpm and behaviour, warm idle rpm, default launch-control rpm.",
+    "Torque-converter stall speed and absolute shift times for the 10L90.",
+    "Weight distribution: not found; 53/47 is an estimate.",
+    "Drag coefficient, frontal area and standard-ZL1 lift/downforce numbers: never published by GM; estimates given (CdA fitted to top speed).",
+    "Steering ratio, lock-to-lock turns, ground clearance, ride height, spring rates, anti-roll bar sizes, damper data.",
+    "Supercharger timing-gear tooth count (would give a second whine order).",
+    "Exterior (pass-by) sound levels.",
+    "Convertible: 2.77 final drive and no eLSD come only from an Autoblog snippet.",
+    "Whether the Camaro LT4 uses cylinder deactivation (AFM).",
+    "A clean, freely licensed coupe side-profile photo; the blockout fractions come from a modified convertible's near-side view.",
+    "No freely licensed recording of a Camaro ZL1 itself; the downloaded clips are an LT4 in a Cadillac with an aftermarket exhaust and a supercharged LS9 Corvette ZR1.",
+    "The web-search budget for this session ran out before steering, ground clearance and the convertible details could be searched further."
+  ]
+}

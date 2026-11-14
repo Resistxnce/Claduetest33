@@ -1,0 +1,11 @@
+G80_M3_Competition_FiExhaust_CC-BY-3.0_FiExhaust.opus
+  Source:      Wikimedia Commons, "File:BMW M3 (G80) Competition with Fi Exhaust - engine and exhaust sound (YouTube qv a5bJeFPg).opus"
+               https://commons.wikimedia.org/wiki/File:BMW_M3_(G80)_Competition_with_Fi_Exhaust_-_engine_and_exhaust_sound_(YouTube_qv_a5bJeFPg).opus
+  Original:    https://www.youtube.com/watch?v=qv_a5bJeFPg (published 2021-11-28 by FiExhaust)
+  Licence:     CC BY 3.0 (Creative Commons Attribution 3.0 Unported), via YouTube's Creative Commons option.
+               Commons licence review was still pending on 2026-11-13; confirm it before any in-game use.
+  Attribution: "FiExhaust (YouTube), CC BY 3.0, via Wikimedia Commons"
+  Content:     start-up, revving or acceleration; 80.7 s, Ogg Opus 48 kHz stereo, 120 kb/s.
+  Caveat:      AFTERMARKET Fi Exhaust, not the stock exhaust. Use as a reference for engine orders and rev
+               behaviour only, not for stock loudness or timbre.
+  Downloaded:  2026-11-13 for research reference (RefM3G80).

@@ -1,0 +1,102 @@
+{
+  "id": "Ref720S",
+  "displayName": "Ashcombe AR-7",
+  "reference": "McLaren 720S coupe (2017-2023), M840T 4.0 L twin-turbo flat-plane V8, standard exhaust. Engineering reference only.",
+  "engine": {
+    "cylinders": 8,
+    "layout": "V",
+    "bankAngleDeg": 90,
+    "crank": "flatplane",
+    "firingOrder": [1, 8, 3, 6, 4, 5, 2, 7],
+    "banks": {"B1": [1, 2, 3, 4], "B2": [5, 6, 7, 8]},
+    "displacementCc": 3994,
+    "idleRpm": 800,
+    "limiterRpm": 8200,
+    "aspiration": "Turbo",
+    "cylinderSpread": 0.06
+  },
+  "exhaust": {
+    "evoDeg": 130,
+    "gasTempK": 1100,
+    "pipeTempK": 800,
+    "rasp": 0.45,
+    "collectors": [
+      {"name": "B1_scroll14", "cylinders": [1, 4], "primaryLengthM": 0.42, "lengthSpreadM": 0.02},
+      {"name": "B1_scroll23", "cylinders": [2, 3], "primaryLengthM": 0.42, "lengthSpreadM": 0.02},
+      {"name": "B2_scroll58", "cylinders": [5, 8], "primaryLengthM": 0.42, "lengthSpreadM": 0.02},
+      {"name": "B2_scroll67", "cylinders": [6, 7], "primaryLengthM": 0.42, "lengthSpreadM": 0.02}
+    ],
+    "merge": {"type": "hpipe", "crossover": 0.25, "crossoverHz": 350, "pathM": 0.35},
+    "outlets": [
+      {"collectors": ["B1_scroll14", "B1_scroll23"], "pipeLengthM": 1.7, "tailLengthM": 0.22, "diameterM": 0.105, "offsetM": 0.0},
+      {"collectors": ["B2_scroll58", "B2_scroll67"], "pipeLengthM": 1.95, "tailLengthM": 0.22, "diameterM": 0.105, "offsetM": 0.05}
+    ],
+    "muffler": {
+      "valves": "auto",
+      "openAboveRpm": 4000,
+      "openAboveLoad": 0.6,
+      "openLowpassHz": 3600,
+      "closedLowpassHz": 1300,
+      "closedCutDb": 7
+    }
+  },
+  "intake": {"level": 0.2, "runnerLengthM": 0.24, "airboxHz": 130, "snorkelLengthM": 0.6},
+  "mechanical": {"combustion": 0.05, "valvetrain": 0.008, "injectors": 0.0},
+  "idle": {"roughness": 0.09, "lope": 0.0},
+  "overrun": {"pulseLevel": 0.14, "burble": 0.08},
+  "forcedInduction": {
+    "type": "Turbo",
+    "count": 2,
+    "pulseDamping": 0.6,
+    "dampingHz": 200,
+    "whistleHz": [2600, 8000],
+    "whooshLevel": 0.13,
+    "blowOff": {"type": "flutter", "level": 0.5, "variants": 3}
+  },
+  "limiter": {
+    "type": "ignitionCut",
+    "free": {"bounceHz": 9.0, "dropRpm": 250, "cutShare": 0.4},
+    "load": {"bounceHz": 7.0, "dropRpm": 130, "cutShare": 0.35},
+    "popChance": 0.05,
+    "cutLevel": 0.12
+  },
+  "loops": {"rpmPoints": [800, 1100, 1500, 2000, 2700, 3600, 4700, 6000, 7200, 8200], "seconds": 1.0, "limiterSeconds": 1.25},
+  "loudness": {
+    "interior": {"idleDbA": 55, "fullThrottleDbA": 95, "cruiseDbA": 75, "source": "Car and Driver 2018 coupe: 95 dBA at full throttle [M]; idle 55 and 70 mph 75 dBA from a FastestLaps listing seen only as a search snippet (probably the same test), unverified"},
+    "exterior": {},
+    "loadRangeDb": 12.0
+  },
+  "notes": {
+    "engine.firingOrder": "[P] 1-8-3-6-4-5-2-7 (M-Engineering, McLaren ECU specialist: 'McLaren Cylinder Layout & Firing Order'; same order quoted for the 12C's M838T). research_notes/cars/Ref720S.json engine.firingOrder.",
+    "engine.banks": "[P/A] Cylinders 1-4 on bank 1 and 5-8 on bank 2 (implied by the firing order, which alternates the two groups, as a flat-plane V8 must). Bank 1 is said to be the right-hand bank (owner forum, snippet only) and cylinder 1 is assumed at the cabin (timing) end [A]; neither changes the sound here. Each bank then fires 180 degrees apart like an inline-4 (bank 1: 1-3-4-2, bank 2: 8-6-5-7), interleaved at 90 degrees [E, derived].",
+    "engine.bankAngleDeg": "[P] 90-degree V8 (Wikipedia M840T infobox).",
+    "engine.crank": "[P] Flat-plane (180-degree) crank (Wikipedia; McLaren only says 'stiffer, lighter crankshaft'); the evenly alternating-bank firing order confirms it.",
+    "engine.displacementCc": "[F] 3,994 cc (McLaren 2021 brochure).",
+    "engine.idleRpm": "[E] 800 rpm: not published; matches the car config.",
+    "engine.limiterRpm": "[F] Max revs 8,100 rpm in 1st-2nd and 8,200 rpm in 3rd-7th (2017 press release). One limiter per car in the game, so 8,200, matching the car config.",
+    "engine.cylinderSpread": "[E] default: cylinder-to-cylinder variation that puts the half orders in the sound.",
+    "exhaust.collectors": "[F/E] Each bank's manifold feeds its own twin-scroll turbo [F, press release]. The scroll pairing is the research's estimate [E]: 1+4 and 2+3 on bank 1, 5+8 and 6+7 on bank 2, so each scroll gets pulses 360 degrees apart and each turbo 180 degrees apart. Short primaries into the turbos (0.42 m) [E]; the turbos sit close to the heads in the V's outer sides [A].",
+    "exhaust.evoDeg": "[E] default exhaust-valve opening after firing.",
+    "exhaust.gasTempK": "[E] Hotter than the default (1,000 K): a high-revving turbo engine runs hot exhaust gas into its turbines.",
+    "exhaust.pipeTempK": "[E] After the turbines and catalysts, about 800 K at load.",
+    "exhaust.rasp": "[E] 0.45, above the default 0.35: reviewers describe 'more rasp, whoosh and fizz' than the 650S (Autocar), 'angry blare' (evo) and 'more like a waspy racing motorbike than eight cylinders' (motor1.de); the turbos then take the sharp part out (forcedInduction.pulseDamping).",
+    "exhaust.merge": "[E] After the turbos come the catalysts and one rear silencer feeding two tailpipes [P: press text, aftermarket listings 'after the factory converters']. The silencer's internals aren't documented: modelled as banks that stay mostly apart with a shared silencer volume (an H-pipe-like 25% crossover below about 350 Hz), so each tailpipe keeps some of its bank's inline-4 pulse pattern.",
+    "exhaust.outlets": "[P/E] Two large round tailpipes set high in the centre of the rear valance, either side of the mesh panel (Commons photo 'McLaren 720S August 2024 006', CC BY 4.0) [P]: close together, so neither is much farther from a listener (offsets 0 and 0.05 m) [E]. A mid-engined car's exhaust is short: 1.7 and 1.95 m from turbo to silencer outlet, unequal because the banks sit on opposite sides of a transverse silencer [E]; tailpipe diameter about 105 mm [E, photo scale].",
+    "exhaust.muffler.valves": "[A] The standard exhaust's valve hardware isn't documented (an optional Sports Exhaust is 'even louder and more emotive' [F]). Assumed bypass valves that open above 4,000 rpm or past 60% load, as in Sport and Track modes; filter corners are the synthesizer defaults [E].",
+    "intake": "[F/E] A cast-aluminium plenum sits on top of the engine under a mesh cover, right behind the cabin [F]; induction pulses are damped by the compressors, so the level is modest (0.2) [E]; runner length, airbox resonance and inlet duct length are estimates [E].",
+    "mechanical.injectors": "[F] Port injection, two injectors per cylinder (press release): no direct-injection ticking, so 0.",
+    "mechanical": "[E] Combustion and valvetrain levels are the calibrated defaults (docs/AUDIO.md, Calibration).",
+    "idle": "[E] Roughness 0.09, a little above the default: evo calls the idle 'harsh and faintly gravelly'. Flat-plane crank, so no cam lope.",
+    "overrun": "[A] Light burble only (0.08): reviews call the stock car muted, and the turbos and catalysts take the edge off; research assumption: light crackle in Sport and Track, little in Comfort.",
+    "forcedInduction.count": "[F] Two turbos, one per bank.",
+    "forcedInduction.pulseDamping": "[E] 0.6, above the default 0.55: each bank's whole pulse train passes through its turbine (no wastegate bypass at load), so the sharp part of each pulse is taken out above about 200 Hz (dampingHz). Expect less burble and a smoother, hissier top end than a non-turbo flat-plane V8.",
+    "forcedInduction.dampingHz": "[E] 200 Hz: pulses are smoothed above this.",
+    "forcedInduction.whistleHz": "[E] Compressor whistle from about 2.6 kHz at low boost to 8 kHz at full boost: small, low-inertia MHI turbos rated to 160,000 rpm [F/P] (shaft speed about 2.5 kHz near full boost; the whistle sits above it).",
+    "forcedInduction.whooshLevel": "[E] 0.13, above the default 0.08: evo's 'rushing whoosh of the turbochargers', Autocar's 'whoosh and fizz'.",
+    "forcedInduction.blowOff": "[A] The car has electronically controlled wastegates and an electronically controlled dump valve [F]; whether the dump valve recirculates isn't documented, and no source read describes the lift-off sound. The brief asks for wastegate chatter, and owner recordings are commonly said to have a lift-off flutter: modelled with the synthesizer's 'flutter' one-shot (a fast 'stu-tu-tu' chuffing) at a moderate level. To be judged against a recording.",
+    "limiter": "[E] The cut style isn't documented; research: model it as an ignition cut with about 100-150 rpm of bounce. In gear: 7 bounces a second dropping 130 rpm; free revving: 9 a second dropping 250 rpm. Light afterfire (popChance 0.05): catalysts and turbos muffle it.",
+    "loops.rpmPoints": "[E] Ten engine speeds from idle to the limiter, about 1.2-1.4x apart, closer together at the top where the valves open and boost is full.",
+    "loudness.interior": "[M] Car and Driver 2018 coupe: 95 dBA at full throttle (99 dBA for the 2019 Spider). Idle 55 dBA and 70 mph 75 dBA come from a FastestLaps listing seen only as a search snippet, probably the same C/D test: unverified. auto motor und sport measured 79 dB(A) at 130 km/h and 84 dB(A) at 180 km/h [M].",
+    "loudness.loadRangeDb": "[E] default: level difference between closed and full throttle at the same rpm."
+  }
+}

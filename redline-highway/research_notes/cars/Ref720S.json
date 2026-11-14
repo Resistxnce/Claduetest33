@@ -1,0 +1,1506 @@
+{
+ "configId": "Ref720S",
+ "reference": "McLaren 720S coupe (2017-2023), engineering reference only; the game uses a fictional name",
+ "compiledOn": "2026-11-13",
+ "tagLegend": {
+  "F": "manufacturer figure",
+  "P": "published third-party spec",
+  "M": "measured test",
+  "E": "estimate (method in note)",
+  "A": "assumption"
+ },
+ "identity": {
+  "model": {
+   "value": "McLaren 720S Coupe (internal project code P14)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Japanese type-approval code ABA-P14S seen on Commons photo captions"
+  },
+  "productionYears": {
+   "value": "2017-2023 (Coupe); Spider 2018-2023",
+   "unit": "",
+   "tag": "P",
+   "source": "WIKI_720S",
+   "note": "Revealed Geneva, 7 Mar 2017; deliveries from May 2017; replaced by the 750S in 2023"
+  },
+  "body": {
+   "value": "2-door, 2-seat mid-engined coupe, dihedral doors, carbon Monocage II tub incl. roof",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "driveLayout": {
+   "value": "Mid-engine, rear-wheel drive",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "usVsEu": {
+   "value": "Same hardware. EU quotes 720 PS / 770 Nm; US quotes 710 hp (SAE) / 568 lb-ft. DIN kerb 1,419 kg (90% fuel) vs US curb 1,424 kg (100% fuel). Spec rpm for peak power printed as 7,500 rpm in the 2017 press kit and Spider table, 7,250 rpm on the 2021 coupe table and US data.",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;MCL_PRESS_2017_NCS;CARSPECS_US",
+   "note": "Use 7,500 rpm as the primary figure"
+  }
+ },
+ "engine": {
+  "code": {
+   "value": "M840T",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Evolution of the 3.8 L M838T; 41% new parts; built by Ricardo at Shoreham-by-Sea"
+  },
+  "layout": {
+   "value": "90-degree V8, twin-turbo, dry sump, mid-mounted longitudinally",
+   "unit": "",
+   "tag": "P",
+   "source": "WIKI_M840T;EVO_TECH",
+   "note": "90-degree bank angle from Wikipedia infobox"
+  },
+  "crank": {
+   "value": "Flat-plane (180-degree)",
+   "unit": "",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "M838T is flat-plane (Edmunds/Wikipedia); McLaren says only 'stiffer, lighter crankshaft' for M840T; evenly alternating-bank firing order below confirms a flat-plane pattern"
+  },
+  "displacement": {
+   "value": 3994,
+   "unit": "cc",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "bore": {
+   "value": 93.0,
+   "unit": "mm",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Bore unchanged from M838T (press release)"
+  },
+  "stroke": {
+   "value": 73.5,
+   "unit": "mm",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Stroke +3.6 mm vs M838T (press release); 93 x 73.5 x 8 = 3,994 cc checks"
+  },
+  "compressionRatio": {
+   "value": 8.7,
+   "unit": ":1",
+   "tag": "P",
+   "source": "CAREXPERT;ENCYCARPEDIA",
+   "note": "Same figure as the M838T; one US listing gives 9.0:1 for the Spider. Low confidence."
+  },
+  "valvetrain": {
+   "value": "DOHC, 4 valves per cylinder (32 valves)",
+   "unit": "",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Cam phasing not documented"
+  },
+  "fuelSystem": {
+   "value": "Port fuel injection, 16 injectors (two per cylinder)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "No direct injection"
+  },
+  "engineDryMass": {
+   "value": 170,
+   "unit": "kg",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Uncited on Wikipedia"
+  },
+  "maxPower": {
+   "value": {
+    "PS": 720,
+    "bhp": 710,
+    "kW": 530
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "maxPowerRpm": {
+   "value": 7500,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;WIKI_M840T",
+   "note": "2021 coupe brochure table and US data print 7,250 rpm"
+  },
+  "maxTorque": {
+   "value": {
+    "Nm": 770,
+    "lbft": 568
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "maxTorqueRpm": {
+   "value": 5500,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Single-point peak; no plateau published"
+  },
+  "torqueAtPeakPowerDerived": {
+   "value": 675,
+   "unit": "Nm",
+   "tag": "E",
+   "source": "derived",
+   "note": "530 kW / (7,500 rpm x 2pi/60); at 7,250 rpm it would be 698 Nm"
+  },
+  "fullLoadTorqueCurve": {
+   "value": [
+    [
+     800,
+     260
+    ],
+    [
+     1000,
+     300
+    ],
+    [
+     1500,
+     360
+    ],
+    [
+     2000,
+     430
+    ],
+    [
+     2500,
+     520
+    ],
+    [
+     3000,
+     600
+    ],
+    [
+     3500,
+     665
+    ],
+    [
+     4000,
+     710
+    ],
+    [
+     4500,
+     742
+    ],
+    [
+     5000,
+     762
+    ],
+    [
+     5500,
+     770
+    ],
+    [
+     6000,
+     763
+    ],
+    [
+     6500,
+     746
+    ],
+    [
+     7000,
+     713
+    ],
+    [
+     7500,
+     675
+    ],
+    [
+     8000,
+     628
+    ],
+    [
+     8200,
+     605
+    ]
+   ],
+   "unit": "[rpm, Nm] crank, net, full load",
+   "tag": "E",
+   "source": "derived",
+   "note": "No official or readable dyno chart was found. Shaped through the factory points 770 Nm @ 5,500 and 530 kW @ 7,500 (675 Nm), with boost onset near 2,000 rpm and a progressive mid-range (evo: 'real build-up of boost through the mid-range'; Fabspeed tune gains peak at 3,700 rpm, implying the stock calibration holds mid-range torque back). Power from this curve: 443 kW @ 5,500, 523 kW @ 7,000, 530 kW @ 7,500, 520 kW @ 8,200."
+  },
+  "measuredWheelDyno": {
+   "value": {
+    "BoostAddict_Aug2017": "694/696/698 whp (Dynojet), ~560 lb-ft (759 Nm) wheel, power peak at 6,500 rpm",
+    "DragTimes_Oct2017": "691 whp, 547 lb-ft (742 Nm) wheel",
+    "Fabspeed_stock_baseline": "689 whp, 556 lb-ft wheel"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "MOTOR1_DYNO;THEDRIVE_DYNO;CARSCOOPS_DYNO;FABSPEED_TUNE",
+   "note": "Wheel figures within 2-3% of the crank rating imply the real crank output is roughly 760-800 PS (720S widely reported as under-rated). Torque given in wheel lb-ft referenced to engine rpm. No curve image could be read."
+  },
+  "redline": {
+   "value": {
+    "gears1to2": 8100,
+    "gears3to7": 8200
+   },
+   "unit": "rpm",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Press release: revs to 8,100 rpm in 1st and 2nd, 8,200 rpm in the higher gears. Wikipedia/EngineLabs '8,500 rpm' traces back to M838T (12C) material; do not use."
+  },
+  "limiter": {
+   "value": {
+    "gears1to2": 8100,
+    "gears3to7": 8200
+   },
+   "unit": "rpm",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Limiter assumed equal to the published max revs; cut style (soft ignition cut) not documented"
+  },
+  "idleRpm": {
+   "value": 800,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Not published; typical warm idle for McLaren V8; cold start flare ~1,200-1,500 rpm (E)"
+  },
+  "launchControlRpm": {
+   "value": 3500,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Not published. Range 3,000-4,000 rpm likely; verify against an onboard launch video"
+  },
+  "firingOrder": {
+   "value": "1-8-3-6-4-5-2-7",
+   "unit": "",
+   "tag": "P",
+   "source": "MENG_FIRING",
+   "note": "M-Engineering (McLaren ECU specialist) page 'McLaren Cylinder Layout & Firing Order'; same order quoted on an owner forum for the 12C. Alternates banks every firing, as a flat-plane V8 must."
+  },
+  "cylinderNumbering": {
+   "value": "Cylinders 1-4 on bank 1, 5-8 on bank 2; bank 1 is the right-hand bank",
+   "unit": "",
+   "tag": "P",
+   "source": "MENG_FIRING;MCLARENLIFE_BANKS",
+   "note": "1-4/5-8 split is implied by the firing order (it alternates 1-4 and 5-8 groups). 'Bank 1 = right' is from an owner forum post (search snippet only). Which end cylinder 1 sits at is not documented: assume cylinder 1 at the cabin (timing) end, numbering rearward [A]."
+  },
+  "perBankFiringPattern": {
+   "value": "Bank 1: 1-3-4-2; bank 2: 8-6-5-7 (each bank fires like an inline-4 every 180 deg; banks interleave at 90 deg)",
+   "unit": "",
+   "tag": "E",
+   "source": "derived",
+   "note": "Derived from the firing order"
+  },
+  "firingFrequency": {
+   "value": "f = rpm x 4 / 60 Hz (engine order 4): 53 Hz at 800 rpm, 200 Hz at 3,000, 367 Hz at 5,500, 547 Hz at 8,200; each bank/turbo sees engine order 2",
+   "unit": "",
+   "tag": "E",
+   "source": "derived",
+   "note": ""
+  }
+ },
+ "forcedInduction": {
+  "count": {
+   "value": 2,
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "One per bank"
+  },
+  "type": {
+   "value": "Twin-scroll, ultra-low-inertia, titanium-aluminide turbines rated to 160,000 rpm",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;WIKI_M840T",
+   "note": ""
+  },
+  "maker": {
+   "value": "Mitsubishi Heavy Industries (MHI) TD05H-06*20HF1T-12T",
+   "unit": "",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Wikipedia cites OEM-turbo resale listings; part-label identification, not a McLaren statement"
+  },
+  "wastegates": {
+   "value": "Electronically controlled wastegates plus an electronically controlled dump (blow-off) valve",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Recirculating vs atmospheric dump not documented"
+  },
+  "intercooling": {
+   "value": "New intercoolers (air-to-air assumed)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Type not stated"
+  },
+  "maxBoost": {
+   "value": 1.3,
+   "unit": "bar gauge",
+   "tag": "P",
+   "source": "WIKI_M840T",
+   "note": "Wikipedia says 'over 1.3 bar', uncited. Treat as approximate; 1.3-1.5 bar plausible [E]"
+  },
+  "boostOnsetRpm": {
+   "value": 2000,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "estimate",
+   "note": "From torque shape and reviews; not published"
+  },
+  "fullBoostRpm": {
+   "value": 5000,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Torque peaks at 5,500 rpm; calibration ramps boost through the mid-range"
+  },
+  "twinScrollPairing": {
+   "value": "Probably cylinders 1+4 and 2+3 on bank 1, 5+8 and 6+7 on bank 2 (pulses 360 deg apart per scroll)",
+   "unit": "",
+   "tag": "E",
+   "source": "derived",
+   "note": "Standard twin-scroll pairing for a 1-3-4-2 bank; not documented"
+  }
+ },
+ "transmission": {
+  "type": {
+   "value": "7-speed + reverse Seamless Shift Gearbox (SSG), dual-clutch, Graziano",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;WIKI_720S",
+   "note": "Graziano supplier per Wikipedia [P]"
+  },
+  "gearRatios": {
+   "value": [
+    3.98,
+    2.61,
+    1.91,
+    1.48,
+    1.16,
+    0.91,
+    0.69
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "CARSPECS_US;MOTORMATCHUP",
+   "note": "US OEM data feed; 3rd shown as 1.90 on carspecs.us. Not found in a McLaren document."
+  },
+  "reverseRatio": {
+   "value": 2.8,
+   "unit": "",
+   "tag": "P",
+   "source": "CARSPECS_US",
+   "note": ""
+  },
+  "finalDrive": {
+   "value": 3.3,
+   "unit": "",
+   "tag": "P",
+   "source": "CARSPECS_US;MOTORMATCHUP",
+   "note": "750S has a 15% shorter final drive than the 720S"
+  },
+  "speedAtLimiterByGear": {
+   "value": [
+    78,
+    119,
+    164,
+    212,
+    271,
+    345,
+    455
+   ],
+   "unit": "km/h",
+   "tag": "E",
+   "source": "derived",
+   "note": "From the ratios, 8,100/8,200 rpm limits and a 0.335 m rear rolling radius. Factory 341 km/h top speed sits at the end of 6th; 7th is an overdrive"
+  },
+  "kmhPer1000rpm": {
+   "value": [
+    9.6,
+    14.7,
+    20.0,
+    25.9,
+    33.0,
+    42.1,
+    55.5
+   ],
+   "unit": "km/h",
+   "tag": "E",
+   "source": "derived",
+   "note": ""
+  },
+  "shiftFeatures": {
+   "value": "Ignition-cut quicker shifts; auto or manual via paddles; Comfort/Sport/Track powertrain modes",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "shiftTime": {
+   "value": 0.05,
+   "unit": "s",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Not published; typical DCT torque interruption"
+  },
+  "launchControl": {
+   "value": "Yes (0-60 mph 2.8 s claim)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  }
+ },
+ "drivetrain": {
+  "differential": {
+   "value": "Open rear differential with McLaren Brake Steer (brakes the inside rear wheel)",
+   "unit": "",
+   "tag": "P",
+   "source": "EVO_TECH;MCL_PRESS_2017_NCS",
+   "note": "evo: open diff, Brake Steer simulates a limited-slip effect"
+  },
+  "stabilityAids": {
+   "value": "ESC with Variable Drift Control (driver-selectable slip angle)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  }
+ },
+ "mass": {
+  "dryMinimum": {
+   "value": 1283,
+   "unit": "kg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Lightest options"
+  },
+  "dryBase": {
+   "value": 1322,
+   "unit": "kg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "kerbDIN": {
+   "value": 1419,
+   "unit": "kg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Fluids + 90% fuel"
+  },
+  "curbUS": {
+   "value": 1424,
+   "unit": "kg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Fluids + 100% fuel (3,139 lb)"
+  },
+  "measured": {
+   "value": {
+    "Autocar_2017": 1420,
+    "AMS_2018": 1428,
+    "CarAndDriver_LightningLap_2018": 1432
+   },
+   "unit": "kg",
+   "tag": "M",
+   "source": "AUTOCAR_RT_2017;GCF_AMS;CD_LL2018",
+   "note": "Autocar: 'brimmed with fluids'; C/D test weight 3,158 lb"
+  },
+  "weightDistribution": {
+   "value": {
+    "front": 0.41,
+    "rear": 0.59
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Coupe table; Spider table says 42/58"
+  },
+  "weightDistributionMeasured": {
+   "value": {
+    "Autocar_MIRA": "42/58",
+    "AMS": "41.5/58.5"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "AUTOCAR_LAYOUT;GCF_AMS",
+   "note": ""
+  },
+  "powerToWeight": {
+   "value": 561,
+   "unit": "PS/tonne (dry)",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "cogNote": {
+   "value": "Centre of gravity 3% lower than 650S",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "simMass": {
+   "value": 1494,
+   "unit": "kg",
+   "tag": "A",
+   "source": "derived",
+   "note": "DIN kerb + 75 kg driver, as for the prototype"
+  },
+  "comHeight": {
+   "value": 0.42,
+   "unit": "m",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Typical mid-engine carbon-tub supercar; not published"
+  },
+  "comBehindFrontAxle": {
+   "value": 1.575,
+   "unit": "m",
+   "tag": "E",
+   "source": "derived",
+   "note": "0.59 x 2.670 m"
+  },
+  "staticWheelLoadsSim": {
+   "value": {
+    "frontEach": 3005,
+    "rearEach": 4324
+   },
+   "unit": "N",
+   "tag": "E",
+   "source": "derived",
+   "note": "1,494 kg at 41/59"
+  }
+ },
+ "dimensions": {
+  "length": {
+   "value": 4543,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Wikipedia 4,544"
+  },
+  "widthBody": {
+   "value": 1930,
+   "unit": "mm",
+   "tag": "P",
+   "source": "MOTOR1DE_2017;CAREXPERT",
+   "note": "Without mirrors"
+  },
+  "widthMirrors": {
+   "value": 2161,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Mirrors folded 2,059 mm (Spider table)"
+  },
+  "widthDoorsOpen": {
+   "value": {
+    "single": 2464,
+    "both": 2767
+   },
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "height": {
+   "value": 1196,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Door open 1,953 mm"
+  },
+  "wheelbase": {
+   "value": 2670,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "trackFront": {
+   "value": 1674,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Contact-patch centres"
+  },
+  "trackRear": {
+   "value": 1629,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Contact-patch centres"
+  },
+  "overhangFront": {
+   "value": 1058,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "overhangRear": {
+   "value": 816,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "1,058 + 2,670 + 816 = 4,544"
+  },
+  "groundClearance": {
+   "value": 107,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "approachAngle": {
+   "value": {
+    "normal": 8.3,
+    "noseLift": 10.4
+   },
+   "unit": "deg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "'Ramp angle' with vehicle lift"
+  },
+  "breakoverAngle": {
+   "value": 11.5,
+   "unit": "deg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "departureAngle": {
+   "value": 13.3,
+   "unit": "deg",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "frontalArea": {
+   "value": 1.85,
+   "unit": "m2",
+   "tag": "E",
+   "source": "estimate",
+   "note": "0.80 x width 1.930 x height 1.196"
+  },
+  "luggage": {
+   "value": {
+    "front": 150,
+    "rear": 210
+   },
+   "unit": "L",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "fuelTank": {
+   "value": 72,
+   "unit": "L",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  }
+ },
+ "tyresWheels": {
+  "frontTyre": {
+   "value": "245/35 ZR19",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;MCL_PRESS_2017_NCS",
+   "note": "Unloaded radius 0.327 m [E]"
+  },
+  "rearTyre": {
+   "value": "305/30 ZR20",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;MCL_PRESS_2017_NCS",
+   "note": "Unloaded radius 0.3455 m, rolling ~0.335 m [E]"
+  },
+  "frontWheel": {
+   "value": "19 x 9.0J forged aluminium",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "rearWheel": {
+   "value": "20 x 11.0J forged aluminium",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Lighter forged options save up to 12.5 kg unsprung [F, press]"
+  },
+  "oeTyre": {
+   "value": "Pirelli P Zero (McLaren-specific)",
+   "unit": "",
+   "tag": "P",
+   "source": "THEDRIVE_DRAGTIMES;SUPERCARS_NET",
+   "note": "DragTimes car on 'OEM Pirelli P Zero'"
+  },
+  "optionTyre": {
+   "value": "Pirelli P Zero Corsa (about 6% more mechanical grip than the 650S); C/D Lightning Lap car ran P Zero Corsa",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;CD_LL2018",
+   "note": ""
+  },
+  "trofeoR": {
+   "value": "P Zero Trofeo R option not confirmed for the 720S in any source read (standard on the 765LT)",
+   "unit": "",
+   "tag": "A",
+   "source": "WIKI_720S",
+   "note": "Verify"
+  }
+ },
+ "brakes": {
+  "front": {
+   "value": "390 mm carbon-ceramic discs, 6-piston aluminium calipers",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "rear": {
+   "value": "380 mm carbon-ceramic discs, 4-piston aluminium calipers",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "factory100to0": {
+   "value": 30,
+   "unit": "m",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Press release: under 30 m"
+  },
+  "factory200to0": {
+   "value": {
+    "distance_m": 117,
+    "time_s": 4.6,
+    "brochure2021_distance_m": 122
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;MCL_BROCHURE_2021",
+   "note": "117 m is 6 m shorter than 650S (launch press); 2021 brochure prints 122 m"
+  },
+  "measured": {
+   "value": {
+    "AMS_100to0_cold_m": 33.2,
+    "AMS_130to0_warm_m": 50.3,
+    "AMS_200to0_m": 115.3,
+    "Autocar_70to0mph_m": "39.9 (text: under 40 m)",
+    "CD_Spider_70to0mph_ft": 141
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "GCF_AMS;AUTOCAR_RT_2017;CD_SPIDER_2019",
+   "note": "C/D coupe 70-0 not found"
+  },
+  "airbrake": {
+   "value": "Rear wing deploys 100% as an airbrake in under 0.5 s under high-speed braking, shifting aero balance about 20% rearward",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "simTorqueEstimate": {
+   "value": {
+    "frontPerWheelNm": 2800,
+    "rearPerWheelNm": 1800
+   },
+   "unit": "Nm",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Enough to lock both axles at ~1.3 g with 41/59 static split and ~0.42 m CoM; ~61% front bias"
+  }
+ },
+ "aero": {
+  "dragCoefficient": {
+   "value": null,
+   "unit": "",
+   "tag": "E",
+   "source": "not published",
+   "note": "McLaren never quoted Cd; see CdA estimate"
+  },
+  "CdA": {
+   "value": 0.85,
+   "unit": "m2",
+   "tag": "E",
+   "source": "derived",
+   "note": "Fitted so rated power (92% driveline, Crr 0.012, 1,494 kg) tops out at 341 km/h in 7th (~6,150 rpm); 0.91 if top speed is reached in 6th at ~8,100 rpm. Equivalent Cd ~0.46 on 1.85 m2, high because the wing is partly deployed at speed; a stowed-wing Cd of 0.36-0.40 (CdA ~0.70) would leave top speed set by the 6th-gear limiter (~345 km/h)."
+  },
+  "downforceVs650S": {
+   "value": "About 50% more downforce than the 650S (some outlets 56%); downforce-to-drag ratio more than double the 650S",
+   "unit": "",
+   "tag": "F",
+   "source": "WIKI_720S;MCL_PRESS_2017_NCS",
+   "note": "No absolute kg figure published"
+  },
+  "rearWing": {
+   "value": "Full-width hydraulically actuated wing, up to 30% more downforce than the 650S Coupe wing. Modes: Driver Downforce 70-80% deployment by speed; DRS 30% deployment on straights; High-Speed Braking 100% in <0.5 s",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "bodyAero": {
+   "value": "Double-skinned dihedral doors duct air to the side radiators, so no side intakes; headlight 'eye sockets' duct cooling air; cooling 15% better than 650S; rear 145 mm lower than 650S",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "downforceAreaEstimate": {
+   "value": {
+    "ClA_front": 0.2,
+    "ClA_rear": 0.35
+   },
+   "unit": "m2",
+   "tag": "E",
+   "source": "estimate",
+   "note": "About 1,600 N (160 kg) total at 250 km/h, ~36% front; not published, tune in testing"
+  }
+ },
+ "suspensionSteering": {
+  "suspension": {
+   "value": "Aluminium double wishbones front and rear; Proactive Chassis Control II: adaptive dampers hydraulically interlinked at each corner, no anti-roll bars; Comfort/Sport/Track",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS;MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "pccSensors": {
+   "value": "12 extra sensors: an accelerometer per corner and two pressure sensors per damper; reacts in 2 ms; control based on optimal control theory; 16 kg lighter than 650S system",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "noseLift": {
+   "value": "Vehicle lift raises approach angle from 8.3 to 10.4 deg",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Lift height in mm not published"
+  },
+  "steeringType": {
+   "value": "Electro-hydraulic power steering",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "lockToLock": {
+   "value": 2.46,
+   "unit": "turns",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021;AUTOCAR_RT_2017",
+   "note": "Brochure prints '12.46', read as 2.46; Autocar measured 2.5 turns"
+  },
+  "turningCircle": {
+   "value": 12.4,
+   "unit": "m",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "steeringRatio": {
+   "value": 14.5,
+   "unit": ":1",
+   "tag": "E",
+   "source": "derived",
+   "note": "443 deg of wheel per side over ~30.6 deg mean road-wheel lock implied by the 12.4 m circle and 2,670 mm wheelbase"
+  },
+  "springsEstimate": {
+   "value": {
+    "frontNpm": 27000,
+    "rearNpm": 50000
+   },
+   "unit": "N/m at wheel",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Ride frequencies ~1.6 Hz front / 1.8 Hz rear on the 1,494 kg sim mass"
+  },
+  "rollStiffnessEstimate": {
+   "value": {
+    "antiRollRateFront": 25000,
+    "antiRollRateRear": 18000
+   },
+   "unit": "N/m",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Stand-in for the hydraulic roll coupling of PCC II (real car has no bars)"
+  }
+ },
+ "performance": {
+  "factory": {
+   "value": {
+    "0to100kmh_s": 2.9,
+    "0to60mph_s": 2.8,
+    "0to200kmh_s": 7.8,
+    "quarterMile_s": 10.3,
+    "topSpeed_kmh": 341,
+    "topSpeed_mph": 212
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "Spider: 0-200 7.9 s, 0-300 22.4 s, 1/4 10.4 s. Coupe 0-300 km/h not in the 2021 table (motor1.de text gives 21.4 s, internally inconsistent)"
+  },
+  "MotorTrend_2018_coupe": {
+   "value": {
+    "0to60mph_s": 2.5,
+    "quarterMile": "10.1 s @ 141.5 mph"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "ZERO60SPECS",
+   "note": "MT 'First Test', early 2018; original not readable"
+  },
+  "CarAndDriver_2018_coupe": {
+   "value": {
+    "0to60mph_s": 2.7,
+    "quarterMile": "10.2 s @ 145.0 mph",
+    "fullThrottle_dBA": 95
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "ZERO60SPECS;CD_LOUDEST",
+   "note": "Other C/D sheet values (0-100 mph, 70-0, skidpad, idle/cruise dBA) not reachable"
+  },
+  "CarAndDriver_LightningLap_2018": {
+   "value": {
+    "VIR_lap": "2:39.7",
+    "maxSpeed_mph": 171.7,
+    "testWeight_lb": 3158,
+    "tyres": "P Zero Corsa"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "CD_LL2018",
+   "note": ""
+  },
+  "CarAndDriver_2019_Spider": {
+   "value": {
+    "0to60mph_s": 2.8,
+    "0to100mph_s": 5.5,
+    "0to130mph_s": 8.5,
+    "rolling5to60_s": 3.6,
+    "topGear30to50_s": 2.6,
+    "topGear50to70_s": 3.0,
+    "quarterMile": "10.3 s @ 143 mph",
+    "braking70to0_ft": 141,
+    "skidpad_g": 1.09,
+    "fullThrottle_dBA": 99
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "CD_SPIDER_2019;CD_LOUDEST",
+   "note": "Spider, not coupe"
+  },
+  "RoadAndTrack_2018_coupe": {
+   "value": {
+    "0to60mph_s": 2.7,
+    "quarterMile": "9.9 s @ 148.2 mph"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "ZERO60SPECS",
+   "note": ""
+  },
+  "Autocar_2017": {
+   "value": {
+    "0to60mph_s": 2.9,
+    "0to100mph_s": 5.6,
+    "quarterMile_s": 10.4,
+    "braking70to0": "39.9 m (under 40 m)",
+    "lateral_g": "1.24 (snippet, unverified)"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "AUTOCAR_RT_2017",
+   "note": "Two occupants, full tank"
+  },
+  "AMS_2018": {
+   "value": {
+    "0to100kmh_s": 2.8,
+    "0to200kmh_s": 7.4,
+    "0to280kmh_s": 15.5,
+    "slalom18m_kmh": "72.8/73.0",
+    "laneChange_kmh": "154.7/157.1"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "GCF_AMS",
+   "note": "auto motor und sport comparison with 911 GT2 RS, as transcribed on a forum"
+  },
+  "Autozeitung": {
+   "value": {
+    "0to200kmh_s": 7.1
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "GCF_AMS",
+   "note": "Forum citation"
+  },
+  "Motoring_SA_2017": {
+   "value": {
+    "0to100kmh_s": 2.85,
+    "402m_s": 10.29
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "IOL_MOTORING",
+   "note": "Gerotek test track"
+  },
+  "DragTimes_2017": {
+   "value": {
+    "0to60mph_s": 2.5,
+    "0to100mph_s": 5.2,
+    "quarterMile": "9.98 s @ 141 mph"
+   },
+   "unit": "",
+   "tag": "M",
+   "source": "THEDRIVE_DRAGTIMES",
+   "note": "Owner's stock car, OEM P Zero, Palm Beach International Raceway"
+  }
+ },
+ "sound": {
+  "exhaustLayout": {
+   "value": "Each bank's exhaust manifold feeds its own twin-scroll turbo; catalysts after the turbos; rear silencer; two large round tailpipes set high in the centre of the rear valance, either side of the McLaren-lettered mesh panel, above the diffuser and below the engine cover/wing",
+   "unit": "",
+   "tag": "P",
+   "source": "MCL_PRESS_2017_NCS;COMMONS_REAR_EXHAUST",
+   "note": "Tailpipe position seen in Commons photo; turbo-per-bank and cats from press text/aftermarket listings ('factory converters'). Exact silencer and pipe routing not documented."
+  },
+  "valves": {
+   "value": "Optional Sports Exhaust with a unique tailpipe design and 'even louder and more emotive' sound; valve hardware not described for either system",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Engine sound changes by ADP mode; aftermarket valved systems (Capristo, Fi, Novitec) are common"
+  },
+  "intake": {
+   "value": "Cast-aluminium plenum on top of the engine under a mesh cover (Speedmark logo lit on unlock)",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": ""
+  },
+  "turboCharacter": {
+   "value": "Audible 'whoosh' and 'fizz' under load; electronically controlled wastegates and dump valve. Wastegate chatter/flutter not described by the sources read",
+   "unit": "",
+   "tag": "P",
+   "source": "EVO_TECH;AUTOCAR_RT_2017",
+   "note": "Flutter on lift-off: [A] to be judged from recordings"
+  },
+  "interiorLevels": {
+   "value": {
+    "CD_coupe_fullThrottle_dBA": 95,
+    "CD_Spider_fullThrottle_dBA": 99,
+    "idle_dBA": 55,
+    "cruise70mph_dBA": 75,
+    "AMS_130kmh_dBA": 79,
+    "AMS_180kmh_dBA": 84
+   },
+   "unit": "dB(A)",
+   "tag": "M",
+   "source": "CD_LOUDEST;FASTESTLAPS;GCF_AMS",
+   "note": "Idle 55 / 70-mph 75 come from a FastestLaps listing seen only as a search snippet (probably the C/D coupe test); unverified"
+  },
+  "euStationaryNoise": {
+   "value": null,
+   "unit": "dB(A)",
+   "tag": "E",
+   "source": "not found",
+   "note": "Not found. UN R51 test speed would be 3,750 rpm (half of S = 7,500 rpm) [A: rule recalled, verify]. Expect roughly 95-100 dB(A) [E]"
+  },
+  "limiterBehaviour": {
+   "value": "Hard stop at 8,100 rpm in 1st-2nd and 8,200 rpm above (gear-dependent limits). Cut type and bounce not documented",
+   "unit": "",
+   "tag": "F",
+   "source": "MCL_PRESS_2017_NCS",
+   "note": "Model as ignition cut, ~100-150 rpm hysteresis [E]"
+  },
+  "overrunByMode": {
+   "value": "Not documented. Reviews describe a muted, functional note; assume light crackle on lift-off only in Sport/Track, little in Comfort; louder with Sports Exhaust",
+   "unit": "",
+   "tag": "A",
+   "source": "estimate",
+   "note": ""
+  },
+  "reviewerQuotes": {
+   "value": [
+    {
+     "quote": "the angry blare as the revs rise and rushing whoosh of the turbochargers",
+     "source": "EVO_TECH"
+    },
+    {
+     "quote": "harsh and faintly gravely",
+     "source": "EVO_TECH",
+     "context": "at idle"
+    },
+    {
+     "quote": "The 720S's engine has more rasp, whoosh and fizz about it",
+     "source": "AUTOCAR_RT_2017",
+     "context": "vs the 650S"
+    },
+    {
+     "quote": "There's nothing rich, mellifluous or soulful here.",
+     "source": "AUTOCAR_RT_2017"
+    },
+    {
+     "quote": "the 720S's exhaust sounds off like a railway gun at a military tattoo",
+     "source": "AUTOCAR_RT_2017"
+    },
+    {
+     "quote": "eher nach wepsigem Rennmotorrad als nach acht Zylindern",
+     "source": "MOTOR1DE_2017",
+     "context": "'more like a waspy racing motorbike than eight cylinders'"
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "",
+   "note": ""
+  },
+  "referenceVideos": {
+   "value": [
+    {
+     "title": "2020 McLaren 720s (720 HP): Pure Exhaust Sound (AutoMann)",
+     "url": "https://www.youtube.com/watch?v=K_0jKeawP78",
+     "content": "cold start, revs, acceleration; exhaust type not stated"
+    },
+    {
+     "title": "2020 McLaren 720s (720 HP): Drive & Sound Overview (AutoMann)",
+     "url": "https://www.youtube.com/watch?v=frcF1zktkbY",
+     "content": "drive and sound"
+    },
+    {
+     "title": "DragTimes stock 720S quarter-mile runs (embedded in The Drive, Oct 2017)",
+     "url": "https://www.youtube.com/watch?v=eawOtLnMgo8",
+     "content": "onboard launches, 9.98 s @ 141 mph, stock exhaust"
+    },
+    {
+     "title": "McLaren 720s w/ Valvetronic Fi EXHAUST catback + catless downpipes (FiExhaust)",
+     "url": "https://www.youtube.com/watch?v=ijLY6Tl8ex0",
+     "content": "aftermarket exhaust; CC BY on YouTube"
+    },
+    {
+     "title": "NOVITEC McLaren 720S Race Exhaust Video Debut (Supercars67)",
+     "url": "https://www.youtube.com/watch?v=XfgP-gX7KNg",
+     "content": "aftermarket exhaust; CC BY on YouTube"
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "AUTOMANN;THEDRIVE_DRAGTIMES;COMMONS_AUDIO",
+   "note": "No stock flyby, dyno-pull or stock onboard-at-redline video was found before the search budget ran out"
+  },
+  "freeRecordings": {
+   "value": [
+    {
+     "file": "McLaren_720S_FiExhaust_YouTube_ijLY6Tl8ex0.opus",
+     "commons": "https://commons.wikimedia.org/wiki/File:McLaren_720S_with_Fi_Exhaust_-_engine_and_exhaust_sound_(YouTube_ijLY6Tl8ex0).opus",
+     "licence": "CC BY 3.0",
+     "attribution": "FiExhaust (YouTube)",
+     "duration_s": 83,
+     "note": "aftermarket valved catback + catless downpipes; louder than stock",
+     "downloaded": false
+    },
+    {
+     "file": "McLaren_720S_Novitec_YouTube_XfgP-gX7KNg.opus",
+     "commons": "https://commons.wikimedia.org/wiki/File:McLaren_720S_with_Novitec_exhaust_-_engine_and_exhaust_sound_(YouTube_XfgP-gX7KNg).opus",
+     "licence": "CC BY 3.0",
+     "attribution": "Supercars67 (YouTube)",
+     "duration_s": 120,
+     "note": "Novitec race exhaust; not stock",
+     "downloaded": false
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_AUDIO",
+   "note": "NOT downloaded: Wikimedia's file server returned HTTP 429 (rate limit) on every attempt on 2026-11-13. Fetch from the Commons pages; intended local names are given in 'file' (folder audio/Ref720S/, see LICENSE_NOTES.md there). Both licences are marked 'not yet reviewed' on Commons. Commercial alternative (not free): Sonniss 'McLaren 720S Spider SSG 2019' library."
+  },
+  "audioConfigHints": {
+   "value": {
+    "redlineRpm": 8200,
+    "limiterRpm1st2nd": 8100,
+    "idleRpm": 800,
+    "shiftCutTime": 0.05,
+    "crackleMinRpm": 4000
+   },
+   "unit": "",
+   "tag": "E",
+   "source": "estimate",
+   "note": "Starting values for the audio block"
+  }
+ },
+ "visualBlockout": {
+  "bodyStyle": {
+   "value": "Low mid-engined coupe with a teardrop glass canopy, dihedral doors, no side intakes, flying-buttress-free rear (glass 'canopy' blends into a low engine cover), full-width active wing forming the tail trailing edge",
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": "Judged from Commons photos"
+  },
+  "frontAxleFromNose": {
+   "value": 0.233,
+   "unit": "fraction of length",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "1,058 / 4,543"
+  },
+  "rearAxleFromNose": {
+   "value": 0.821,
+   "unit": "fraction of length",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": "3,728 / 4,543"
+  },
+  "windscreenBaseFromNose": {
+   "value": 0.31,
+   "unit": "fraction of length",
+   "tag": "E",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": "+/-0.03. Base sits about 0.35-0.45 m behind the front axle; read from near-profile photos with perspective error"
+  },
+  "roofPeakFromNose": {
+   "value": 0.52,
+   "unit": "fraction of length",
+   "tag": "E",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": "+/-0.04, about mid-wheelbase, over the seats"
+  },
+  "roofHeight": {
+   "value": 1196,
+   "unit": "mm",
+   "tag": "F",
+   "source": "MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "beltlineHeight": {
+   "value": 0.8,
+   "unit": "m",
+   "tag": "E",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": "Door top roughly two-thirds of overall height"
+  },
+  "noseShape": {
+   "value": "Low, pointed, shark-like; deep headlight 'eye sockets' that double as intakes; front splitter close to the ground",
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_SIDE_PHOTOS;MCL_BROCHURE_2021",
+   "note": ""
+  },
+  "tailShape": {
+   "value": "High, short tail: full-width wing as trailing edge, slim LED light blades, open mesh upper rear panel, deep diffuser, two round tailpipes high in the centre",
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": ""
+  },
+  "photoUrls": {
+   "value": [
+    "https://commons.wikimedia.org/wiki/File:McLaren_720S_August_2024.jpg",
+    "https://commons.wikimedia.org/wiki/File:McLaren_720S_August_2024_001.jpg",
+    "https://commons.wikimedia.org/wiki/File:2021_McLaren_720S_6.jpg",
+    "https://commons.wikimedia.org/wiki/File:McLaren_720S_August_2024_006.jpg",
+    "https://commons.wikimedia.org/wiki/File:McLaren_720S_9.jpg"
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_SIDE_PHOTOS",
+   "note": "August 2024 series CC BY 4.0; 2021_McLaren_720S_6 and McLaren_720S_9 CC BY-SA 4.0. No true orthographic profile found; all are slight 3/4 views"
+  }
+ },
+ "sources": [
+  {
+   "id": "MCL_BROCHURE_2021",
+   "title": "McLaren 720S brochure, 'Technical Highlights' (EU/UK specs as at 13.10.2021), third-party-hosted copy",
+   "url": "https://xr793.com/wp-content/uploads/2022/11/2021-McLaren-720S.pdf"
+  },
+  {
+   "id": "MCL_PRESS_2017_NCS",
+   "title": "McLaren 720S launch press release (Mar 2017) as reproduced by netcarshow (cars.mclaren.press/en-gb/releases/442 did not load)",
+   "url": "https://www.netcarshow.com/mclaren/2018-720s/"
+  },
+  {
+   "id": "WIKI_720S",
+   "title": "Wikipedia: McLaren 720S",
+   "url": "https://en.wikipedia.org/wiki/McLaren_720S"
+  },
+  {
+   "id": "WIKI_M840T",
+   "title": "Wikipedia: McLaren M840T engine",
+   "url": "https://en.wikipedia.org/wiki/McLaren_M840T_engine"
+  },
+  {
+   "id": "EVO_TECH",
+   "title": "evo: McLaren 720S engine, gearbox and technical highlights",
+   "url": "https://www.evo.co.uk/mclaren/720s/engine-gearbox-technical-highlights"
+  },
+  {
+   "id": "AUTOCAR_RT_2017",
+   "title": "Autocar road test, McLaren 720S (26 May 2017), mirror",
+   "url": "https://autocar-prod.codeenigma.net/car-review/mclaren/720s"
+  },
+  {
+   "id": "AUTOCAR_LAYOUT",
+   "title": "Autocar 24 May 2017 'Technical layout' (42/58 on MIRA weighbridge), search snippet only",
+   "url": "https://www.pressreader.com/uk/autocar/20170524/281775629102961"
+  },
+  {
+   "id": "MOTOR1DE_2017",
+   "title": "motor1.com Germany: Test McLaren 720S (2017)",
+   "url": "https://de.motor1.com/reviews/150663/test-mclaren-720s-besser-als-der-ferrari-488/"
+  },
+  {
+   "id": "CARSPECS_US",
+   "title": "carspecs.us 2017 McLaren 720S (US OEM data: ratios)",
+   "url": "https://www.carspecs.us/cars/2017/mclaren/720s/68778"
+  },
+  {
+   "id": "MOTORMATCHUP",
+   "title": "Motor Matchup 2021 720S Coupe (ratios, search snippet)",
+   "url": "https://www.motormatchup.com/catalog/McLaren/720S/2021/Coupe"
+  },
+  {
+   "id": "CAREXPERT",
+   "title": "CarExpert 720S specs (dimensions; compression via snippet)",
+   "url": "https://www.carexpert.com.au/mclaren/720s/2022-performance-ab5fd1bc"
+  },
+  {
+   "id": "ENCYCARPEDIA",
+   "title": "encyCARpedia 720S coupe (compression 8.7:1, snippet)",
+   "url": "https://www.encycarpedia.com/us/mclaren/17-720s-coupe"
+  },
+  {
+   "id": "ZERO60SPECS",
+   "title": "0-60specs: 720S tests by MT, C/D, R&T",
+   "url": "https://www.0-60specs.com/mclaren/720s-0-60-times"
+  },
+  {
+   "id": "CD_SPIDER_2019",
+   "title": "C/D 2019 720S Spider test data via 0-60-time.com (original caranddriver.com/reviews/a26539664)",
+   "url": "https://0-60-time.com/0-60-times/mclaren/720s/2019/"
+  },
+  {
+   "id": "CD_LL2018",
+   "title": "Car and Driver Lightning Lap 2018: McLaren 720S (Yahoo syndication, snippet)",
+   "url": "https://autos.yahoo.com/lightning-lap-2018-mclaren-720s-184600216.html"
+  },
+  {
+   "id": "CD_LOUDEST",
+   "title": "Motorbiscuit relaying C/D loudest-cars list (720S 95 dBA, Spider 99 dBA)",
+   "url": "https://www.motorbiscuit.com/dislike-neighbors-check-out-some-of-the-loudest-cars-stock-exhaust"
+  },
+  {
+   "id": "FASTESTLAPS",
+   "title": "FastestLaps 720S (blocked; idle 55 dB / 70 mph 75 dB seen in snippet)",
+   "url": "https://fastestlaps.com/models/mclaren-720s"
+  },
+  {
+   "id": "GCF_AMS",
+   "title": "GermanCarForum thread transcribing auto motor und sport 720S vs 911 GT2 RS data (2018)",
+   "url": "https://www.germancarforum.com/threads/mclaren-720s-vs-911-gt2rs-ams.58232/page-5"
+  },
+  {
+   "id": "IOL_MOTORING",
+   "title": "Motoring (South Africa): Tested McLaren 720S",
+   "url": "https://www.iol.co.za/motoring/road-tests/tested-mclaren-720s-rocks-our-quarter-mile-chart-13557256"
+  },
+  {
+   "id": "THEDRIVE_DRAGTIMES",
+   "title": "The Drive: 720S running 9-second quarter miles (DragTimes, 16 Oct 2017)",
+   "url": "https://www.thedrive.com/article/15187/the-mclaren-720s-is-running-9-second-quarter-miles-from-the-factory"
+  },
+  {
+   "id": "THEDRIVE_DYNO",
+   "title": "The Drive: 720S makes 700 hp at the wheels (BoostAddict, 8 Aug 2017)",
+   "url": "https://www.thedrive.com/news/13302/mclaren-720s-actually-makes-700-hp-at-the-wheels-dyno-reveals.md"
+  },
+  {
+   "id": "MOTOR1_DYNO",
+   "title": "Motor1: 720S horsepower might be underrated (8 Aug 2017)",
+   "url": "https://www.motor1.com/news/176224/mclaren-720s-dyno-figures/"
+  },
+  {
+   "id": "CARSCOOPS_DYNO",
+   "title": "Carscoops: 720S lays down 691 whp (31 Oct 2017)",
+   "url": "https://www.carscoops.com/2017/10/mclaren-720s-lays-down-impressive-691"
+  },
+  {
+   "id": "FABSPEED_TUNE",
+   "title": "Fabspeed 720S XperTune listing (stock baseline 689 whp / 556 lb-ft)",
+   "url": "https://ffperformance.co/product/fabspeed-mclaren-720s-xpertune-performance-software/"
+  },
+  {
+   "id": "MENG_FIRING",
+   "title": "M-Engineering: McLaren Cylinder Layout & Firing Order",
+   "url": "https://m-engineering.atlassian.net/wiki/spaces/MENGINEERI/pages/467730433/McLaren+Cylinder+Layout+Firing+Order"
+  },
+  {
+   "id": "MCLARENLIFE_BANKS",
+   "title": "McLarenLife owner forum (bank 1 = right), search snippet only",
+   "url": "https://www.mclarenlife.com/threads/engine-system-fault-on-first-day-of-ownership.83890/page-3"
+  },
+  {
+   "id": "SUPERCARS_NET",
+   "title": "supercars.net 720S guide",
+   "url": "https://www.supercars.net/blog/mclaren-720s-ultimate-guide/"
+  },
+  {
+   "id": "AUTOMANN",
+   "title": "AutoMann 720S video pages",
+   "url": "https://automann.tv/blog/mclaren-720s-pure-sound-speed-by-automann"
+  },
+  {
+   "id": "COMMONS_AUDIO",
+   "title": "Wikimedia Commons, Category:McLaren 720S (two CC BY 3.0 audio files)",
+   "url": "https://commons.wikimedia.org/wiki/Category:McLaren_720S"
+  },
+  {
+   "id": "COMMONS_SIDE_PHOTOS",
+   "title": "Wikimedia Commons photos listed under visualBlockout.photoUrls",
+   "url": "https://commons.wikimedia.org/wiki/Category:McLaren_720S"
+  },
+  {
+   "id": "COMMONS_REAR_EXHAUST",
+   "title": "Commons: McLaren 720S August 2024 006 (rear, tailpipes), CC BY 4.0",
+   "url": "https://commons.wikimedia.org/wiki/File:McLaren_720S_August_2024_006.jpg"
+  }
+ ],
+ "gaps": [
+  "Full-load torque curve: no official chart or readable dyno sheet; curve is an estimate through the factory points.",
+  "Gear ratios and final drive come from US OEM data feeds (carspecs.us / Motor Matchup), not a McLaren document.",
+  "Car and Driver 2018 coupe sheet: only 0-60, quarter mile and full-throttle dBA found; 0-100 mph, 70-0, skidpad and idle/cruise dBA unverified (idle 55 / 70 mph 75 dBA from a snippet).",
+  "Motor Trend braking, lateral g and figure-eight figures not reachable.",
+  "EU stationary noise (dB(A) at rpm) not found; estimate only.",
+  "Drag coefficient, frontal area and absolute downforce never published; CdA and ClA are fitted estimates.",
+  "Shift times, launch-control rpm, idle rpm, boost onset/full-boost rpm and exact max boost not published.",
+  "Firing order from one specialist source; cylinder-1 location and bank sides partly from an owner forum.",
+  "Exhaust valve hardware (standard vs Sports Exhaust) and overrun calibration by mode undocumented.",
+  "Pirelli P Zero Trofeo R as a 720S option not confirmed.",
+  "No stock-exhaust free-licence recording found; the two CC BY recordings are aftermarket exhausts.",
+  "No true orthographic side photo on Commons; windscreen-base and roof-peak fractions carry +/-0.03-0.04 error.",
+  "Web search budget ran out mid-task (shared limit); a follow-up session could chase C/D, MT and AMS originals and a stock dyno chart."
+ ]
+}

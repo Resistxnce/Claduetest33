@@ -1,0 +1,21 @@
+RefM5F90 audio folder - licence and attribution notes (2026-11-13)
+
+Status: NO audio file is stored here yet.
+The only freely licensed recording found for the BMW M5 F90 could not be downloaded:
+upload.wikimedia.org answered HTTP 429 (robot-policy rate limit) to every attempt
+for about 12 minutes on 2026-11-13. Download it manually and keep this note with it.
+
+File:     BMW M5 F90 - engine and exhaust sound (YouTube GMtRzIc0tP4).opus
+Page:     https://commons.wikimedia.org/wiki/File:BMW_M5_F90_-_engine_and_exhaust_sound_(YouTube_GMtRzIc0tP4).opus
+Direct:   https://upload.wikimedia.org/wikipedia/commons/9/98/BMW_M5_F90_-_engine_and_exhaust_sound_%28YouTube_GMtRzIc0tP4%29.opus
+Content:  38 s, Ogg Opus 117 kbps; start-up, revving or acceleration of a BMW M5 F90
+          (exhaust may be modified - the source video is titled "M5 F90 Crazy sound - startup sound").
+Source:   YouTube video https://www.youtube.com/watch?v=GMtRzIc0tP4 by channel "mjrk.39",
+          published under YouTube's Creative Commons option; uploaded to Commons by Braiion on 2026-10-22.
+Licence:  Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+          https://creativecommons.org/licenses/by/3.0/
+          Commons marks the file as awaiting licence review.
+Attribution to use: "BMW M5 F90 engine sound" by mjrk.39 (via Wikimedia Commons), CC BY 3.0.
+
+Use: reference listening only (idle character, revving), not suitable as game loops without
+editing; the game itself must use original or properly licensed sounds (see docs/AUDIO.md).

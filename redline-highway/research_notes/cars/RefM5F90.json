@@ -1,0 +1,2508 @@
+{
+  "id": "RefM5F90",
+  "reference_vehicle": "BMW M5 Competition sedan (F90), 2018-2023 - engineering reference only; the in-game car uses a fictional name and no BMW names, logos or body design",
+  "compiled": "2026-11-13",
+  "tag_legend": {
+    "F": "manufacturer figure (BMW AG / BMW of North America press kits and spec sheets)",
+    "P": "published third-party spec, or BMW material for a sister engine/earlier version (stated in note)",
+    "M": "measured in a magazine or independent test",
+    "E": "estimate (method in note)",
+    "A": "assumption"
+  },
+  "variant_scope": {
+    "value": "Primary target: M5 Competition, 460 kW / 625 PS. Pre-LCI (production 07/2018-06/2020, US MY2019-2020) and LCI (production 07/2020-06/2023, US MY2021-2023) values are both given where they differ; the LCI car is the default for the builder.",
+    "unit": "",
+    "tag": "A",
+    "source": "bmw_pr_m5c_2018; bmw_spec_062020; ams_2021_cost",
+    "note": "Production months: LCI 07/2020 start from ADAC catalogue, end 06/2023 from auto motor und sport 'Baujahr 07/2020 bis 06/2023'. Pre-LCI Competition start month is an assumption (press release 06 Aug 2018, photos dated 05/2018)."
+  },
+  "brief_checks": [
+    {
+      "claim": "Engine S63B44T4, 4.4 L twin-turbo hot-V V8, 617 hp / 625 PS",
+      "verdict": "CONFIRMED",
+      "detail": "BMW NA 2021 spec table lists engine type S63B44T4; 4,395 cc; 460 kW = 625 PS (EU) = 617 hp (US SAE). Turbos sit inside the 90-degree V. Base (non-Competition) M5 is 441 kW / 600 PS / 600 hp.",
+      "sources": "bmwna_2021; bmw_spec_062020; wiki_n63"
+    },
+    {
+      "claim": "8-speed M Steptronic torque-converter automatic",
+      "verdict": "CONFIRMED",
+      "detail": "ZF 8HP-family torque-converter automatic with Drivelogic (3 shift programs) and an oil cooler. BMW parts catalogue (via Wikipedia) lists GA8HP75Z for the pre-LCI car; BMW NA lists 'M8HP76' for the 2021 LCI. Gear ratios are identical.",
+      "sources": "bmw_spec_092018; bmwna_2021; wiki_m5"
+    },
+    {
+      "claim": "M xDrive with 4WD, 4WD Sport and 2WD modes, Active M Differential",
+      "verdict": "CONFIRMED, with nuance",
+      "detail": "Five configurations: DSC on = 4WD only; MDM (M Dynamic Mode) = 4WD Sport; DSC off = 4WD, 4WD Sport or 2WD. 2WD is only available with DSC off. Rear-biased; centre multi-plate clutch; Active M Differential (rear, electronically controlled multi-plate, 0-100 % locking).",
+      "sources": "bmw_mxdrive_2017; bmwna_2018_pr; bmw_spec_092018"
+    },
+    {
+      "claim": "(not in brief) commonly repeated errors found while checking",
+      "verdict": "CORRECTIONS",
+      "detail": "Compression ratio is 10.0:1 (BMW), not 10.5:1. Final drive is 3.154 (BMW EU) / 3.15 (BMW NA); auto motor und sport data pages print 2.93, which conflicts with BMW and with parts listings (3.15) - treat 2.93 as an error. Wikipedia's '0-100 km/h 3.1 s' for the Competition is the US 0-60 mph claim; BMW's 0-100 km/h is 3.3 s. Reverse ratio differs between BMW sheets (3.478 EU, 3.38 US 2021, 4.172 US 2017 preliminary).",
+      "sources": "bmw_spec_092018; bmw_spec_062020; bmwna_2021; bmwna_2018_spec; ams_2021_e63; wiki_m5"
+    }
+  ],
+  "identity": {
+    "make": {
+      "value": "BMW (developed by BMW M GmbH)",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018",
+      "note": ""
+    },
+    "model": {
+      "value": "M5 Competition",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018",
+      "note": "Sold as a standalone model ('M5 Competition'); in the US also described as the M5 with Competition Package."
+    },
+    "chassis_code": {
+      "value": "F90",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018",
+      "note": "Press-release tag #F90. Based on the G30 5 Series, CLAR platform (Wikipedia)."
+    },
+    "generation": {
+      "value": "6th-generation M5",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_mxdrive_2017",
+      "note": ""
+    },
+    "body": {
+      "value": "4-door, 5-seat saloon (three-box sedan)",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "layout": {
+      "value": "Front-mounted longitudinal V8, all-wheel drive (rear-biased M xDrive), 2WD selectable",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "plant": {
+      "value": "Dingolfing, Germany",
+      "unit": "",
+      "tag": "P",
+      "source": "wiki_m5",
+      "note": ""
+    },
+    "years_overall_F90_M5": {
+      "value": "2017-2023 production (first deliveries 2018)",
+      "unit": "",
+      "tag": "P",
+      "source": "wiki_m5",
+      "note": ""
+    },
+    "competition_introduced": {
+      "value": "Revealed May 2018 (press photos 05/2018); European press release 06 Aug 2018; US model year 2019",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018",
+      "note": ""
+    },
+    "lci_introduced": {
+      "value": "Revealed June 2020; ADAC lists production from 07/2020; BMW NA global market launch August 2020; US MY2021-2023",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2021; adac_lci",
+      "note": ""
+    },
+    "end_of_production": {
+      "value": "06/2023",
+      "unit": "",
+      "tag": "P",
+      "source": "ams_2021_cost",
+      "note": "auto motor und sport 'Baujahr 07/2020 bis 06/2023'."
+    },
+    "exact_trim_for_game": {
+      "value": "M5 Competition, LCI (2021-2023), EU specification as default; US numbers given alongside",
+      "unit": "",
+      "tag": "A",
+      "source": "",
+      "note": ""
+    },
+    "us_vs_eu_differences": {
+      "value": [
+        "Power label: 617 hp (US, SAE) = 625 PS = 460 kW (EU); identical engine.",
+        "Top speed: EU 250 km/h limited / 305 km/h with M Driver's Package; US 155 mph limited / 190 mph with M Driver's Package (2021 sheet; 2018 US base M5 sheet said 189 mph).",
+        "Acceleration claim: EU 0-100 km/h 3.3 s; US 0-60 mph 3.1 s.",
+        "Mass: EU DIN 1,895 kg / EU (with driver) 1,970 kg (LCI); US curb 4,345 lb = 1,971 kg (2021).",
+        "Gasoline particulate filter (OPF): EU cars (BMW 2018 Competition release; ADAC). US cars: no OPF stated in US material [assumption].",
+        "BMW NA publishes weight distribution 54.4/45.6 and Cd 0.31; the EU sheets give only CdA (0.758 / 0.77 m^2).",
+        "Reverse ratio printed differently (EU 3.478, US 2021 3.38, US 2017 preliminary 4.172).",
+        "US cars on non-run-flat tyres; same sizes as EU."
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2021; bmw_spec_062020; bmw_pr_m5c_2018; adac_lci; bmwna_2018_spec",
+      "note": ""
+    },
+    "lci_differences": {
+      "value": [
+        "Peak-torque plateau extended: 750 Nm from 1,800 to 5,860 rpm (pre-LCI Competition 1,800-5,800). Peak power unchanged: 460 kW at 6,000 rpm.",
+        "New dampers and recalibrated Variable Damper Control (Competition only; tuning carried over from the M8 Competition Gran Coupe).",
+        "Length 4,983 mm (pre-LCI 4,966) from new front and rear aprons; new L-shaped headlight signature, new tail lamps, larger rear diffuser.",
+        "Unladen weight DIN/EU 1,895/1,970 kg (pre-LCI 1,865/1,940).",
+        "CdA 0.77 m^2 (pre-LCI 0.758).",
+        "Gearbox listed as M8HP76 (pre-LCI GA8HP75Z); ratios unchanged.",
+        "M Mode button (ROAD / SPORT / TRACK; TRACK mutes audio and turns off the central display), Setup button, 12.3-inch centre display, iDrive 7.",
+        "Standard M Compound calipers red (pre-LCI blue); exhaust tips black chrome with thinner walls.",
+        "Emission class Euro 6d-TEMP-EVAP-ISC with Otto-Partikelfilter (ADAC)."
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmw_lci_pr_ie_2020; bmwna_2021; adac_lci; wiki_m5",
+      "note": ""
+    }
+  },
+  "engine": {
+    "code": {
+      "value": "S63B44T4",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": "BMW NA 2021 spec table 'Engine type S63B44T4'. Training literature calls this version S63TU4 ('S63 Top, technical update 4')."
+    },
+    "family": {
+      "value": "BMW S63 (BMW M version of the N63); evolution of the F10 M5's S63TU (S63B44T0)",
+      "unit": "",
+      "tag": "P",
+      "source": "wiki_n63",
+      "note": ""
+    },
+    "layout": {
+      "value": "V8, 90-degree bank angle, 'hot-V' (turbochargers and exhaust manifolds inside the V, intake on the outside)",
+      "unit": "",
+      "tag": "P",
+      "source": "wiki_n63",
+      "note": "90 degrees from Wikipedia N63/S63 infobox; hot-V from BMW (turbos 'installed over' each bank in the V) and Wikipedia."
+    },
+    "crankshaft": {
+      "value": "Cross-plane (90-degree crankpin) forged steel crank, 5 main bearings, 6 balance weights",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "Forged C38 steel, 5 bearings, 6 counterweights are from BMW's S63TU (F10 M5) training manual; carried over to TU4 [assumption]. Cross-plane follows from the 90-degree alternating-bank firing order and from the need for a cross-bank manifold (a flat-plane V8 would already give even pulses per bank)."
+    },
+    "displacement": {
+      "value": 4395,
+      "unit": "cm^3",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "bore": {
+      "value": 89.0,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "stroke": {
+      "value": 88.3,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "compression_ratio": {
+      "value": 10.0,
+      "unit": ":1",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Not 10.5:1. Same in BMW EU 2018/2020 and BMW NA 2021 sheets."
+    },
+    "valvetrain": {
+      "value": "DOHC, 4 valves per cylinder, chain-driven camshafts, VALVETRONIC fully variable valve lift, Double-VANOS variable cam timing",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Chain drive: auto motor und sport data page (Nockenwellenantrieb: Kette)."
+    },
+    "fuel_system": {
+      "value": "High Precision Injection (direct injection), max injection pressure 350 bar (up from 200 bar)",
+      "unit": "bar",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2018_pr",
+      "note": ""
+    },
+    "fuel": {
+      "value": "RON 98 recommended (min. RON 91) in EU; Premium in US",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2021",
+      "note": ""
+    },
+    "aspiration": {
+      "value": "Twin-turbocharged, twin-scroll ('M TwinScroll TwinTurbo'), cross-bank exhaust manifold, indirect (water-to-air) charge-air cooling",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "max_power": {
+      "value": 460,
+      "unit": "kW",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "= 625 PS (EU) = 617 hp (US). Base M5: 441 kW / 600 PS."
+    },
+    "max_power_rpm": {
+      "value": 6000,
+      "unit": "rpm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Chart shows a flat 460 kW from about 5,860 to 6,000 rpm."
+    },
+    "max_torque": {
+      "value": 750,
+      "unit": "Nm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "= 553 lb-ft."
+    },
+    "max_torque_rpm_range_LCI": {
+      "value": [
+        1800,
+        5860
+      ],
+      "unit": "rpm",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2021",
+      "note": "The chart's printed label says 1,800-5,800 rpm but its plotted plateau ends at 5,859 rpm."
+    },
+    "max_torque_rpm_range_preLCI": {
+      "value": [
+        1800,
+        5800
+      ],
+      "unit": "rpm",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018; bmw_spec_092018",
+      "note": ""
+    },
+    "full_load_torque_curve_chart_nodes": {
+      "value": [
+        [
+          1000,
+          400.0
+        ],
+        [
+          1244,
+          480.5
+        ],
+        [
+          1500,
+          600.0
+        ],
+        [
+          1791,
+          749.3
+        ],
+        [
+          5859,
+          749.3
+        ],
+        [
+          6000,
+          732.5
+        ],
+        [
+          6600,
+          647.4
+        ],
+        [
+          7000,
+          587.0
+        ],
+        [
+          7198,
+          563.6
+        ]
+      ],
+      "unit": "[rpm, Nm] crank (engine output, manufacturer chart)",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "READ FROM CHART: BMW 06/2020 'Output and torque diagrams', M5 Competition (460 kW). The PDF chart is vector art; the curve vertices were extracted from the drawing paths and mapped to the axis grid (error well under 1 %). The curve is a polyline through these nodes. The power curve on the same chart agrees with torque x rpm to within 0.5 kW at every node. Crank figures (manufacturer net output), not wheel."
+    },
+    "full_load_torque_curve_500rpm": {
+      "value": [
+        [
+          1000,
+          400
+        ],
+        [
+          1500,
+          600
+        ],
+        [
+          2000,
+          750
+        ],
+        [
+          2500,
+          750
+        ],
+        [
+          3000,
+          750
+        ],
+        [
+          3500,
+          750
+        ],
+        [
+          4000,
+          750
+        ],
+        [
+          4500,
+          750
+        ],
+        [
+          5000,
+          750
+        ],
+        [
+          5500,
+          750
+        ],
+        [
+          6000,
+          732
+        ],
+        [
+          6500,
+          662
+        ],
+        [
+          7000,
+          587
+        ],
+        [
+          7200,
+          564
+        ]
+      ],
+      "unit": "[rpm, Nm] crank",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "READ FROM CHART at 500 rpm steps by linear interpolation between the chart nodes above; 2,000-5,500 rpm plateau rounded to the published 750 Nm. 7,200 rpm is where BMW's curve ends (cut-off)."
+    },
+    "full_load_power_curve_500rpm": {
+      "value": [
+        [
+          1000,
+          42
+        ],
+        [
+          1500,
+          94
+        ],
+        [
+          2000,
+          157
+        ],
+        [
+          2500,
+          196
+        ],
+        [
+          3000,
+          236
+        ],
+        [
+          3500,
+          275
+        ],
+        [
+          4000,
+          314
+        ],
+        [
+          4500,
+          353
+        ],
+        [
+          5000,
+          393
+        ],
+        [
+          5500,
+          432
+        ],
+        [
+          6000,
+          460
+        ],
+        [
+          6500,
+          450
+        ],
+        [
+          7000,
+          430
+        ],
+        [
+          7200,
+          425
+        ]
+      ],
+      "unit": "[rpm, kW] crank",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "READ FROM CHART (power curve on the same diagram)."
+    },
+    "torque_below_1000rpm": {
+      "value": [
+        [
+          600,
+          300
+        ],
+        [
+          800,
+          350
+        ],
+        [
+          1000,
+          400
+        ]
+      ],
+      "unit": "[rpm, Nm]",
+      "tag": "E",
+      "source": "",
+      "note": "Not on BMW's chart. 400 Nm at 1,000 rpm equals about 11.4 bar BMEP, i.e. roughly naturally-aspirated full load with little boost; extended down at similar volumetric efficiency with a mild fall-off at very low speed."
+    },
+    "redline": {
+      "value": 7200,
+      "unit": "rpm",
+      "tag": "F",
+      "source": "bmwna_m5cs; bmw_spec_062020",
+      "note": "BMW NA M5 CS release (same S63B44T4): 'engine redline is 7,200 rpm'. BMW's M5 Competition power/torque chart ends at 7,200 rpm."
+    },
+    "limiter_cutoff": {
+      "value": 7200,
+      "unit": "rpm",
+      "tag": "P",
+      "source": "bmw_st1202; wiki_n63",
+      "note": "BMW S63TU training manual lists 'cutoff speed 7200 rpm' for the F10 M5's S63TU; Wikipedia: rev limit raised from 6,800 (S63) to 7,200. BMW: in manual mode there is no automatic upshift at the limiter (bmwna_2018_pr; bmw_lci_pr_ie_2020). Limiter style (hard fuel cut vs soft ignition cut) not published."
+    },
+    "idle_rpm": {
+      "value": 600,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Typical warm idle for BMW N63/S63 V8s is about 550-650 rpm; cold-start fast idle is higher (estimate 1,000-1,300 rpm for the first tens of seconds). Verify against the Commons start-up recording or a video with a visible tachometer."
+    },
+    "launch_control_rpm": {
+      "value": 3000,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Launch control exists (The Drive 2021 mentions initiating launch control). Estimate based on a torque-converter launch that must pre-build boost (full torque arrives at 1,800 rpm) without overwhelming 4WD traction; plausible range 2,500-3,500 rpm. Verify on an onboard launch video."
+    },
+    "firing_order": {
+      "value": "1-5-4-8-6-3-7-2",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "From BMW's S63TU (F10 M5) technical training manual data table, which lists 1-5-4-8-6-3-7-2 for both the S63 and S63TU. The cross-bank manifold of the F90's S63TU4 (BMW spec 'cross-bank exhaust manifold') only works with this order, so carry-over is near certain [assumption]."
+    },
+    "cylinder_numbering": {
+      "value": "BMW convention: cylinder 1 is at the front of the RIGHT bank (right = passenger side on a left-hand-drive car, seen in the direction of travel). Right bank = cylinders 1, 2, 3, 4 front to rear; left bank = cylinders 5, 6, 7, 8 front to rear.",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "BMW manual: 'exhaust manifold ... in driving direction, 1st cylinder, top right'; 'cylinder bank 1-4 (R)', 'cylinder bank 5/8 (L)'."
+    },
+    "firing_events_deg": {
+      "value": [
+        [
+          1,
+          0,
+          "R"
+        ],
+        [
+          5,
+          90,
+          "L"
+        ],
+        [
+          4,
+          180,
+          "R"
+        ],
+        [
+          8,
+          270,
+          "L"
+        ],
+        [
+          6,
+          360,
+          "L"
+        ],
+        [
+          3,
+          450,
+          "R"
+        ],
+        [
+          7,
+          540,
+          "L"
+        ],
+        [
+          2,
+          630,
+          "R"
+        ]
+      ],
+      "unit": "[cylinder, crank degrees after cyl 1 TDC-firing, bank]",
+      "tag": "E",
+      "source": "bmw_st1202",
+      "note": "Derived: even 90-degree firing intervals across the engine (720/8). Per-bank intervals are uneven, the classic cross-plane pattern: right bank 180-270-180-90 degrees, left bank 180-90-180-270 degrees. The cross-bank manifold regroups the pulses so each turbo sees even 180-degree spacing (see forced_induction)."
+    },
+    "firing_frequency": {
+      "value": "f = rpm / 60 x 4: 40 Hz at 600 rpm, 66.7 Hz at 1,000, 200 Hz at 3,000, 400 Hz at 6,000, 480 Hz at 7,200",
+      "unit": "Hz",
+      "tag": "E",
+      "source": "",
+      "note": "Engine order 4 (crank). Each exhaust branch after a turbo carries order 2."
+    },
+    "lubrication": {
+      "value": "Wet sump with small front sump chamber, fully variable map-controlled oil pump (suction pump for the front chamber), designed for track g-loads; extra engine-oil cooler",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020; bmwna_2021",
+      "note": ""
+    },
+    "oil_capacity_change": {
+      "value": 10.0,
+      "unit": "L",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "cooling": {
+      "value": "Separate circuits for engine/turbochargers and for the indirect charge-air coolers; electric pump keeps coolant flowing through the turbochargers after shut-off",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": ""
+    },
+    "engine_mounts": {
+      "value": 900,
+      "unit": "N/mm",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020; bmwna_m5cs",
+      "note": "Competition-specific mounts; BMW NA: 5,139 lb/in (Competition/CS) vs 3,312 lb/in (about 580 N/mm) for the standard M5."
+    },
+    "drive_performance_modes": {
+      "value": [
+        "EFFICIENT",
+        "SPORT",
+        "SPORT+"
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020",
+      "note": "SPORT and SPORT+ sharpen accelerator response and change the exhaust-flap strategy."
+    },
+    "rotational_inertia_estimate": {
+      "value": 0.3,
+      "unit": "kg*m^2",
+      "tag": "E",
+      "source": "",
+      "note": "Crank, flexplate and torque-converter impeller/cover. Typical 4.4 L V8 with converter; tune in testing."
+    },
+    "specific_output": {
+      "value": 104.7,
+      "unit": "kW/L",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    }
+  },
+  "forced_induction": {
+    "turbo_count": {
+      "value": 2,
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "turbo_type": {
+      "value": "Twin-scroll turbine housings ('M TwinScroll TwinTurbo')",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Newly developed turbochargers for the F90 (bmwna_2018_pr); 'optimised turbochargers' (bmw_lci_pr_ie_2020)."
+    },
+    "turbo_maker_model": {
+      "value": null,
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "NOT FOUND in BMW press material or the sources reached. Gap; check the BMW parts catalogue (ETK) part numbers or the BMW ST1916 S63TU4 training manual (bmwtechinfo link returned 404)."
+    },
+    "placement": {
+      "value": "Hot-V: both turbochargers inside the 90-degree V on top of the engine, one positioned over each cylinder bank; each turbine outlet feeds a close-coupled catalyst",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202; wiki_n63",
+      "note": "Positions from the F10 S63TU manual ('turbocharger installed over cylinder bank 5/8 (L)' and 'over cylinder bank 1-4 (R)'). Catalyst position also S63TU [assumption for TU4]."
+    },
+    "cross_bank_manifold": {
+      "value": {
+        "principle": "Four-into-two-per-turbo, overlapping 'cross-bank' manifold: each turbo is fed by two cylinders from EACH bank, chosen so that the turbo receives a pulse every 180 crank degrees, like an inline-4; each scroll receives a pulse every 360 degrees.",
+        "turbo_over_left_bank_5_to_8": {
+          "cylinders": [
+            1,
+            4,
+            6,
+            7
+          ],
+          "scroll_front": [
+            1,
+            6
+          ],
+          "scroll_rear": [
+            4,
+            7
+          ],
+          "pulse_times_deg": [
+            0,
+            180,
+            360,
+            540
+          ]
+        },
+        "turbo_over_right_bank_1_to_4": {
+          "cylinders": [
+            2,
+            3,
+            5,
+            8
+          ],
+          "scroll_front": [
+            2,
+            8
+          ],
+          "scroll_rear": [
+            3,
+            5
+          ],
+          "pulse_times_deg": [
+            90,
+            270,
+            450,
+            630
+          ]
+        },
+        "offset_between_turbos_deg": 90
+      },
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "BMW S63TU manual: 'exhaust gas pulses from cylinders 1/6 and 4/7 are fed to the exhaust turbocharger installed over cylinder bank 5/8 (L) and the exhaust gas from cylinders 2/8 and 3/5 is fed to the exhaust turbocharger installed over cylinder bank 1-4 (R)'; '360 degrees of crankshaft angle between the two exhaust cycles within the exhaust flute'. Manifold figure legend: 2/8 right front scroll, 3/5 right rear scroll, 1/6 left front scroll, 4/7 left rear scroll. F90 retains a cross-bank manifold (BMW 2017/2020: 'cross-bank exhaust manifolds ... modified to optimise the flow of energy to the turbine wheels'). Pulse times derived from the firing order."
+    },
+    "max_boost_relative_base_M5": {
+      "value": 24.46,
+      "unit": "psi (relative)",
+      "tag": "F",
+      "source": "bmwna_2018_pr",
+      "note": "= 1.69 bar gauge. Stated for the 600 hp M5 at launch (Aug 2017). For comparison the F10 M5's S63TU ran 1.5 bar (Wikipedia, P)."
+    },
+    "max_boost_relative_competition": {
+      "value": 1.75,
+      "unit": "bar (relative)",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Same 750 Nm torque as the base M5 but held to higher rpm and 19 kW more peak power, so slightly more boost at the top end: estimate 1.7-1.8 bar gauge. Verify with logged data from owners."
+    },
+    "boost_onset_rpm": {
+      "value": 1100,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "From the chart: 400 Nm at 1,000 rpm is about naturally aspirated full load (11.4 bar BMEP), so boost starts building at roughly 1,000-1,200 rpm; torque rises steeply from 1,244 rpm (480 Nm) to 1,500 (600 Nm)."
+    },
+    "full_boost_rpm": {
+      "value": 1800,
+      "unit": "rpm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Full 750 Nm from 1,800 rpm (steady-state full load). In a transient from low load, expect several tenths of a second of spool in higher gears [E]."
+    },
+    "boost_taper": {
+      "value": "Above about 5,860 rpm torque falls (733 Nm at 6,000, 647 at 6,600, 587 at 7,000, 564 at 7,200) while power stays within 460-425 kW: boost is tapered toward the cut-off.",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "READ FROM CHART."
+    },
+    "wastegate": {
+      "value": "One wastegate per turbo. S63TU (F10): vacuum-actuated through an electro-pneumatic pressure converter. S63TU4 actuation type not confirmed.",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "Gap for the F90: the BMW TU4 training manual (ST1916) was not reachable."
+    },
+    "blow_off_valve": {
+      "value": "None. BMW: the S63TU 'does not use a blow-off valve. The use of Valvetronic and special tuning rendered it unnecessary'; compressors were redesigned so they are 'not sensitive to pump' (surge).",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": "Carry-over to TU4 assumed. Audio implication: no blow-off 'pssh' on lift-off; at most a faint compressor flutter, mostly masked."
+    },
+    "charge_air_cooling": {
+      "value": "Indirect (water-to-air) charge-air coolers, about 20 % smaller yet more effective than the previous M5's",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr",
+      "note": ""
+    }
+  },
+  "transmission": {
+    "model": {
+      "value": "ZF 8HP family: GA8HP75Z (pre-LCI) / 'M8HP76' (LCI, per BMW NA)",
+      "unit": "",
+      "tag": "P",
+      "source": "wiki_m5; bmwna_2021",
+      "note": "GA8HP75Z from BMW parts catalogue (realoem) cited by Wikipedia; M8HP76 printed in BMW NA's 2021 spec table."
+    },
+    "type": {
+      "value": "8-speed M Steptronic torque-converter automatic with Drivelogic, paddles, transmission oil cooler",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "gear_ratios": {
+      "value": [
+        5.0,
+        3.2,
+        2.143,
+        1.72,
+        1.313,
+        1.0,
+        0.823,
+        0.64
+      ],
+      "unit": ":1",
+      "tag": "F",
+      "source": "bmw_spec_092018; bmw_spec_062020",
+      "note": "Same in pre-LCI and LCI sheets and in BMW NA sheets (rounded)."
+    },
+    "reverse_ratio": {
+      "value": 3.478,
+      "unit": ":1",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "BMW NA 2021 sheet prints 3.38 and the 2017 US preliminary sheet 4.172; EU value used."
+    },
+    "final_drive": {
+      "value": 3.154,
+      "unit": ":1",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "BMW NA: 3.15. Parts listings sell F90 front and rear differentials as '3.15 ratio' (P). auto motor und sport prints 2.93 - conflicts, treated as an error."
+    },
+    "transfer_case_ratio": {
+      "value": 1.0,
+      "unit": ":1",
+      "tag": "A",
+      "source": "",
+      "note": "xDrive transfer case is a clutch/chain power divider without a range reduction; front differential also listed as 3.15 in parts listings. Note: front tyres (275/35R20, 700.5 mm) are about 1 % smaller in diameter than rears (285/35R20, 707.5 mm), so with equal axle ratios the front axle turns slightly faster; the centre clutch slips to manage this."
+    },
+    "overall_ratios": {
+      "value": [
+        15.77,
+        10.093,
+        6.759,
+        5.425,
+        4.141,
+        3.154,
+        2.596,
+        2.019
+      ],
+      "unit": ":1",
+      "tag": "E",
+      "source": "",
+      "note": "Gear x 3.154. Reverse overall 10.97."
+    },
+    "speed_at_7200rpm_by_gear": {
+      "value": [
+        59,
+        92,
+        138,
+        172,
+        225,
+        295,
+        359,
+        461
+      ],
+      "unit": "km/h",
+      "tag": "E",
+      "source": "",
+      "note": "Rear dynamic rolling radius 0.343 m (97 % of the 285/35R20 free radius). 2nd gear tops out at about 57 mph, so 0-60 mph needs a shift into 3rd. 305 km/h (M Driver's Package limit) is reached in 7th at about 6,120 rpm; 8th is an overdrive."
+    },
+    "rpm_at_100kmh_by_gear": {
+      "value": [
+        12191,
+        7802,
+        5225,
+        4194,
+        3201,
+        2438,
+        2007,
+        1560
+      ],
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Same radius assumption. 8th at 130 km/h is about 2,030 rpm."
+    },
+    "drivelogic_programs": {
+      "value": {
+        "1": "efficient driving, comfort shift times",
+        "2": "sporty driving, shortened shift times",
+        "3": "track, extremely short shift times"
+      },
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr",
+      "note": ""
+    },
+    "shift_behaviour": {
+      "value": "D (automatic) or S/manual via lever or paddles; multiple downshifts to the lowest available gear when braking; in manual mode NO automatic upshift at the rev limiter",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "shift_time_estimate": {
+      "value": {
+        "drivelogic_1": 0.35,
+        "drivelogic_2": 0.22,
+        "drivelogic_3": 0.12
+      },
+      "unit": "s (torque interruption felt)",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Typical fast 8HP calibrations; The Drive: paddle shifts 'come quick but aren't instantaneous'; launch-control upshifts 'decently jolty'."
+    },
+    "torque_converter": {
+      "value": "Converter with lock-up clutch; BMW: 'the torque converter lock-up clutch fully engages once the car has pulled away'",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr",
+      "note": "Stall speed and converter torque ratio not published (gap). Estimate for a sim: converter coupling to about 2,500-3,000 rpm at full throttle from rest, lock-up from about 15-20 km/h in 1st-2nd [E]."
+    },
+    "launch_control": {
+      "value": "Present",
+      "unit": "",
+      "tag": "P",
+      "source": "thedrive_2021",
+      "note": "Launch rpm not published; see engine.launch_control_rpm."
+    },
+    "efficiency_estimate": {
+      "value": 0.88,
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "Locked-converter 8HP plus transfer case and two axle drives; about 0.85-0.90 crank-to-wheel at full load."
+    }
+  },
+  "drivetrain": {
+    "system": {
+      "value": "M xDrive: rear-biased all-wheel drive; central transfer case with electronically controlled, fully variable multi-plate clutch; Active M Differential at the rear",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmw_mxdrive_2017",
+      "note": ""
+    },
+    "default_behaviour": {
+      "value": "Rear axle permanently driven; front wheels are brought in only when the rear wheels cannot transmit more torque",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_mxdrive_2017; bmwna_2018_pr",
+      "note": ""
+    },
+    "configurations": {
+      "value": [
+        {
+          "dsc": "DSC on",
+          "mxdrive": "4WD",
+          "note": "default at every start; allows some rear slip"
+        },
+        {
+          "dsc": "MDM (M Dynamic Mode)",
+          "mxdrive": "4WD Sport",
+          "note": "more torque to the rear axle, more permitted slip, controlled drifts"
+        },
+        {
+          "dsc": "DSC off",
+          "mxdrive": "4WD",
+          "note": "neutral set-up, maximum traction/controllability"
+        },
+        {
+          "dsc": "DSC off",
+          "mxdrive": "4WD Sport",
+          "note": "more rear bias; tuned for dry track"
+        },
+        {
+          "dsc": "DSC off",
+          "mxdrive": "2WD",
+          "note": "rear-wheel drive only; only selectable with DSC off"
+        }
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_mxdrive_2017; bmwna_2018_pr; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "torque_split_numbers": {
+      "value": {
+        "4WD_cruise_front_share": "0-0.1",
+        "4WD_max_front_share": 0.5,
+        "4WD_Sport_max_front_share": 0.35,
+        "2WD_front_share": 0.0
+      },
+      "unit": "share of torque to front axle",
+      "tag": "E",
+      "source": "",
+      "note": "BMW publishes no split percentages ('fully variable'). Estimates for a sim: front share rises with rear-axle slip and is capped lower in 4WD Sport."
+    },
+    "rear_differential": {
+      "value": "Active M Differential: electronically controlled multi-plate limited-slip, locking effect 0-100 %",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "front_differential": {
+      "value": "Open",
+      "unit": "",
+      "tag": "A",
+      "source": "",
+      "note": "No front LSD is mentioned anywhere in BMW material."
+    },
+    "reinforcement": {
+      "value": "Drivetrain reinforced for the torque, the rear-biased set-up and the 2WD mode",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_mxdrive_2017",
+      "note": ""
+    },
+    "traction_systems": {
+      "value": "DSC with ABS, ASC, MDM, CBC, DBC, dry braking, Start-Off Assistant; DSC networked with M xDrive",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    }
+  },
+  "mass": {
+    "unladen_DIN_LCI": {
+      "value": 1895,
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "DIN kerb weight: ready to drive with fuel, without driver or luggage."
+    },
+    "unladen_EU_LCI": {
+      "value": 1970,
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "EU kerb mass: 90 % fuel plus 75 kg for driver and luggage (68 + 7); here exactly DIN + 75 kg."
+    },
+    "unladen_DIN_preLCI": {
+      "value": 1865,
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_092018",
+      "note": ""
+    },
+    "unladen_EU_preLCI": {
+      "value": 1940,
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_092018",
+      "note": ""
+    },
+    "us_curb_weight_2021": {
+      "value": 4345,
+      "unit": "lb",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": "= 1,971 kg. Same figure for M5 and M5 Competition in BMW NA's 2021 table."
+    },
+    "us_curb_weight_2018_base_M5": {
+      "value": 4370,
+      "unit": "lb",
+      "tag": "F",
+      "source": "bmwna_2018_spec",
+      "note": "= 1,982 kg, preliminary US sheet for the base 2018 M5."
+    },
+    "measured_weights": {
+      "value": [
+        {
+          "car": "2018 M5 (base, pre-LCI)",
+          "value_lb": 4288,
+          "value_kg": 1945,
+          "source": "cd_2018_m5"
+        },
+        {
+          "car": "M5 Competition (pre-LCI or LCI unclear)",
+          "value_kg": 1904,
+          "source": "fastestlaps_cmp",
+          "note": "compiled figure, original magazine not identified"
+        }
+      ],
+      "unit": "",
+      "tag": "M",
+      "source": "cd_2018_m5; fastestlaps_cmp",
+      "note": ""
+    },
+    "weight_distribution_front_rear": {
+      "value": [
+        54.4,
+        45.6
+      ],
+      "unit": "%",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": "BMW NA 2021 (M5 and Competition). No independent scale measurement found."
+    },
+    "max_permissible_weight": {
+      "value": 2440,
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "max_axle_loads_front_rear": {
+      "value": [
+        1215,
+        1260
+      ],
+      "unit": "kg",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "fuel_tank": {
+      "value": 68,
+      "unit": "L",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "lightweight_parts": {
+      "value": "CFRP roof, aluminium bonnet and front wings; weight-optimised exhaust (Helmholtz resonator saves 5 kg / 11 lb); M Carbon ceramic brakes save 23 kg unsprung/rotating mass",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "simulation_mass": {
+      "value": 1970,
+      "unit": "kg",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "EU figure (DIN 1,895 + 75 kg driver) for the LCI car; 1,940 kg for pre-LCI."
+    },
+    "axle_loads_at_sim_mass": {
+      "value": {
+        "front_axle_kg": 1072,
+        "rear_axle_kg": 898,
+        "per_front_wheel_N": 5257,
+        "per_rear_wheel_N": 4406
+      },
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "1,970 kg x 54.4/45.6, static."
+    },
+    "centre_of_gravity_height": {
+      "value": 0.5,
+      "unit": "m",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Large sedan with a heavy V8 high in the hot-V layout but a CFRP roof; typical 0.48-0.53 m."
+    },
+    "yaw_inertia": {
+      "value": 3700,
+      "unit": "kg*m^2",
+      "tag": "E",
+      "source": "",
+      "note": "Uniform-box value m(L^2+W^2)/12 = 4,660 kg*m^2 scaled by 0.8 for mass concentrated between the axles."
+    }
+  },
+  "dimensions": {
+    "length_LCI": {
+      "value": 4983,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "auto motor und sport prints 5,001 mm."
+    },
+    "length_preLCI": {
+      "value": 4966,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_092018",
+      "note": ""
+    },
+    "width": {
+      "value": 1903,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "width_incl_mirrors": {
+      "value": 2126,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "LCI dimension drawing; BMW NA 83.7 in."
+    },
+    "height": {
+      "value": 1469,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Competition (7 mm lower than M5's 1,473 mm in BMW's sheets; BMW NA: 0.2 in lower)."
+    },
+    "wheelbase": {
+      "value": 2982,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "track_front": {
+      "value": 1625,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Competition (more negative camber); M5 1,626."
+    },
+    "track_rear": {
+      "value": 1594,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "front_overhang_LCI": {
+      "value": 888,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "LCI dimension drawing (888 + 2,982 + 1,113 = 4,983)."
+    },
+    "rear_overhang_LCI": {
+      "value": 1113,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "ground_clearance": {
+      "value": 128,
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Competition; M5 132 (pre-LCI) / 133 (LCI). BMW NA: 5.0 in."
+    },
+    "turning_circle": {
+      "value": 12.6,
+      "unit": "m",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "BMW NA: turning radius 20.7 ft."
+    },
+    "frontal_area": {
+      "value": 2.45,
+      "unit": "m^2",
+      "tag": "E",
+      "source": "bmwna_2021; bmw_spec_062020",
+      "note": "Two methods agree: (1) CdA / Cd = 0.77 / 0.31 = 2.48 m^2 (LCI) and 0.758 / 0.31 = 2.45 m^2 (pre-LCI, if Cd is the same); (2) integrating the silhouette of BMW's front-view dimension drawing gives 2.40-2.44 m^2 including mirrors."
+    },
+    "interior_headroom_front_rear": {
+      "value": [
+        1034,
+        977
+      ],
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "interior_shoulder_width_front_rear": {
+      "value": [
+        1523,
+        1487
+      ],
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "luggage_volume": {
+      "value": 530,
+      "unit": "L",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    }
+  },
+  "tyres_wheels": {
+    "front_tyre": {
+      "value": "275/35 ZR20 102Y XL",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "rear_tyre": {
+      "value": "285/35 ZR20 104Y XL",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "front_rim": {
+      "value": "9.5J x 20, forged light alloy",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "rear_rim": {
+      "value": "10.5J x 20, forged light alloy",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "wheel_design": {
+      "value": "Competition: forged bi-colour Y-spoke M wheels; LCI option: 20-inch M double-spoke in polished Orbit Grey",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "oe_tyre_model": {
+      "value": "Pirelli P Zero (BMW star-marked)",
+      "unit": "",
+      "tag": "M",
+      "source": "ams_2021_e63; ams_2021_cost; ams_2019_rs7; citizen_2021",
+      "note": "Fitted to auto motor und sport's 2019 and 2021 test cars ('Pirelli P Zero *') and The Citizen's 2021 car. Other OE approvals (e.g. Michelin Pilot Sport 4S star) not verified - gap."
+    },
+    "non_run_flat": {
+      "value": true,
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": ""
+    },
+    "base_M5_tyres": {
+      "value": "275/40 ZR19 105Y XL front, 285/40 ZR19 107Y XL rear on 9.5J/10.5J x 19",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "free_diameter_front_rear": {
+      "value": [
+        700.5,
+        707.5
+      ],
+      "unit": "mm",
+      "tag": "E",
+      "source": "",
+      "note": "From the size codes: 508 mm rim + 2 x section x aspect."
+    },
+    "dynamic_rolling_radius_rear": {
+      "value": 0.343,
+      "unit": "m",
+      "tag": "E",
+      "source": "",
+      "note": "97 % of free radius."
+    },
+    "wheel_tyre_inertia": {
+      "value": {
+        "front": 1.7,
+        "rear": 1.9
+      },
+      "unit": "kg*m^2 per wheel",
+      "tag": "E",
+      "source": "",
+      "note": "Forged 20-inch wheel about 12-13 kg plus 12-13 kg tyre plus disc/hub share."
+    }
+  },
+  "brakes": {
+    "standard_system": {
+      "value": "M Compound brakes (cast-iron friction ring with aluminium hat)",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2018_pr",
+      "note": ""
+    },
+    "front_standard": {
+      "value": "395 x 36 mm perforated, internally vented discs; 6-piston fixed calipers",
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmwna_2018_spec",
+      "note": "Calipers blue (pre-LCI), red as standard on LCI (blue or black at no cost)."
+    },
+    "rear_standard": {
+      "value": "380 x 28 mm perforated, internally vented discs; single-piston floating calipers with integrated parking brake",
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmwna_2018_spec",
+      "note": ""
+    },
+    "carbon_ceramic_option": {
+      "value": "M Carbon ceramic: front 400 x 38 mm (15.74 x 1.49 in) with 6-piston fixed calipers; rear 380 x 28 mm with single-piston floating calipers; gold calipers; 23 kg lighter",
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmwna_2018_pr; bmw_lci_pr_ie_2020",
+      "note": "auto motor und sport's 2019/2021 ceramic-equipped test cars list 400/380 mm."
+    },
+    "measured_braking": {
+      "value": [
+        {
+          "test": "70-0 mph",
+          "value_ft": 147,
+          "value_m": 44.8,
+          "car": "2018 M5 (base)",
+          "source": "cd_2018_m5"
+        },
+        {
+          "test": "70-0 mph",
+          "value_ft": 139,
+          "value_m": 42.4,
+          "car": "2021 M5 Competition (LCI)",
+          "source": "cd_2021_comp"
+        },
+        {
+          "test": "0-100-0 mph",
+          "value_s": 11.0,
+          "car": "M5 Competition",
+          "source": "fastestlaps_cmp",
+          "note": "original magazine not identified"
+        }
+      ],
+      "unit": "",
+      "tag": "M",
+      "source": "cd_2018_m5; cd_2021_comp; fastestlaps_cmp",
+      "note": "No 100-0 km/h figure found (auto motor und sport pages reached did not show it)."
+    },
+    "braking_100_0_kmh_estimate": {
+      "value": 33.5,
+      "unit": "m",
+      "tag": "E",
+      "source": "",
+      "note": "Scaled from C&D's 139 ft (42.4 m) from 70 mph: (100/112.7)^2 x 42.4 = 33.4 m."
+    },
+    "sim_brake_torque_estimate": {
+      "value": {
+        "front_per_wheel_Nm": 4200,
+        "rear_per_wheel_Nm": 2200
+      },
+      "unit": "Nm",
+      "tag": "E",
+      "source": "",
+      "note": "Maximum capacity per wheel. At 1.25 g with 1,970 kg, CoG 0.50 m and tyre mu 1.2 the grip-limited torques are about 3,000 Nm per front wheel and 1,000 Nm per rear wheel, so these caps can lock the wheels (about 65-70 % front bias). Tune so ABS-limited 100-0 km/h is about 33-34 m."
+    }
+  },
+  "aero": {
+    "CdA_preLCI": {
+      "value": 0.758,
+      "unit": "m^2",
+      "tag": "F",
+      "source": "bmw_spec_092018",
+      "note": "BMW 'Air resistance cd x A'. Same for M5 and Competition."
+    },
+    "CdA_LCI_competition": {
+      "value": 0.77,
+      "unit": "m^2",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "LCI M5 (non-Competition): 0.75."
+    },
+    "Cd_competition_LCI": {
+      "value": 0.31,
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": "BMW NA 'Cx': M5 0.32, M5 Competition 0.31 (M5 CS 0.33)."
+    },
+    "frontal_area": {
+      "value": 2.45,
+      "unit": "m^2",
+      "tag": "E",
+      "source": "",
+      "note": "See dimensions.frontal_area."
+    },
+    "downforce": {
+      "value": "Not published. Aero aids: front spoiler, underbody panelling, rear spoiler / trunk-lid Gurney (BMW NA 2018 'trunk lid with Gurney').",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_092018; bmwna_2018_spec",
+      "note": ""
+    },
+    "lift_estimate": {
+      "value": {
+        "ClA_front": 0.05,
+        "ClA_rear": 0.03,
+        "sign": "positive = lift"
+      },
+      "unit": "m^2",
+      "tag": "E",
+      "source": "",
+      "note": "Road sedan with small spoiler: assume slight net lift, about 300 N at 250 km/h in total; game can treat as near zero."
+    },
+    "drag_power_check": {
+      "value": {
+        "at_250kmh_kW": 155,
+        "at_305kmh_kW": 281,
+        "unlimited_vmax_estimate_kmh": 330
+      },
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "0.5 x 1.2 x 0.77 x v^3. With the chart torque, 0.85-0.88 driveline efficiency and 1.2 % rolling resistance, an unlimited car would top out near 330 km/h in 7th; BMW limits it to 250 or 305 km/h."
+    }
+  },
+  "suspension_steering": {
+    "front_suspension": {
+      "value": "Double-wishbone axle in lightweight aluminium, M-specific kinematics and elastokinematics",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "rear_suspension": {
+      "value": "Five-link axle in lightweight aluminium, M-specific elastokinematics; steel X-brace and aluminium transverse strut at the rear subframe",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmwna_2018_pr",
+      "note": ""
+    },
+    "dampers": {
+      "value": "Variable Damper Control (electronically adjustable) with COMFORT / SPORT / SPORT+; LCI Competition gets new dampers and recalibrated control (from M8 Competition Gran Coupe)",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "competition_chassis_changes": {
+      "value": [
+        "Ride height 7 mm lower than M5",
+        "Springs 10 % stiffer front and rear; shorter auxiliary (helper) springs",
+        "More negative camber at the front axle",
+        "Rear toe links with ball joints instead of rubber mounts",
+        "Firmer rear anti-roll bar; newly designed front anti-roll-bar mounting",
+        "Specific damper tuning; engine mounts 900 N/mm"
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_pr_m5c_2018; bmwna_2021",
+      "note": ""
+    },
+    "bracing": {
+      "value": "Aluminium tower-to-bulkhead and tower-to-front-end strut braces",
+      "unit": "",
+      "tag": "F",
+      "source": "bmwna_2018_pr",
+      "note": ""
+    },
+    "ride_height_reference": {
+      "value": "Ground clearance 128 mm (Competition); height 1,469 mm",
+      "unit": "mm",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "spring_damper_arb_rates": {
+      "value": {
+        "front_wheel_rate_N_per_m": 55000,
+        "rear_wheel_rate_N_per_m": 53000,
+        "ride_freq_front_Hz": 1.7,
+        "ride_freq_rear_Hz": 1.85,
+        "front_bump_rebound_Ns_per_m": [
+          3500,
+          5800
+        ],
+        "rear_bump_rebound_Ns_per_m": [
+          3200,
+          5300
+        ],
+        "front_arb_N_per_m": 30000,
+        "rear_arb_N_per_m": 22000
+      },
+      "unit": "",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. Sprung corner masses about 481 kg front and 394 kg rear (1,970 kg, 54.4 % front, about 55 kg unsprung per corner); target ride frequencies 1.7/1.85 Hz; damping ratios about 0.3 bump and 0.5 rebound, as in the GT12 method."
+    },
+    "optional_coilovers": {
+      "value": "M Performance coilover: ride height -5 to -20 mm, separate bump and rebound adjustment",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "steering_type": {
+      "value": "Electromechanical rack-and-pinion (EPS) with M Servotronic and variable sport ratio; LCI modes COMFORT / SPORT",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020; bmw_lci_pr_ie_2020",
+      "note": ""
+    },
+    "steering_ratio_overall": {
+      "value": 14.3,
+      "unit": ":1",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "turning_circle": {
+      "value": 12.6,
+      "unit": "m",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "max_road_wheel_angle": {
+      "value": {
+        "inner_deg": 38,
+        "outer_deg": 29
+      },
+      "unit": "deg",
+      "tag": "E",
+      "source": "",
+      "note": "From the 12.6 m kerb-to-kerb turning circle, 2,982 mm wheelbase and 1,625 mm track."
+    },
+    "lock_to_lock": {
+      "value": 2.6,
+      "unit": "turns",
+      "tag": "E",
+      "source": "",
+      "note": "Not published. 33.6 deg mean road-wheel angle x 14.3 x 2 = 2.7 turns at constant ratio; variable sport ratio quickens toward lock, so about 2.4-2.7."
+    }
+  },
+  "performance": {
+    "factory_0_100_kmh": {
+      "value": 3.3,
+      "unit": "s",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Pre-LCI and LCI Competition. Base M5 3.4 s."
+    },
+    "factory_0_200_kmh": {
+      "value": 10.8,
+      "unit": "s",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Base M5 11.1 s."
+    },
+    "factory_0_60_mph_US": {
+      "value": 3.1,
+      "unit": "s",
+      "tag": "F",
+      "source": "bmwna_2021",
+      "note": "Base M5 3.2 s."
+    },
+    "top_speed_standard": {
+      "value": 250,
+      "unit": "km/h",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Electronically limited; US 155 mph."
+    },
+    "top_speed_M_Drivers_Package": {
+      "value": 305,
+      "unit": "km/h",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Electronically limited; BMW Ireland's LCI release says 304 km/h; US 190 mph (2021), 189 mph in the 2017-18 US sheets. Reached in 7th gear at about 6,100 rpm."
+    },
+    "top_speed_unlimited_estimate": {
+      "value": 330,
+      "unit": "km/h",
+      "tag": "E",
+      "source": "",
+      "note": "See aero.drag_power_check."
+    },
+    "nurburgring_nordschleife": {
+      "value": {
+        "M5_Competition": "7:35.90",
+        "M5": "7:38.92",
+        "tester": "sport auto"
+      },
+      "unit": "min:s",
+      "tag": "M",
+      "source": "wiki_m5",
+      "note": ""
+    },
+    "magazine_tests": {
+      "value": [
+        {
+          "publication": "Car and Driver",
+          "date": "2018-02 (test of 2018 M5, base 600 hp, pre-LCI)",
+          "source": "cd_2018_m5",
+          "results": {
+            "0_60_mph_s": 2.8,
+            "0_100_mph_s": 6.6,
+            "0_130_mph_s": 11.1,
+            "0_150_mph_s": 15.9,
+            "quarter_mile": "10.9 s @ 129 mph",
+            "rolling_5_60_s": 3.7,
+            "top_gear_30_50_s": 2.2,
+            "top_gear_50_70_s": 2.4,
+            "braking_70_0_ft": 147,
+            "skidpad_300ft_g": 0.98,
+            "top_speed_gov_mph": 163,
+            "weight_lb": 4288
+          },
+          "note": "Figures from a verbatim forum repost of the C/D test (caranddriver.com could not be fetched). Base car, not Competition."
+        },
+        {
+          "publication": "Car and Driver",
+          "date": "2021 (test of 2021 M5 Competition, LCI)",
+          "source": "cd_2021_comp",
+          "results": {
+            "0_60_mph_s": 2.8,
+            "0_100_mph_s": 6.7,
+            "quarter_mile": "10.9 s @ 128 mph",
+            "skidpad_g": 1.0,
+            "braking_70_0_ft": 139
+          },
+          "note": "As quoted by Guys Gab (22 Jul 2021) and a Bimmerpost repost seen in search results."
+        },
+        {
+          "publication": "Car and Driver comparison test (vs Cadillac CT5-V Blackwing, Audi RS7)",
+          "date": "2021-10/11 (2021 M5 Competition, LCI)",
+          "source": "cd_2021_cmp",
+          "results": {
+            "0_60_mph_s": 2.7,
+            "quarter_mile_s": 10.8,
+            "skidpad_g": 0.95
+          },
+          "note": "From search snippets of the Yahoo reprint and BimmerLife; original not fetched. Hagerty also reports a C/D 10.8 s quarter mile for the 2021 car."
+        },
+        {
+          "publication": "Car and Driver Lightning Lap 2019 (VIR Grand Course)",
+          "date": "2019-10",
+          "source": "bmwblog_vir",
+          "results": {
+            "lap": "2:54.0"
+          },
+          "note": "Competition; 1.2 s quicker than the regular M5."
+        },
+        {
+          "publication": "FastestLaps compilation (original magazine not identified)",
+          "date": "unknown",
+          "source": "fastestlaps_cmp",
+          "results": {
+            "0_60_mph_s": 2.7,
+            "quarter_mile": "10.8 s @ 127.7 mph",
+            "0_100_0_mph_s": 11.0,
+            "curb_weight_kg": 1904
+          },
+          "note": "Search snippet only; page returned 403."
+        },
+        {
+          "publication": "Road test reprinted by 5series.net (publisher attribution unclear: MotorTrend or evo)",
+          "date": "unknown (pre-LCI Competition era)",
+          "source": "fivesn",
+          "results": {
+            "0_60_mph_s": 3.14,
+            "0_100_mph_s": 6.58,
+            "quarter_mile": "10.9 s @ 127 mph"
+          },
+          "note": "Search snippet only; page returned 403. Treat as unverified."
+        },
+        {
+          "publication": "The Citizen (South Africa) road test data",
+          "date": "2021-04-12 (LCI Competition, 15 deg C)",
+          "source": "citizen_2021",
+          "results": {
+            "0_100_kmh_s": 3.28,
+            "quarter_mile": "11.22 s @ 206.60 km/h",
+            "half_mile": "17.61 s @ 250.54 km/h",
+            "one_km": "20.36 s @ 264.01 km/h",
+            "60_100_kmh_3rd_s": 2.06,
+            "60_100_kmh_4th_s": 2.55,
+            "80_120_kmh_4th_s": 2.38,
+            "80_120_kmh_5th_s": 3.24,
+            "100_200_kmh_from_3rd_s": 7.75
+          },
+          "note": "Inland South African test venue likely at altitude (not stated), which handicaps turbo engines slightly [assumption]."
+        }
+      ],
+      "unit": "",
+      "tag": "M",
+      "source": "cd_2018_m5; cd_2021_comp; cd_2021_cmp; bmwblog_vir; fastestlaps_cmp; fivesn; citizen_2021",
+      "note": ""
+    },
+    "performance_targets_for_game": {
+      "value": {
+        "zeroTo100": 3.3,
+        "zeroTo200": 10.8,
+        "topSpeedKmh": 305,
+        "topSpeedLimitedStandardKmh": 250
+      },
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": "Measured cars run 0-60 mph in 2.7-2.8 s, so the factory 3.3 s is conservative; a sim landing at 3.0-3.3 s is realistic."
+    }
+  },
+  "sound": {
+    "engine_order_summary": {
+      "value": "Cross-plane V8, even 90-degree firing; firing order 1-5-4-8-6-3-7-2; cylinders 1-4 right bank, 5-8 left bank (cyl 1 front right)",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202",
+      "note": ""
+    },
+    "exhaust_path": {
+      "value": [
+        "Hot-V: exhaust ports face into the V; two cross-bank 4-into-2 manifolds (each pairs cylinders from both banks: 1/6 + 4/7 to the turbo over the left bank, 2/8 + 3/5 to the turbo over the right bank).",
+        "Two twin-scroll turbines inside the V; each turbine sees an even pulse every 180 deg (inline-4-like), the two turbines offset by 90 deg.",
+        "One close-coupled catalyst directly after each turbine (S63TU: double-walled, two ceramic monoliths; assumed carried over).",
+        "EU cars (Competition from 2018, and the LCI): gasoline particulate filter(s) (BMW: 'addition of a particulate filter'; ADAC: Otto-Partikelfilter). Number and position not published.",
+        "Dual-branch (two separate pipes, one per turbo) M Sport exhaust; Helmholtz resonator between the two rear silencers (saves 5 kg).",
+        "Electrically actuated exhaust flaps (BMW NA, M5 CS text, same M Sport system) controlled by EFFICIENT / SPORT / SPORT+; M Sound Control button forces the quiet setting.",
+        "Four tailpipes, two each side; Competition tips in black chrome (LCI: thinner walls)."
+      ],
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_st1202; bmwna_2018_pr; bmw_pr_m5c_2018; bmw_lci_pr_ie_2020; bmwna_m5cs; adac_lci",
+      "note": "Mixed F/P/A as stated in each line."
+    },
+    "acoustic_consequence_of_cross_bank_manifold": {
+      "value": "Each tailpipe branch carries one turbo's even 180-degree pulse train (engine order 2 per branch, order 4 combined), so the classic cross-plane 'burble' (half-order content from uneven per-bank firing) is largely removed before the exhaust leaves the engine bay. Expect a smoother, more 'even' V8 note than a log-manifold cross-plane V8, with turbine and catalyst muffling; uneven character survives mainly at idle and on overrun.",
+      "unit": "",
+      "tag": "E",
+      "source": "bmw_st1202",
+      "note": "Engineering inference from BMW's manifold description; useful for synthesis: weight orders 4 and 8 strongly, add weaker orders 2 and 6 per branch, keep 0.5-order components low except at idle."
+    },
+    "turbo_sound": {
+      "value": "No blow-off valve (S63TU design, assumed carried over), so no 'pssh' on lift. Reviewers report essentially no lag; turbo whistle is subdued on the stock car.",
+      "unit": "",
+      "tag": "E",
+      "source": "bmw_st1202; mws_2022",
+      "note": "Suggest a quiet broadband spool/whistle layer rising with boost, peaking 1,800-4,000 rpm under load, and a faint flutter on sudden lift at high boost."
+    },
+    "measured_interior_levels": {
+      "value": [
+        {
+          "source": "cd_2018_m5",
+          "car": "2018 M5 (base, pre-LCI)",
+          "idle_dBA": null,
+          "full_throttle_dBA": 74,
+          "full_throttle_sport_mode_peak_dBA": 80,
+          "cruise_70mph_dBA": 66,
+          "note": "C/D: Sport mode plays an enhanced engine soundtrack through the audio system. Idle figure not in the repost."
+        },
+        {
+          "source": "ams_2021_cost",
+          "car": "LCI M5 Competition (test 11/2021)",
+          "idle_dBA": 48,
+          "max_full_throttle_dBA": 81,
+          "at_80kmh": 68,
+          "at_100kmh": 69,
+          "at_130kmh": 71,
+          "at_160kmh": 74,
+          "at_180kmh": 75,
+          "note": "auto motor und sport interior noise ('Innengeraeusch'), automatic in D."
+        },
+        {
+          "source": "fastestlaps_g30",
+          "car": "F90 M5 (base)",
+          "idle_dBA": 45,
+          "at_100kmh": 63,
+          "note": "Compiled figure, original source not identified; snippet only."
+        }
+      ],
+      "unit": "dB(A)",
+      "tag": "M",
+      "source": "cd_2018_m5; ams_2021_cost; fastestlaps_g30",
+      "note": ""
+    },
+    "car_and_driver_competition_dBA": {
+      "value": {
+        "idle": 47,
+        "full_throttle": 79,
+        "cruise_70mph": 67
+      },
+      "unit": "dB(A)",
+      "tag": "E",
+      "source": "",
+      "note": "GAP: no Car and Driver sound figures for the M5 Competition were reachable. Estimate from C/D's base M5 (66 / 74-80) and auto motor und sport's LCI Competition (idle 48, max 81, 71 dB(A) at 130 km/h); the Competition's louder M Sport exhaust and stiffer mounts add a little."
+    },
+    "eu_stationary_noise": {
+      "value": 86,
+      "unit": "dB(A)",
+      "tag": "F",
+      "source": "ams_2021_e63; ams_2021_cost",
+      "note": "Manufacturer value quoted by auto motor und sport ('Stand-/Fahrgeraeusch 86 / 71 dB(A)')."
+    },
+    "eu_stationary_noise_test_rpm": {
+      "value": 3750,
+      "unit": "rpm",
+      "tag": "E",
+      "source": "",
+      "note": "Not printed with the F90 value. UN R51.03 stationary test uses 3,750 rpm for engines whose rated-power speed is 5,000-7,500 rpm (here 6,000); BMW lists the current G90 M5 as 88 dB(A) at 3,750 rpm. Rule quoted from memory of R51.03 - verify."
+    },
+    "eu_pass_by_noise": {
+      "value": 71,
+      "unit": "dB(A)",
+      "tag": "F",
+      "source": "ams_2021_e63; ams_2019_rs7",
+      "note": "Manufacturer value via auto motor und sport. ADAC lists 72 dB for the LCI M5 Competition (07/20-09/20) - 1 dB discrepancy, possibly a later homologation."
+    },
+    "active_sound_design": {
+      "value": "Yes. The F90 has an Active Sound Design (ASD) control unit (BMW parts listings). Car and Driver: 'Switch to Sport mode and the audio system plays an enhanced version of the engine's soundtrack'; its sound meter peaked at 80 dB(A) in Sport versus 74 dB(A) at full throttle in the default mode. BMW's description of M5 ASD (F10 launch, 2011): synthesised from the engine's firing sequence and the exhaust's frequency range, adapts to the selected engine mode, spread evenly to all five seats. LCI TRACK mode mutes the audio system.",
+      "unit": "",
+      "tag": "P",
+      "source": "cd_2018_m5; bimmerfile_asd_2011; leebmann_asd; bmw_lci_pr_ie_2020",
+      "note": "Share of speaker-generated sound: NOT PUBLISHED. The 6 dB Sport-mode rise includes the exhaust flaps opening, so ASD adds at most about 6 dB at full throttle in Sport/Sport+ [E]; at cruise in Comfort/Efficient it is mild. For the game cabin mix: a clean, low-order 'ASD' layer (orders 2, 4, 8 of crank speed, smooth envelope tied to load) that is louder in SPORT/SPORT+ and absent in TRACK."
+    },
+    "limiter_behaviour": {
+      "value": "Fuel/ignition cut at about 7,200 rpm. In manual mode the gearbox does not upshift, so the engine bounces on the limiter; in D it upshifts just before.",
+      "unit": "",
+      "tag": "P",
+      "source": "bmw_st1202; bmwna_2018_pr; bmw_lci_pr_ie_2020",
+      "note": "Cut style and bounce rate not published; suggest a 10-15 Hz bounce of about 150-250 rpm [E]."
+    },
+    "overrun_pops_by_mode": {
+      "value": {
+        "EFFICIENT_or_M_Sound_Control": "flaps closed, essentially no pops; soft burble only",
+        "SPORT": "flaps open under load; occasional light burble on lift-off",
+        "SPORT_PLUS": "most overrun burble, 'booms and snaps' on lift-off, strongest in lower gears (reviewer: hold 2nd in Sport+ and lift)",
+        "EU_OPF_effect": "OPF-equipped EU cars crackle less sharply than US cars [estimate]"
+      },
+      "unit": "",
+      "tag": "E",
+      "source": "mws_2022; bmw_lci_pr_ie_2020",
+      "note": "Mode behaviour inferred from BMW's flap/mode description and reviewer reports; not a BMW statement."
+    },
+    "upshift_character": {
+      "value": "Torque-converter automatic: quick, smooth upshifts in Drivelogic 1-2; Drivelogic 3 and launch-control upshifts are firmer ('decently jolty'). No ignition-cut 'bark' like a dual-clutch; a short torque dip is heard.",
+      "unit": "",
+      "tag": "P",
+      "source": "thedrive_2021",
+      "note": "Synthesis: shift cut 60-120 ms, small level dip, little crack."
+    },
+    "reviewer_descriptions": {
+      "value": [
+        {
+          "quote": "Press the red start button, and the S63 wakes up with a sharp rumble.",
+          "source": "mws_2022",
+          "car": "LCI Competition, stock exhaust"
+        },
+        {
+          "quote": "the M5 settles into a quiet idle that's perhaps a bit too quiet from the inside.",
+          "source": "mws_2022",
+          "car": "LCI Competition"
+        },
+        {
+          "quote": "Put the transmission into Sport +, hold it in second, then let off the gas for a very yummy burble.",
+          "source": "mws_2022",
+          "car": "LCI Competition"
+        },
+        {
+          "quote": "that insanely menacing exhaust note lets people know that this is no ordinary BMW.",
+          "source": "guysgab_2021",
+          "car": "2021 Competition"
+        },
+        {
+          "quote": "The exhaust is mellow (at least from inside the cabin).",
+          "source": "guysgab_2021",
+          "car": "2021 Competition"
+        },
+        {
+          "quote": "Switch to Sport mode and the audio system plays an enhanced version of the engine's soundtrack.",
+          "source": "cd_2018_m5",
+          "car": "2018 M5"
+        },
+        {
+          "quote": "At speed, the V8 sounds throaty with an aggressive crackle that brings to mind a phlegm-congested dragon.",
+          "source": "thedrive_2021",
+          "car": "2021 Competition with optional M Performance titanium exhaust (not stock)"
+        },
+        {
+          "quote": "This version of the twin-pipe, flap-controlled exhaust generates a strikingly prominent soundtrack.",
+          "source": "bmw_pr_m5c_2018",
+          "car": "M5 Competition (manufacturer claim)"
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "mws_2022; guysgab_2021; cd_2018_m5; thedrive_2021; bmw_pr_m5c_2018",
+      "note": ""
+    },
+    "reference_videos": {
+      "value": [
+        {
+          "title": "2018 BMW M5 F90 (600 HP): Pure Exhaust Sound Test (AutoMann)",
+          "url": "https://www.youtube.com/watch?v=aeFiDvXGNRA",
+          "content": "cold start, idle, revs, full-throttle runs, overrun pops (base M5, exhaust status not stated)",
+          "via": "automann_1"
+        },
+        {
+          "title": "2018 BMW M5 (600 HP): Drive & Sound Experience (AutoMann)",
+          "url": "https://www.youtube.com/watch?v=jAq2ckKSqvU",
+          "content": "drive and sound review, 5:26",
+          "via": "automann_2"
+        },
+        {
+          "title": "M5 F90 Crazy sound - startup sound (mjrk.39, CC BY on YouTube)",
+          "url": "https://www.youtube.com/watch?v=GMtRzIc0tP4",
+          "content": "start-up, revving or acceleration, 38 s audio on Commons",
+          "via": "commons_audio"
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "automann_1; automann_2; commons_audio",
+      "note": "Links only. Onboard-at-the-limiter, dyno and flyby references were not found because the session's web-search budget ran out - gap."
+    },
+    "freely_licensed_recordings": {
+      "value": [
+        {
+          "file": "BMW M5 F90 - engine and exhaust sound (YouTube GMtRzIc0tP4).opus",
+          "page": "https://commons.wikimedia.org/wiki/File:BMW_M5_F90_-_engine_and_exhaust_sound_(YouTube_GMtRzIc0tP4).opus",
+          "direct": "https://upload.wikimedia.org/wikipedia/commons/9/98/BMW_M5_F90_-_engine_and_exhaust_sound_%28YouTube_GMtRzIc0tP4%29.opus",
+          "licence": "CC BY 3.0 Unported (https://creativecommons.org/licenses/by/3.0)",
+          "author": "YouTube channel mjrk.39 (video 'M5 F90 Crazy sound - startup sound'); Commons upload by Braiion, 22 Oct 2026",
+          "duration_s": 38,
+          "status": "Commons licence review still pending; exhaust may be modified ('Crazy sound') - unknown",
+          "downloaded_to": "NOT downloaded: upload.wikimedia.org answered HTTP 429 (robot-policy rate limit) to every attempt over about 12 minutes on 2026-11-13. Download it manually from the 'direct' URL; licence CC BY 3.0 requires attribution to mjrk.39 and a link to the licence."
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "commons_audio",
+      "note": ""
+    }
+  },
+  "visual_blockout": {
+    "body_style": {
+      "value": "Three-box four-door saloon; long bonnet, cab set back, short boot with lip spoiler; flared front wings with side 'gills'",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "engine_position": {
+      "value": "Front, longitudinal, mostly behind the front axle line (front-mid); front overhang 888 mm",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "proportions_source": {
+      "value": "Measured on BMW's LCI side-view dimension drawing (06/2020 specifications PDF, page 6), scaled by the printed 4,983 mm length; heights by the same scale. Used for measurement only; the drawing is BMW copyright and must not be traced as an asset.",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "landmarks_fraction_of_length_from_front": {
+      "value": {
+        "front_axle": 0.178,
+        "rear_axle": 0.777,
+        "windscreen_base_cowl": 0.305,
+        "windscreen_top_header": 0.47,
+        "roof_peak": 0.59,
+        "rear_window_top": 0.7,
+        "rear_window_base_decklid_start": 0.885,
+        "boot_lid_trailing_edge_spoiler": 0.975
+      },
+      "unit": "fraction of overall length",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "Read from the silhouette (column-by-column top edge) of the drawing; +/- 0.01."
+    },
+    "heights_m": {
+      "value": {
+        "roof_peak": 1.47,
+        "official_height": 1.469,
+        "bonnet_at_0.10L": 0.9,
+        "bonnet_at_0.20L": 0.97,
+        "cowl": 1.0,
+        "windscreen_header": 1.42,
+        "boot_deck": 1.06,
+        "spoiler_lip": 1.045,
+        "nose_top_at_125mm": 0.77,
+        "front_splitter_lowest": 0.155,
+        "sill_lowest": 0.175,
+        "rear_diffuser_edge": 0.25,
+        "ground_clearance_official": 0.128
+      },
+      "unit": "m",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "From the same drawing; the shark-fin antenna (about 0.725 L) is the highest drawn point."
+    },
+    "top_silhouette_profile": {
+      "value": [
+        [
+          0.0,
+          0.21
+        ],
+        [
+          0.025,
+          0.77
+        ],
+        [
+          0.05,
+          0.83
+        ],
+        [
+          0.1,
+          0.9
+        ],
+        [
+          0.15,
+          0.94
+        ],
+        [
+          0.2,
+          0.97
+        ],
+        [
+          0.25,
+          0.99
+        ],
+        [
+          0.3,
+          1.0
+        ],
+        [
+          0.325,
+          1.07
+        ],
+        [
+          0.35,
+          1.15
+        ],
+        [
+          0.4,
+          1.29
+        ],
+        [
+          0.45,
+          1.4
+        ],
+        [
+          0.5,
+          1.44
+        ],
+        [
+          0.55,
+          1.47
+        ],
+        [
+          0.6,
+          1.477
+        ],
+        [
+          0.65,
+          1.467
+        ],
+        [
+          0.7,
+          1.46
+        ],
+        [
+          0.75,
+          1.39
+        ],
+        [
+          0.8,
+          1.3
+        ],
+        [
+          0.85,
+          1.19
+        ],
+        [
+          0.9,
+          1.1
+        ],
+        [
+          0.95,
+          1.06
+        ],
+        [
+          0.975,
+          1.045
+        ],
+        [
+          1.0,
+          0.43
+        ]
+      ],
+      "unit": "[fraction of length from nose, height m]",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "Top edge of the side view. 0.000 is the splitter tip; the front face is near-vertical up to about 0.77 m. At 1.000 the value is the rear bumper/diffuser; the bumper face rises to the boot lip at about 1.04 m."
+    },
+    "nose_shape": {
+      "value": "Blunt, near-vertical front face (large kidney grille, three big intakes); bonnet leading edge about 0.77 m high, rising gently to 1.00 m at the cowl",
+      "unit": "",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "tail_shape": {
+      "value": "Short notchback boot; rear window slopes about 20 deg from horizontal down to a high boot deck (about 1.06 m); small lip spoiler; tall rear bumper with diffuser and four tailpipes (two per side)",
+      "unit": "",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": ""
+    },
+    "windscreen_rake_deg_from_horizontal": {
+      "value": 27,
+      "unit": "deg",
+      "tag": "E",
+      "source": "bmw_spec_062020",
+      "note": "From cowl (1.52 m, 1.00 m) to header (2.34 m, 1.42 m) on the drawing."
+    },
+    "freely_licensed_side_photos": {
+      "value": [
+        {
+          "file": "M5_F90_Side.jpg",
+          "page": "https://commons.wikimedia.org/wiki/File:M5_F90_Side.jpg",
+          "licence": "CC BY-SA 4.0",
+          "author": "MrWalkr",
+          "date": "2021-05-03",
+          "viewed": true,
+          "notes": "Viewed (960 px). Pre-LCI M5 in white with black kidney surround, shot from front-right through a showroom window; strong perspective and reflections, so NOT usable for measuring; confirms long bonnet, set-back cabin, short boot."
+        },
+        {
+          "file": "BMW_M5_(F90)_-_side_view_-_Netherlands.jpg",
+          "page": "https://commons.wikimedia.org/wiki/File:BMW_M5_(F90)_-_side_view_-_Netherlands.jpg",
+          "licence": "CC BY-SA 4.0",
+          "author": "Sebastiaan Broekhoven",
+          "date": "2020-04-11",
+          "viewed": true,
+          "notes": "Viewed (1280 px). Near-profile view of a pre-LCI M5 (green wrap, M Performance side skirts, gold carbon-ceramic calipers, black 20-inch wheels), front to the left. Landmarks agree with BMW's drawing within about 0.01-0.02 of length: windscreen base about 0.31, header about 0.46, roof peak about 0.60, boot-deck start about 0.89. Wide-angle perspective stretches the middle of the car (apparent wheelbase 0.65 of length vs true 0.60), so take axle positions from the drawing, not the photo."
+        }
+      ],
+      "unit": "",
+      "tag": "P",
+      "source": "commons_side1; commons_side2",
+      "note": ""
+    },
+    "colour_suggestion": {
+      "value": "LCI paint names from BMW: Brands Hatch Grey, Bluestone, Motegi Red (standard); Tanzanite Blue, Aventurine Red, Alvit Grey (BMW Individual)",
+      "unit": "",
+      "tag": "F",
+      "source": "bmw_lci_pr_ie_2020",
+      "note": "For choosing a similar fictional livery only."
+    }
+  },
+  "sources": [
+    {
+      "id": "bmw_spec_092018",
+      "title": "Specifications of the BMW M5, valid from 09/2018 (M5 and M5 Competition spec sheets)",
+      "publisher": "BMW Group PressClub Global",
+      "url": "https://press.bmwgroup.com/global/article/attachment/T0286586EN/419604",
+      "date": "2018-11-05",
+      "note": "PDF: https://newsroom.bmwgroup.com/global/download/525d1fbc-3144-4c4a-869d-c3d98da1b94b/20260722124132002-95.pdf"
+    },
+    {
+      "id": "bmw_pr_m5c_2018",
+      "title": "The new BMW M5 Competition.",
+      "publisher": "BMW Group PressClub Global",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0280678EN/412670",
+      "date": "2018-08-06"
+    },
+    {
+      "id": "bmw_spec_062020",
+      "title": "The new BMW M5 and BMW M5 Competition. Specifications (incl. output/torque diagram p.5 and dimension drawing p.6)",
+      "publisher": "BMW Group PressClub Global",
+      "url": "https://press.bmwgroup.com/global/article/attachment/T0309233EN/452618",
+      "date": "2020-06",
+      "note": "PDF: https://newsroom.bmwgroup.com/global/download/b3cc0d7f-5447-48d2-9c89-265cc3700727/20260722141130077-693.pdf"
+    },
+    {
+      "id": "bmw_lci_pr_ie_2020",
+      "title": "The new BMW M5 Competition (LCI press release)",
+      "publisher": "BMW Group PressClub Ireland",
+      "url": "https://www.press.bmwgroup.com/ireland/article/detail/T0309430EN/the-new-bmw-m5-competition",
+      "date": "2020-06"
+    },
+    {
+      "id": "bmw_mxdrive_2017",
+      "title": "The new BMW M5 with M xDrive.",
+      "publisher": "BMW AG Corporate Communications",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0270907EN/386135",
+      "date": "2017-05-17",
+      "note": "PDF: https://newsroom.bmwgroup.com/global/download/86c620ea-f2bb-4bce-aa56-51b2d13f6e13/20260722114137526-361.pdf"
+    },
+    {
+      "id": "bmw_ie_2017",
+      "title": "The New BMW M5 (press release)",
+      "publisher": "BMW Group Ireland",
+      "url": "https://press.bmwgroup.com/ireland/article/attachment/T0273806EN/392695",
+      "date": "2017-08-21"
+    },
+    {
+      "id": "bmwna_2018_pr",
+      "title": "The all-new 2018 BMW M5 - the quintessential high-performance sedan",
+      "publisher": "BMW of North America (BMW Group Newsroom USA)",
+      "url": "https://www.press.bmwgroup.com/usa/article/detail/T0273727EN_US/the-all-new-2018-bmw-m5-the-quintessential-high-performance-sedan",
+      "date": "2017-08-21"
+    },
+    {
+      "id": "bmwna_2018_spec",
+      "title": "Technical Specifications. The all-new BMW M5 (US, preliminary)",
+      "publisher": "BMW of North America",
+      "url": "https://newsroom.bmwgroup.com/americas/download/2456617c-0526-4f01-8f39-af563677fa2e/20260728132504252-221.pdf",
+      "date": "2017-08-21"
+    },
+    {
+      "id": "bmwna_2021",
+      "title": "The new 2021 BMW M5 Sedan (press kit with M5 / M5 Competition specification table)",
+      "publisher": "BMW of North America",
+      "url": "https://newsroom.bmwgroup.com/americas/the-new-2021-bmw-m5-sedan/",
+      "date": "2020-06",
+      "note": "PDF: https://newsroom.bmwgroup.com/americas/download/6155bba1-36d9-41e1-bcb9-6a82f95f6cec/20260728141627017-921.pdf"
+    },
+    {
+      "id": "bmwna_m5cs",
+      "title": "The new BMW M5 CS",
+      "publisher": "BMW of North America",
+      "url": "https://newsroom.bmwgroup.com/americas/the-new-bmw-m5-cs/",
+      "date": "2021-01"
+    },
+    {
+      "id": "bmw_st1202",
+      "title": "ST1202 S63TU Engine - BMW technical training manual (F10 M5 engine; sister of the F90's S63TU4)",
+      "publisher": "BMW Group (mirrored by Internet Archive)",
+      "url": "https://archive.org/download/BMWTechnicalTrainingDocuments/ST1202%20S63TU%20Engine/S63TU-engine-manual.pdf",
+      "date": "c. 2011",
+      "note": "Used for cylinder numbering, firing order, cross-bank manifold grouping, catalyst layout, wastegate and blow-off design. Not the F90's own manual (ST1916 S63TU4 could not be retrieved)."
+    },
+    {
+      "id": "wiki_m5",
+      "title": "BMW M5 (F90 section)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_M5",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "wiki_n63",
+      "title": "BMW N63 (S63 section)",
+      "publisher": "Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/BMW_N63#S63",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "adac_lci",
+      "title": "Allgemeine Daten zum BMW M5 Competition xDrive M Steptronic (07/20 - 09/20)",
+      "publisher": "ADAC Autokatalog",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/5er-reihe/g30-g31-f90-facelift/313219",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "ams_2021_cost",
+      "title": "Kosten und Realverbrauch: BMW M5 Competition - Technische Daten (test 11/2021)",
+      "publisher": "auto motor und sport",
+      "url": "https://www.auto-motor-und-sport.de/test/kosten-realverbrauch-bmw-m5-competition/technische-daten/",
+      "date": "2021-11"
+    },
+    {
+      "id": "ams_2021_e63",
+      "title": "BMW M5 Competition & Mercedes-AMG E 63 S im Test: Technische Daten (test 07/2021)",
+      "publisher": "auto motor und sport",
+      "url": "https://www.auto-motor-und-sport.de/test/bmw-m5-competition-mercedes-amg-e-63-s-4matic/technische-daten/",
+      "date": "2021-07"
+    },
+    {
+      "id": "ams_2019_rs7",
+      "title": "Audi RS 7 Sportback, BMW M5 Competition, Mercedes-AMG GT 63 S: Technische Daten (test 12/2019)",
+      "publisher": "auto motor und sport",
+      "url": "https://www.auto-motor-und-sport.de/test/audi-rs-7-sportback-bmw-m5-competition-mercedes-amg-gt-63-s/technische-daten/",
+      "date": "2019-12"
+    },
+    {
+      "id": "cd_2018_m5",
+      "title": "2018 BMW M5 Test Review (figures via a verbatim forum repost)",
+      "publisher": "Car and Driver (repost on BMW Fanatics forum)",
+      "url": "https://www.caranddriver.com/reviews/a17804645/2018-bmw-m5-test-review/",
+      "date": "2018-02-13",
+      "note": "caranddriver.com could not be fetched; numbers read from https://www.bmwfanatics.co.za/threads/new-m5-performance-tested.84850/"
+    },
+    {
+      "id": "cd_2021_comp",
+      "title": "2021 BMW M5 Competition review quoting Car and Driver's instrumented test",
+      "publisher": "Guys Gab (quoting Car and Driver)",
+      "url": "https://www.guysgab.com/review-2021-bmw-m5-competition/",
+      "date": "2021-07-22"
+    },
+    {
+      "id": "cd_2021_cmp",
+      "title": "Comparison Test: 2022 Cadillac CT5-V Blackwing vs. 2021 Audi RS7 vs. 2021 BMW M5 Competition",
+      "publisher": "Car and Driver (Yahoo Autos reprint; search snippet only) / BimmerLife",
+      "url": "https://autos.yahoo.com/comparison-test-2022-cadillac-ct5-110000587.html",
+      "date": "2021-10/11",
+      "note": "BimmerLife summary: https://bimmerlife.com/2021/10/30/f90-m5-lci-tested-and-compared/"
+    },
+    {
+      "id": "bmwblog_vir",
+      "title": "Video: BMW M5 Competition at Car and Driver's Lightning Lap",
+      "publisher": "BMWBLOG",
+      "url": "https://www.bmwblog.com/2019/10/11/video-bmw-m5-competition-at-car-and-drivers-lightning-lap/",
+      "date": "2019-10-11"
+    },
+    {
+      "id": "fastestlaps_cmp",
+      "title": "BMW M5 vs BMW M5 Competition (comparison page; search snippet only, page 403)",
+      "publisher": "FastestLaps",
+      "url": "https://fastestlaps.com/comparisons/ascr01fa1jvf",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "fastestlaps_g30",
+      "title": "BMW M5 (F90) model page (search snippet only)",
+      "publisher": "FastestLaps",
+      "url": "https://fastestlaps.com/models/bmw-m5-g30",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "fivesn",
+      "title": "M5 Competition Now Even Sharper. But is it Quicker? (search snippet only, page 403)",
+      "publisher": "5series.net",
+      "url": "https://5series.net/?p=16545",
+      "date": "unknown"
+    },
+    {
+      "id": "citizen_2021",
+      "title": "BMW M5 Competition road test data sheet",
+      "publisher": "The Citizen (South Africa)",
+      "url": "https://citizen.co.za/wp-content/uploads/2021/05/M5Compdata.pdf",
+      "date": "2021-04-12"
+    },
+    {
+      "id": "thedrive_2021",
+      "title": "2021 BMW M5 Competition Review: The World's Fastest Honda Accord",
+      "publisher": "The Drive (Chris Tsui)",
+      "url": "https://www.thedrive.com/new-cars/42106/2021-bmw-m5-competition-review-the-worlds-fastest-honda-accord",
+      "date": "2021-10-08"
+    },
+    {
+      "id": "mws_2022",
+      "title": "Your M3 is a toy. The F90 M5 is a grown-up's M car",
+      "publisher": "Machines With Souls (Mike D'Ambrosio)",
+      "url": "https://machineswithsouls.com/bmw-m5-review/",
+      "date": "2022-08-22"
+    },
+    {
+      "id": "guysgab_2021",
+      "title": "2021 BMW M5 Competition Is As Close To Daily Driver Perfection As It Gets",
+      "publisher": "Guys Gab",
+      "url": "https://www.guysgab.com/review-2021-bmw-m5-competition/",
+      "date": "2021-07-22"
+    },
+    {
+      "id": "motor1_2021",
+      "title": "2021 BMW M5 Pro/Con",
+      "publisher": "Motor1 (Brett T. Evans)",
+      "url": "https://www.motor1.com/reviews/527898/2021-bmw-m5-pro-con/",
+      "date": "2021-08-20",
+      "note": "Spec table: 0-60 2.9 s, 4,345 lb."
+    },
+    {
+      "id": "bimmerfile_asd_2011",
+      "title": "Active Sound Design (F10 M5 launch article)",
+      "publisher": "Bimmerfile",
+      "url": "https://www.bimmerfile.com/?p=15607",
+      "date": "2011-09-25"
+    },
+    {
+      "id": "leebmann_asd",
+      "title": "BMW control unit Active Sound Design (F90 fitment listing; search snippet)",
+      "publisher": "Leebmann24",
+      "url": "https://www.leebmann24.com/dk/en/product/bmw-control-unit-active-sound-design-10389592",
+      "date": "accessed 2026-11-13"
+    },
+    {
+      "id": "automann_1",
+      "title": "2018 BMW M5 F90 (600 HP): Pure Exhaust Sound Test",
+      "publisher": "AutoMann (automann.tv / YouTube)",
+      "url": "https://automann.tv/blog/2018-bmw-m5-f90-600hp-pure-sound",
+      "date": "2018-07-15"
+    },
+    {
+      "id": "automann_2",
+      "title": "2018 BMW M5 (600 HP): Drive & Sound Experience",
+      "publisher": "AutoMann (automann.tv / YouTube)",
+      "url": "https://automann.tv/blog/2018-bmw-m5-f90-600hp-drive-sound",
+      "date": "2018-09-22"
+    },
+    {
+      "id": "commons_audio",
+      "title": "BMW M5 F90 - engine and exhaust sound (YouTube GMtRzIc0tP4).opus",
+      "publisher": "Wikimedia Commons (CC BY 3.0, mjrk.39)",
+      "url": "https://commons.wikimedia.org/wiki/File:BMW_M5_F90_-_engine_and_exhaust_sound_(YouTube_GMtRzIc0tP4).opus",
+      "date": "2025-03-01 (video) / 2026-10-22 (upload)"
+    },
+    {
+      "id": "commons_side1",
+      "title": "M5 F90 Side.jpg",
+      "publisher": "Wikimedia Commons (CC BY-SA 4.0, MrWalkr)",
+      "url": "https://commons.wikimedia.org/wiki/File:M5_F90_Side.jpg",
+      "date": "2021-05-03"
+    },
+    {
+      "id": "commons_side2",
+      "title": "BMW M5 (F90) - side view - Netherlands.jpg",
+      "publisher": "Wikimedia Commons (CC BY-SA 4.0, Sebastiaan Broekhoven)",
+      "url": "https://commons.wikimedia.org/wiki/File:BMW_M5_(F90)_-_side_view_-_Netherlands.jpg",
+      "date": "2020-04-11"
+    }
+  ],
+  "gaps": [
+    "Turbocharger maker and model (not in any source reached; BMW ST1916 S63TU4 training manual returned 404).",
+    "Maximum boost for the Competition (only the 600 hp M5's 24.46 psi / 1.69 bar gauge is published).",
+    "Wastegate actuation on the S63TU4 (S63TU was vacuum/electro-pneumatic).",
+    "Idle rpm, launch-control rpm, limiter cut style - estimates given.",
+    "Torque-converter stall speed and lock-up strategy details; shift times.",
+    "M xDrive torque-split percentages per mode (BMW says only 'fully variable', rear-biased).",
+    "Independent (scale) weight distribution; centre-of-gravity height; spring, damper and anti-roll-bar rates.",
+    "Car and Driver interior sound levels (idle / full throttle / 70 mph) for the M5 Competition itself - only the 2018 base M5 (66 / 74, 80 in Sport, idle missing) and auto motor und sport's LCI Competition values were found.",
+    "Car and Driver, MotorTrend and auto motor und sport original test pages could not be fetched (blocked); several magazine numbers are via reposts or search snippets and are labelled so.",
+    "100-0 km/h braking distance (only C/D 70-0 mph found).",
+    "Stationary-noise test rpm for the F90 (3,750 rpm inferred from the UN R51.03 rule); pass-by values differ by 1 dB between sources (71 vs 72).",
+    "Share of in-cabin sound produced by Active Sound Design.",
+    "Steering lock-to-lock turns and maximum road-wheel angle (estimated from the turning circle).",
+    "Downforce/lift coefficients (none published).",
+    "Other OE tyre approvals besides Pirelli P Zero (star).",
+    "Onboard (limiter), dyno and flyby reference videos - the shared web-search budget ran out before these could be looked up.",
+    "Pre-LCI front/rear overhang split (only the LCI drawing was available).",
+    "The CC BY 3.0 Commons recording was not downloaded (Wikimedia returned HTTP 429 to every attempt); URL and attribution are in audio/RefM5F90/LICENSE_AND_ATTRIBUTION.txt."
+  ]
+}

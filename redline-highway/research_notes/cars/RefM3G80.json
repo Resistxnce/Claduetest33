@@ -1,0 +1,2243 @@
+{
+ "meta": {
+  "config_id": "RefM3G80",
+  "reference_vehicle": "BMW M3 Competition Sedan (G80), rear-wheel drive, 8-speed M Steptronic, model years 2021-2024 (pre-2024-LCI focus)",
+  "purpose": "Engineering reference for a fictional car in Redline Highway. Real names appear only in docs.",
+  "researched": "2026-11-13",
+  "tags": {
+   "F": "manufacturer figure",
+   "P": "published third-party spec",
+   "M": "measured in a magazine or independent test",
+   "E": "estimate (method in note)",
+   "A": "assumption"
+  },
+  "units_note": "SI unless a unit says otherwise. Imperial magazine figures are kept as published and converted in notes.",
+  "research_limits": "The team's shared web-search budget ran out near the end of this session, so the video list and a few gaps could not be searched further."
+ },
+ "identity": {
+  "make": {
+   "value": "BMW",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "model": {
+   "value": "M3 Competition Sedan",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "chassis_code": {
+   "value": "G80",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "G81 = Touring, G82/G83 = M4 Coupe/Convertible share the drivetrain."
+  },
+  "type_codes": {
+   "value": "31AY (RWD), 32AY (M xDrive)",
+   "unit": "",
+   "tag": "P",
+   "source": "LEEBMANN_TC",
+   "note": "Fitment table lists 31AY and 32AY as G80 M3 Competition (11/2020-06/2024); a Japanese homologation photo title '3BA-32AY30 M3 Competition M xDrive' on Commons suggests 32AY = M xDrive."
+  },
+  "engine_code": {
+   "value": "S58B30T0",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "T0 = Competition output; base M3 is S58B30O0. ADAC lists S58B30A for the 07/22-05/24 car."
+  },
+  "production_and_years": {
+   "value": "Launch March 2021; M xDrive from summer 2021 (US MY2022); running update 07/2022; LCI from 07/2024",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "07/2022 and 07/2024 dates from ADAC catalogue periods. LCI raised the M xDrive to 390 kW/530 PS; RWD Competition stayed at 375 kW/510 PS (ADAC, Wikipedia)."
+  },
+  "body": {
+   "value": "4-door, 5-seat notchback sedan with standard CFRP roof",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "trim_researched": {
+   "value": "M3 Competition Sedan, rear-wheel drive, 8-speed M Steptronic with Drivelogic",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "us_vs_eu_power": {
+   "value": "Identical engine: 375 kW = 510 PS (EU) = 503 hp SAE (US). Only the units differ.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "375 kW x 1.341 = 503 hp; 650 Nm = 479 lb-ft."
+  },
+  "us_vs_eu_mass": {
+   "value": "EU DIN 1,730 kg (no driver, 90% fuel); EU 1,805 kg (DIN + 75 kg driver/luggage); US curb 3,890 lb = 1,764 kg (full fuel, no driver)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US figure from BMW_US21."
+  },
+  "us_vs_eu_other": {
+   "value": "EU/RoW cars carry gasoline particulate filters (OPF) in the exhaust; US cars do not. 2021 US spec lists 18/19-inch wheels as standard and 19/20-inch optional; most test cars ran 19/20.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "OPF note: ST1926 marks the underbody catalytic converter/particulate filter 'Not for the US' (F97 manual, same S58 exhaust concept); vendors confirm for G80 (OPF_VENDORS)."
+  },
+  "m_xdrive_differences": {
+   "value": "Transfer case with electronically controlled multi-plate clutch, rear-only in normal driving; modes 4WD, 4WD Sport, 2WD (DSC off). +50 kg DIN (about +100 lb US). Steering ratio 14.6:1 vs 15.0:1. Standard 19/20-inch wheels. 0-100 km/h 3.5 s (vs 3.9), 0-60 mph 3.4 s (vs 3.8). From 07/2024 (LCI) 390 kW/530 PS.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_US22XD",
+   "note": "Mass delta from BMW regional pages (1,780 kg DIN xDrive) and US curb 3,990 vs 3,890 lb."
+  }
+ },
+ "engine": {
+  "layout": {
+   "value": "Inline-6, front-mounted, longitudinal",
+   "unit": "",
+   "tag": "F",
+   "source": "AMS",
+   "note": "'vorne / laengs' in AMS data; BMW: in-line 6."
+  },
+  "block": {
+   "value": "Aluminium closed-deck crankcase without liners; wire-arc-sprayed iron bore coating",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "head": {
+   "value": "Aluminium; 3D-printed sand core for coolant passages",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "crankshaft": {
+   "value": "Forged lightweight steel crank (42CrMoS4 mod, nitrocarburised), approx. 21.2 kg",
+   "unit": "kg",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Throw layout for an even-firing inline-6 is 120 deg (A)."
+  },
+  "pistons": {
+   "value": "Forged Mahle slipper-skirt pistons, 84 mm",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": ""
+  },
+  "displacement": {
+   "value": 2993,
+   "unit": "cc",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "bore": {
+   "value": 84.0,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "stroke": {
+   "value": 90.0,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "compression_ratio": {
+   "value": 9.3,
+   "unit": ":1",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "valvetrain": {
+   "value": "DOHC, 4 valves/cylinder, chain-driven cams, VALVETRONIC fully variable valve lift, Double-VANOS",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Chain drive from AMS ('Kette')."
+  },
+  "fuel_system": {
+   "value": "High Precision direct injection, 350 bar max",
+   "unit": "bar",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "fuel": {
+   "value": "RON 98 (min. RON 91)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "oil_capacity": {
+   "value": 7.0,
+   "unit": "L",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Oil change with filter."
+  },
+  "max_power": {
+   "value": 375,
+   "unit": "kW",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "510 PS / 503 hp SAE."
+  },
+  "max_power_rpm": {
+   "value": 6250,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "BMW's own output diagram shows a flat 375 kW plateau from 5,600 to 7,200 rpm (BMW_SPEC_M4), so treat 6,250 as a point on that plateau."
+  },
+  "max_torque": {
+   "value": 650,
+   "unit": "Nm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "479 lb-ft."
+  },
+  "max_torque_rpm_range": {
+   "value": [
+    2750,
+    5500
+   ],
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "torque_curve_crank_factory": {
+   "value": [
+    [
+     1000,
+     245
+    ],
+    [
+     1500,
+     295
+    ],
+    [
+     2000,
+     345
+    ],
+    [
+     2500,
+     460
+    ],
+    [
+     2651,
+     570
+    ],
+    [
+     2744,
+     650
+    ],
+    [
+     3000,
+     650
+    ],
+    [
+     3500,
+     650
+    ],
+    [
+     4000,
+     650
+    ],
+    [
+     4500,
+     650
+    ],
+    [
+     5000,
+     650
+    ],
+    [
+     5500,
+     650
+    ],
+    [
+     5593,
+     639
+    ],
+    [
+     6000,
+     597
+    ],
+    [
+     6151,
+     581
+    ],
+    [
+     6244,
+     573
+    ],
+    [
+     6349,
+     564
+    ],
+    [
+     6500,
+     551
+    ],
+    [
+     7000,
+     511
+    ],
+    [
+     7198,
+     497
+    ]
+   ],
+   "unit": "[rpm, Nm] at the crankshaft",
+   "tag": "F",
+   "source": "BMW_SPEC_M4",
+   "note": "Read from BMW's full-load diagram (M4 spec sheet, labelled '375 KW @ 5600-7200 rpm' and '650 Nm @ 2750-5500 rpm'; same engine and tune as M3 Competition). The diagram is vector art, so the vertices were extracted from the PDF drawing commands rather than eyeballed; accuracy about +/-1 Nm. Above 5,500 rpm torque equals 375 kW / omega. This is BMW's nominal (stylised) curve, not a dyno trace."
+  },
+  "torque_curve_crank_500rpm_steps": {
+   "value": [
+    [
+     1000,
+     245
+    ],
+    [
+     1500,
+     295
+    ],
+    [
+     2000,
+     345
+    ],
+    [
+     2500,
+     460
+    ],
+    [
+     3000,
+     650
+    ],
+    [
+     3500,
+     650
+    ],
+    [
+     4000,
+     650
+    ],
+    [
+     4500,
+     650
+    ],
+    [
+     5000,
+     650
+    ],
+    [
+     5500,
+     650
+    ],
+    [
+     6000,
+     597
+    ],
+    [
+     6500,
+     551
+    ],
+    [
+     7000,
+     511
+    ],
+    [
+     7200,
+     497
+    ]
+   ],
+   "unit": "[rpm, Nm] at the crankshaft",
+   "tag": "F",
+   "source": "BMW_SPEC_M4",
+   "note": "Same source as above, sampled at 500 rpm steps; 7,200 rpm is the end of BMW's curve (redline)."
+  },
+  "power_curve_crank_factory": {
+   "value": [
+    [
+     1000,
+     25.7
+    ],
+    [
+     1500,
+     46.2
+    ],
+    [
+     2000,
+     71.9
+    ],
+    [
+     2500,
+     120.0
+    ],
+    [
+     3000,
+     204.1
+    ],
+    [
+     3500,
+     238.1
+    ],
+    [
+     4000,
+     272.1
+    ],
+    [
+     4500,
+     306.1
+    ],
+    [
+     5000,
+     340.1
+    ],
+    [
+     5500,
+     374.2
+    ],
+    [
+     6000,
+     374.8
+    ],
+    [
+     6500,
+     374.8
+    ],
+    [
+     7000,
+     374.8
+    ],
+    [
+     7200,
+     374.8
+    ]
+   ],
+   "unit": "[rpm, kW]",
+   "tag": "F",
+   "source": "BMW_SPEC_M4",
+   "note": "Extracted from the same vector diagram."
+  },
+  "torque_curve_wheel_dyno_measured": {
+   "value": [
+    [
+     2550,
+     458
+    ],
+    [
+     3000,
+     597
+    ],
+    [
+     3500,
+     597
+    ],
+    [
+     4000,
+     596
+    ],
+    [
+     4500,
+     589
+    ],
+    [
+     5000,
+     582
+    ],
+    [
+     5500,
+     569
+    ],
+    [
+     6000,
+     530
+    ],
+    [
+     6500,
+     484
+    ],
+    [
+     6950,
+     446
+    ]
+   ],
+   "unit": "[rpm, Nm] at the wheels",
+   "tag": "M",
+   "source": "ARM_DYNO",
+   "note": "Stock 2022 M4 Competition xDrive (same S58B30T0 + 8HP76; AWD drivetrain), Mustang dynamometer, 93 octane US pump fuel, SAE-type weather correction. Read from the published chart image by pixel digitising (consistency check: hp computed from the torque trace matches the plotted hp within 1-2 hp). Original units 338-443 lb-ft. Peak 443 lb-ft (601 Nm) near 3,000-3,500 rpm and 449 whp (335 kW) near 5,800 rpm. Mustang dynos read lower than Dynojets."
+  },
+  "power_curve_wheel_dyno_measured": {
+   "value": [
+    [
+     2550,
+     122
+    ],
+    [
+     3000,
+     187
+    ],
+    [
+     3500,
+     218
+    ],
+    [
+     4000,
+     249
+    ],
+    [
+     4500,
+     277
+    ],
+    [
+     5000,
+     304
+    ],
+    [
+     5500,
+     327
+    ],
+    [
+     6000,
+     332
+    ],
+    [
+     6500,
+     329
+    ],
+    [
+     6950,
+     324
+    ]
+   ],
+   "unit": "[rpm, kW] at the wheels",
+   "tag": "M",
+   "source": "ARM_DYNO",
+   "note": "Same chart. 449 whp = 335 kW peak."
+  },
+  "underrating_note": {
+   "value": "Measured wheel power (335 kW at the wheels on a conservative Mustang dyno, AWD) implies roughly 385-400 kW at the crank with 13-16% losses, i.e. the 375 kW rating is conservative.",
+   "unit": "",
+   "tag": "E",
+   "source": "ARM_DYNO",
+   "note": "Supporting: MotorTrend says 'BMW historically has underrated its beefier engines' (MT_XD); a base manual M3 dynoed at about 496 hp vs 473 rated (BMWBLOG_DYNO). Loss assumption is an estimate."
+  },
+  "redline": {
+   "value": 7200,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "limiter_rpm": {
+   "value": 7250,
+   "unit": "rpm",
+   "tag": "P",
+   "source": "EVO",
+   "note": "evo: 'the limiter coming in at 7250rpm'. In M (manual) mode the gearbox does not upshift at the limiter (BMW_PK)."
+  },
+  "design_rated_speed": {
+   "value": 7500,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Training manual: pistons and Valvetronic designed for a rated engine speed of 7,500 rpm. Not the road-car limiter."
+  },
+  "idle_rpm": {
+   "value": 700,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not found. Typical warm idle for BMW B58/S58 automatics is about 650-750 rpm; cold-start flare about 1,200-1,500 rpm for a few seconds (BMW_ST1926 notes a catalyst-heating mode for ~30 s after start). Verify against a video."
+  },
+  "launch_control_rpm": {
+   "value": 2700,
+   "unit": "rpm",
+   "tag": "P",
+   "source": "BMAG_LC",
+   "note": "Secondary, generic source: 'M Steptronic holds engine revolutions around 2,700 rpm'. The Citizen: launch flag appears after about 2 s of building boost to around 1.0 bar, and the RWD car launches in 2nd gear (CITIZEN_ART). C/D xDrive: 'boost holding above 15.0 psi' at launch (CD_XD). Treat 2,500-3,000 rpm as the plausible range."
+  },
+  "engine_mass": {
+   "value": null,
+   "unit": "kg",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. Wikipedia gives 139 kg dry for the single-turbo B58 (uncited). The S58 adds a second turbo/manifold, forged internals and a larger oil system: estimate 160-175 kg dry, about 190 kg with fluids, turbos and ancillaries."
+  },
+  "rotating_inertia": {
+   "value": 0.2,
+   "unit": "kg*m^2",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. Estimate for crank, rods, pistons, damper, flexplate plus torque-converter impeller side. Crank alone 21.2 kg (F)."
+  },
+  "firing_order": {
+   "value": "1-5-3-6-2-4",
+   "unit": "",
+   "tag": "P",
+   "source": "FIRING",
+   "note": "Standard for BMW inline-sixes (M20 through N55/S54 in BMW training material). Not stated in any S58-specific document I opened; strongly expected (A)."
+  },
+  "cylinder_numbering": {
+   "value": "Cylinder 1 at the front (belt/pulley end), cylinder 6 at the rear (gearbox end). Front turbo/manifold serves cylinders 1-3, rear turbo serves 4-6.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Bank grouping is F (BMW_PK, BMW_ST1926); 1-at-front is the BMW convention (FIRING)."
+  },
+  "firing_interval_and_frequency": {
+   "value": "120 deg crank between firings; firing frequency = rpm / 20 Hz (35 Hz at 700 rpm, 125 Hz at 2,500, 360 Hz at 7,200). With 1-5-3-6-2-4, each turbo/exhaust branch receives evenly spaced pulses every 240 deg (1.5th order per branch).",
+   "unit": "Hz",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Arithmetic for a 4-stroke inline-6: 3 firings per revolution."
+  }
+ },
+ "forced_induction": {
+  "type": {
+   "value": "Twin-turbo, two mono-scroll (single-scroll) turbochargers, one per 3-cylinder bank",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Press kit: 'two mono-scroll turbochargers, which supply compressed air to cylinders 1-3 and 4-6 respectively'."
+  },
+  "count": {
+   "value": 2,
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "maker": {
+   "value": "MHI (Mitsubishi Heavy Industries)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "'The system supplier for the mono-scroll turbocharger assembly on the S58 engine is the MHI Group.' Retailers sell OEM Mitsubishi units, BMW part nos. 11658469097 (bank 1) and 11658469098 (bank 2) (TURNER_TURBO)."
+  },
+  "model": {
+   "value": null,
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Turbo frame/model and wheel sizes not published. Gap."
+  },
+  "twin_scroll": {
+   "value": false,
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Mono-scroll; each turbine housing is cast together with its 3-into-1 exhaust manifold."
+  },
+  "max_boost": {
+   "value": 1.7,
+   "unit": "bar (gauge)",
+   "tag": "P",
+   "source": "AMS",
+   "note": "AMS lists 'max. Ladedruck 1,7 bar'. C/D: 24.7 psi (1.70 bar) for Competition vs 18.9 psi (1.30 bar) for the base M3 (CD_RWD). Both read as gauge pressure."
+  },
+  "boost_build_rpm": {
+   "value": "Torque climbs from 345 Nm at 2,000 rpm to 460 Nm at 2,500 and reaches 650 Nm at about 2,750 rpm",
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_SPEC_M4",
+   "note": "Measured wheel dyno: plateau from about 2,900-3,000 rpm (ARM_DYNO). Reviewers note noticeable lag below that (CD_COMP, CITIZEN_ART)."
+  },
+  "peak_torque_start_rpm": {
+   "value": 2750,
+   "unit": "rpm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "wastegate": {
+   "value": "Electric wastegate actuator per turbo, PWM-controlled by the DME; fast closing for response, can open fully to heat the catalysts",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": ""
+  },
+  "blow_off_behaviour": {
+   "value": "No atmospheric blow-off valve is documented; stock cars make no audible 'pssh'. Any compressor recirculation is internal.",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Assumption based on absence in BMW documents and on BMW practice; a faint turbo whoosh/flutter on lift-off is plausible but unverified."
+  },
+  "intercooling": {
+   "value": "Indirect (air-to-liquid) charge-air cooling in the intake plenum, low-temperature circuit with electric pump",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": ""
+  }
+ },
+ "transmission": {
+  "type": {
+   "value": "8-speed M Steptronic with Drivelogic, torque-converter automatic",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "model": {
+   "value": "ZF 8HP76 (BMW designation M8HP76; GA8HP76Z)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "US spec table names 'M8HP76'; parts sellers list 8HP76 for G80 M3 Competition (TURNER_8HP76, LEEBMANN_TC). C/D and MT call it ZF-sourced."
+  },
+  "gear_ratios": {
+   "value": [
+    5.0,
+    3.2,
+    2.143,
+    1.72,
+    1.313,
+    1.0,
+    0.823,
+    0.64
+   ],
+   "unit": ":1",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "reverse_ratio": {
+   "value": 3.478,
+   "unit": ":1",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "final_drive": {
+   "value": 3.154,
+   "unit": ":1",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US sheet rounds to 3.15. Overall top gear 2.02:1 (MT_COMP)."
+  },
+  "speed_at_7200rpm_by_gear": {
+   "value": [
+    57.7,
+    90.1,
+    134.5,
+    167.6,
+    219.6,
+    288.3,
+    350.3,
+    450.5
+   ],
+   "unit": "km/h",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Rolling radius 0.335 m (285/30 ZR20 or 285/35 ZR19, about 0.34 m unloaded). Check: 60 mph in 8th gives 1,543 rpm vs MotorTrend's measured 1,500 rpm."
+  },
+  "rpm_at_100kmh_8th": {
+   "value": 1598,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Same radius."
+  },
+  "shift_times": {
+   "value": null,
+   "unit": "s",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. C/D: upshifts range 'from luxury-car mushy to rifle-bolt quick with almost no torque interruption' depending on Drivelogic. Suggest about 0.10-0.15 s torque dip at Drivelogic 3 (Sport+), 0.3-0.4 s in comfort."
+  },
+  "torque_converter_lockup": {
+   "value": "Lock-up clutch fully engaged the moment the car has pulled away",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "torque_converter_stall_rpm": {
+   "value": null,
+   "unit": "rpm",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. Launch holds about 2,700 rpm (BMAG_LC), so a full-throttle stall around 2,400-2,800 rpm is a reasonable estimate."
+  },
+  "drivelogic": {
+   "value": "3 shift programmes in D and 3 in M; paddles; holding left paddle with throttle drops to lowest possible gear; auto rev-matching on downshifts; in M mode no auto-upshift at the limiter",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "transmission_oil_cooler": {
+   "value": "Separate transmission oil cooler on Competition models",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "manual_alternative": {
+   "value": "Base M3 only: 6-speed manual (4.111/2.315/1.542/1.179/1.000/0.846, R 3.727, FD 3.462), about 25 kg lighter",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  }
+ },
+ "drivetrain": {
+  "layout": {
+   "value": "Front-engine, rear-wheel drive",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "differential": {
+   "value": "Active M Differential: electronically controlled multi-plate limited-slip differential, variable 0-100% locking, networked with DSC",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "BMW does not publish preload or lock values. Electric-motor-actuated clutch pack is assumed from the previous F80 system (A)."
+  },
+  "lock_behaviour_estimate": {
+   "value": "Model as a controlled clutch LSD: low preload (about 50-100 Nm) cruising, ramping toward full lock on power exit and under DSC-off drifting, partial lock on corner entry for stability",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": ""
+  },
+  "traction_control": {
+   "value": "DSC with M Dynamic Mode; slip control moved into the engine ECU (acts up to 10x more often); M Traction Control with 10 stages (with M Drive Professional)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "m_xdrive": {
+   "value": "Electronically controlled multi-plate clutch in the transfer case; rear-only until rear grip limit; 4WD / 4WD Sport / 2WD (DSC off)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  }
+ },
+ "mass": {
+  "kerb_DIN": {
+   "value": 1730,
+   "unit": "kg",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "DIN: 90% fuel, no driver."
+  },
+  "kerb_EU": {
+   "value": 1805,
+   "unit": "kg",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "EU: DIN + 75 kg driver/luggage. ADAC repeats 1,805 kg (EU)."
+  },
+  "kerb_US": {
+   "value": 3890,
+   "unit": "lb",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "1,764 kg."
+  },
+  "kerb_measured_MT": {
+   "value": 3745,
+   "unit": "lb",
+   "tag": "M",
+   "source": "MT_FT",
+   "note": "1,699 kg; car had carbon-ceramic brakes."
+  },
+  "kerb_measured_CD": {
+   "value": 3820,
+   "unit": "lb",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": "1,733 kg; car had carbon-ceramic brakes and M Driver's Package."
+  },
+  "licensing_mass_ZA": {
+   "value": 1690,
+   "unit": "kg",
+   "tag": "P",
+   "source": "CITIZEN_SHEET",
+   "note": "South African licensing (tare) mass on the test sheet."
+  },
+  "dry_weight": {
+   "value": null,
+   "unit": "kg",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. DIN minus fuel (59 L x 0.9 x 0.745 = 40 kg) gives about 1,690 kg; minus oil, coolant and ATF roughly 1,660 kg."
+  },
+  "max_permissible": {
+   "value": 2210,
+   "unit": "kg",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Max axle loads 1,080 kg front / 1,180 kg rear."
+  },
+  "weight_distribution_factory": {
+   "value": [
+    53.1,
+    46.9
+   ],
+   "unit": "% front/rear",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "US spec table. The press kit's 'virtually 50:50' is marketing; factory and measured figures agree on 53/47."
+  },
+  "weight_distribution_measured": {
+   "value": [
+    53,
+    47
+   ],
+   "unit": "% front/rear",
+   "tag": "M",
+   "source": "MT_FT",
+   "note": "MotorTrend scales, 3,745 lb."
+  },
+  "weight_distribution_measured_xdrive": {
+   "value": [
+    54,
+    46
+   ],
+   "unit": "% front/rear",
+   "tag": "M",
+   "source": "MT_XD",
+   "note": "3,899 lb."
+  },
+  "xdrive_masses": {
+   "value": {
+    "DIN_kg": 1780,
+    "EU_kg": 1855,
+    "US_curb_lb": 3990,
+    "MT_measured_lb": 3899,
+    "CD_measured_lb": 3929
+   },
+   "unit": "",
+   "tag": "P",
+   "source": "BMW_US22XD",
+   "note": "US curb is F (BMW_US22XD); DIN/EU figures from BMW regional pages via search extracts (not opened); measured from MT_XD and CD_XD (Edition 50 Jahre with carbon buckets and CCB)."
+  },
+  "weight_savers": {
+   "value": "M Race Track Package about -25 kg; M Carbon bucket seats save 21 lb (9.5 kg); CFRP roof standard",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Seat saving from BMW_US21."
+  }
+ },
+ "dimensions": {
+  "length": {
+   "value": 4794,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "width": {
+   "value": 1903,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "width_with_mirrors": {
+   "value": 2068,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "From the dimension drawing; US 81.4 in."
+  },
+  "height": {
+   "value": 1433,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Unladen; the drawing shows 1,437."
+  },
+  "wheelbase": {
+   "value": 2857,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "track_front": {
+   "value": 1617,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US 63.7 in."
+  },
+  "track_rear": {
+   "value": 1605,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US 63.2 in."
+  },
+  "front_overhang": {
+   "value": 860,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "From the dimension drawing."
+  },
+  "rear_overhang": {
+   "value": 1077,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "From the dimension drawing."
+  },
+  "ground_clearance": {
+   "value": 120,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US 4.7 in."
+  },
+  "frontal_area": {
+   "value": 2.34,
+   "unit": "m^2",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "turning_circle": {
+   "value": 12.2,
+   "unit": "m",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Measured 12.1 m (AMS), 40.0 ft = 12.2 m (MT_COMP)."
+  },
+  "fuel_tank": {
+   "value": 59,
+   "unit": "L",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "luggage": {
+   "value": 480,
+   "unit": "L",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  }
+ },
+ "tyres_wheels": {
+  "standard_EU_RWD": {
+   "value": {
+    "front": "275/40 ZR18 103Y XL on 9.5J x 18",
+    "rear": "285/35 ZR19 103Y XL on 10.5J x 19"
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Forged M light-alloy wheels. US 2021 sheet lists the same as standard."
+  },
+  "optional_and_xdrive_standard": {
+   "value": {
+    "front": "275/35 ZR19 (100Y) on 9.5J x 19",
+    "rear": "285/30 ZR20 (99Y) on 10.5J x 20"
+   },
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Standard on M xDrive and in Canada; fitted to every magazine test car found. Load indices from CD_RWD."
+  },
+  "oe_tyre_models": {
+   "value": [
+    "Michelin Pilot Sport 4S (star-marked)",
+    "Pirelli P Zero PZ4 (star-marked)",
+    "Michelin Pilot Sport Cup 2 (track option, not offered in the US at launch)"
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "CD_RWD",
+   "note": "PS4S on C/D, MT, AMS and Citizen cars; P Zero PZ4 on the C/D xDrive car (CD_XD); Cup 2 option per BMW_CA and MT_FT."
+  },
+  "tyre_diameter_rear_20in": {
+   "value": 679,
+   "unit": "mm",
+   "tag": "E",
+   "source": "CALC",
+   "note": "285/30 R20 geometry: 508 + 2 x 85.5."
+  }
+ },
+ "brakes": {
+  "standard": {
+   "value": "M Compound: front 380 mm vented discs, 6-piston fixed calipers; rear 370 mm vented discs, single-piston floating calipers with integrated parking brake",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Calipers blue as standard."
+  },
+  "standard_disc_thickness": {
+   "value": {
+    "front_mm": 36,
+    "rear_mm": 24
+   },
+   "unit": "mm",
+   "tag": "P",
+   "source": "DISC_PARTS",
+   "note": "380 x 36 and 370 x 24 from replacement-part listings."
+  },
+  "carbon_ceramic_option": {
+   "value": "M Carbon ceramic: 400 mm front, 380 mm rear, gold calipers",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Front 400 x 38 mm per Turner note (P, indirect). C/D lists 15.7-in/15.0-in cross-drilled carbon-ceramic discs on its test cars."
+  },
+  "brake_system": {
+   "value": "Integrated braking system (brake-by-wire module, electric actuator) with Comfort/Sport pedal-feel settings",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "braking_70_0_mph": {
+   "value": 150,
+   "unit": "ft",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": "45.7 m, carbon-ceramic brakes, PS4S. xDrive: 153 ft (CD_XD)."
+  },
+  "braking_100_0_mph": {
+   "value": 297,
+   "unit": "ft",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": "90.5 m. xDrive: 297 ft."
+  },
+  "braking_60_0_mph": {
+   "value": 102,
+   "unit": "ft",
+   "tag": "M",
+   "source": "MT_FT",
+   "note": "31.1 m. xDrive: 105 ft (MT_XD)."
+  },
+  "braking_100_0_kmh": {
+   "value": 34,
+   "unit": "m",
+   "tag": "E",
+   "source": "CALC",
+   "note": "No European measurement found. Scaling MT's 60-0 (v^2) gives 33.3 m; scaling C/D's 70-0 gives 36.0 m. Mean decelerations 1.18 g (MT) and 1.09 g (C/D)."
+  }
+ },
+ "aero": {
+  "drag_coefficient": {
+   "value": 0.33,
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "US Cx 0.33 (M4 0.34)."
+  },
+  "frontal_area": {
+   "value": 2.34,
+   "unit": "m^2",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "CdA": {
+   "value": 0.772,
+   "unit": "m^2",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "0.33 x 2.34 from BMW's 'cd x A' entry."
+  },
+  "downforce": {
+   "value": null,
+   "unit": "N",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. BMW says the extended sills/aprons 'increase downforce in the underbody area' and the lip, Air Curtain flics and roof fins optimise aero balance (BMW_PK). For simulation assume near-zero net lift (small ClA, about 0.05-0.10 m^2 per axle)."
+  },
+  "active_aero": {
+   "value": "None documented",
+   "unit": "",
+   "tag": "A",
+   "source": "BMW_PK",
+   "note": "No moving aero devices are mentioned in the press kit."
+  },
+  "drag_force_at_250kmh": {
+   "value": 2234,
+   "unit": "N",
+   "tag": "E",
+   "source": "CALC",
+   "note": "0.5 x 1.2 kg/m^3 x (69.4 m/s)^2 x 0.772; about 155 kW."
+  }
+ },
+ "suspension_steering": {
+  "front": {
+   "value": "Double-joint spring-strut axle, aluminium wishbones and torque arm, forged swivel bearing; large castor and kingpin angles; lowered roll centre",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "rear": {
+   "value": "Five-link axle in aluminium/steel, rear subframe rigidly bolted to the body",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "anti_roll_bars": {
+   "value": "Front and rear",
+   "unit": "",
+   "tag": "M",
+   "source": "AMS",
+   "note": ""
+  },
+  "dampers": {
+   "value": "Adaptive M suspension: electronically controlled dampers, electromagnetic valves per wheel, Comfort / Sport / Sport Plus",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "spring_rates": {
+   "value": {
+    "front_N_per_m_at_wheel": 43000,
+    "rear_N_per_m_at_wheel": 48000
+   },
+   "unit": "N/m",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. From ride frequencies 1.6 Hz front / 1.8 Hz rear, EU mass 1,805 kg at 53.1/46.9, about 50 kg unsprung per corner."
+  },
+  "ride_height": {
+   "value": "Ground clearance 120 mm",
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "cog_height": {
+   "value": 0.49,
+   "unit": "m",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Not published. Typical for a lowered sedan with CFRP roof."
+  },
+  "steering": {
+   "value": "Electric power steering with M Servotronic and variable sport ratio; Comfort/Sport modes",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "steering_ratio": {
+   "value": 15.0,
+   "unit": ":1",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "M xDrive 14.6:1 (BMW_US22XD)."
+  },
+  "lock_to_lock_turns": {
+   "value": 2.0,
+   "unit": "turns",
+   "tag": "M",
+   "source": "MT_COMP",
+   "note": "AMS measured 2.25 turns; 370 mm wheel diameter (AMS)."
+  },
+  "turning_circle": {
+   "value": 12.2,
+   "unit": "m",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  }
+ },
+ "performance": {
+  "factory_0_100_kmh": {
+   "value": 3.9,
+   "unit": "s",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "M xDrive 3.5 s."
+  },
+  "factory_0_60_mph": {
+   "value": 3.8,
+   "unit": "s",
+   "tag": "F",
+   "source": "BMW_US21",
+   "note": "M xDrive 3.4 s (BMW_US22XD)."
+  },
+  "factory_0_200_kmh": {
+   "value": 12.5,
+   "unit": "s",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": ""
+  },
+  "factory_80_120_kmh": {
+   "value": {
+    "4th": 2.6,
+    "5th": 3.4
+   },
+   "unit": "s",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "top_speed": {
+   "value": 250,
+   "unit": "km/h",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Electronically limited (155 mph)."
+  },
+  "top_speed_m_drivers_package": {
+   "value": 290,
+   "unit": "km/h",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "180 mph."
+  },
+  "top_speed_measured_gps": {
+   "value": 293,
+   "unit": "km/h",
+   "tag": "M",
+   "source": "MOTOR1_VMAX",
+   "note": "AutoTopNL GPS run with M Driver's Package (182 mph); from a search extract, page not loaded."
+  },
+  "top_speed_unrestricted_estimate": {
+   "value": 315,
+   "unit": "km/h",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Power balance: 330 kW at the wheels vs CdA 0.772 m^2 and 1.2% rolling resistance; would sit near 6,500 rpm in 7th."
+  },
+  "CD_RWD_2021": {
+   "value": {
+    "0_60_mph": 3.5,
+    "0_100_mph": 7.6,
+    "quarter_mile": "11.6 s @ 124 mph",
+    "0_130_mph": 12.8,
+    "0_150_mph": 18.3,
+    "rolling_5_60": 4.5,
+    "top_gear_30_50": 2.4,
+    "top_gear_50_70": 2.7,
+    "braking_70_0_ft": 150,
+    "braking_100_0_mph_ft": 297,
+    "skidpad_g": 1.03,
+    "curb_lb": 3820
+   },
+   "unit": "s unless stated",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": "Results omit 1-ft rollout (0.2 s). Michelin PS4S, carbon-ceramic brakes."
+  },
+  "MT_RWD_2021": {
+   "value": {
+    "0_30_mph": 1.6,
+    "0_40": 2.2,
+    "0_50": 2.8,
+    "0_60": 3.5,
+    "0_70": 4.4,
+    "0_80": 5.3,
+    "0_90": 6.4,
+    "0_100_mph": 7.5,
+    "quarter_mile": "11.6 s @ 125.6 mph",
+    "passing_45_65": 1.4,
+    "braking_60_0_ft": 102,
+    "lateral_g_avg": 1.03,
+    "figure_eight": "23.8 s @ 0.85 g",
+    "0_100_0_mph": 11.3,
+    "curb_lb": 3745
+   },
+   "unit": "s unless stated",
+   "tag": "M",
+   "source": "MT_COMP",
+   "note": "First published 2021-04-20 (MT_FT)."
+  },
+  "CITIZEN_2021": {
+   "value": {
+    "0_100_kmh": 3.64,
+    "quarter_mile": "11.58 s @ 201.21 km/h",
+    "half_mile": "18.06 s @ 243.29 km/h",
+    "1_km": "20.75 s @ 256.46 km/h",
+    "60_100_kmh": "2.21 s (3rd) / 2.95 s (4th)",
+    "80_120_kmh": "2.67 s (4th) / 4.02 s (5th)",
+    "100_200_kmh": "8.01 s (from 3rd)"
+   },
+   "unit": "s",
+   "tag": "M",
+   "source": "CITIZEN_SHEET",
+   "note": "South Africa, 14 April 2021, 15 deg C, Michelin PS4S 275/35 R19 / 285/30 R20. Test altitude not stated."
+  },
+  "estimated_0_200_kmh_measured_basis": {
+   "value": 11.7,
+   "unit": "s",
+   "tag": "E",
+   "source": "CALC",
+   "note": "Citizen 0-100 (3.64) + 100-200 (8.01) plus about 0.1 s for the shift overlap; quicker than BMW's 12.5 s, consistent with an underrated engine."
+  },
+  "CD_XDRIVE_2023": {
+   "value": {
+    "0_30_mph": 1.0,
+    "0_60_mph": 2.8,
+    "0_100_mph": 7.0,
+    "quarter_mile": "11.0 s @ 124 mph",
+    "0_130_mph": 12.3,
+    "0_150_mph": 18.2,
+    "rolling_5_60": 4.2,
+    "braking_70_0_ft": 153,
+    "braking_100_0_mph_ft": 297,
+    "skidpad_g": 1.03,
+    "curb_lb": 3929
+   },
+   "unit": "s unless stated",
+   "tag": "M",
+   "source": "CD_XD",
+   "note": "M xDrive, for comparison only."
+  },
+  "MT_XDRIVE_2022": {
+   "value": {
+    "0_60_mph": 3.0,
+    "0_100_mph": 7.2,
+    "quarter_mile": "11.1 s @ 124.7 mph",
+    "braking_60_0_ft": 105,
+    "lateral_g_avg": 1.03,
+    "figure_eight": "23.3 s @ 0.89 g",
+    "curb_lb": 3899,
+    "dist": "54/46"
+   },
+   "unit": "s unless stated",
+   "tag": "M",
+   "source": "MT_XD",
+   "note": "M xDrive, for comparison only."
+  }
+ },
+ "sound": {
+  "exhaust_layout": {
+   "value": "Per bank: 3-into-1 manifold cast into the turbine housing -> mono-scroll turbo -> close-coupled ceramic-monolith catalyst (one per bank) -> [EU/RoW only] underbody catalyst + gasoline particulate filter per branch -> centre silencer -> large rear silencer with two electric flaps in the outer tailpipes -> 4 tailpipes in two twin pairs, 100 mm each (Black Chrome on Competition). Dual-branch (cylinders 1-3 / 4-6) 'cylinder-dependent twin-pipe design'; the tailpipes are internally interconnected so gas always exits all four.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Component order from the S58 training manual (F97/F98, same engine family); dual-branch, rear silencer, quad 100 mm tips and flaps for G80 from BMW_PK. G80-specific centre-silencer details not seen."
+  },
+  "flap_logic": {
+   "value": "Flaps are binary (fully open or closed, PWM 10% open / 90% closed). Closed at low rpm/low load for comfort and urban pass-by noise; open at high rpm/high load. SPORT / SPORT+ change timbre and intensity; the M Sound Control button keeps the flaps closed as long as possible and reduces ASD, overriding the drive mode.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "Behaviour documented for S58 in F97/F98; G80 press kit describes the same SPORT/SPORT+/M Sound Control logic (BMW_PK)."
+  },
+  "turbo_sound_character": {
+   "value": "Two mono-scroll turbos with even 240-deg pulse spacing per branch; electric wastegates; no documented blow-off valve. Reviewers mainly note lag below about 2,750 rpm rather than turbo noise.",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": "No published description of turbo whistle found. Gap."
+  },
+  "cd_interior_70mph": {
+   "value": 72,
+   "unit": "dBA",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": "Steady 70 mph; four dB quieter than the previous M3 Competition."
+  },
+  "cd_interior_full_throttle": {
+   "value": 84,
+   "unit": "dBA",
+   "tag": "M",
+   "source": "CD_RWD",
+   "note": ""
+  },
+  "cd_interior_idle": {
+   "value": null,
+   "unit": "dBA",
+   "tag": "M",
+   "source": "CD_COMP",
+   "note": "Not printed in the text; the comparison says the M3 was quieter than the Alfa at idle and 70 mph. Gap. AMS idle figure below."
+  },
+  "ams_interior": {
+   "value": {
+    "idle": 45,
+    "max_full_throttle": 82,
+    "80_kmh": 68,
+    "100_kmh": 70,
+    "130_kmh": 73,
+    "160_kmh": 76,
+    "180_kmh": 78
+   },
+   "unit": "dB(A)",
+   "tag": "M",
+   "source": "AMS",
+   "note": "Test date 04/2021, automatic, PS4S 19/20-inch."
+  },
+  "eu_stationary_noise": {
+   "value": 89,
+   "unit": "dB(A) at 3,750 rpm",
+   "tag": "P",
+   "source": "BMW_WEB_NOISE",
+   "note": "From search extracts of BMW Malta/Malaysia technical-data pages for the M3 Competition (model year not visible). The 2024 G80 pages (Ireland/UK) show 91 dB(A) at 3,750 rpm. Low confidence: not read from a homologation document."
+  },
+  "eu_pass_by_noise": {
+   "value": 73,
+   "unit": "dB(A)",
+   "tag": "P",
+   "source": "ADAC",
+   "note": "ADAC 'Fahrgeraeusch' for M3 Competition Steptronic 07/22-05/24 (UN R51.03). BMW Malta/Malaysia extracts show 72 dB(A); 2024 Irish/UK extracts show 69 dB(A) for M xDrive."
+  },
+  "active_sound_design": {
+   "value": "Fitted: engine orders are added through the audio system (ASD in the passenger compartment). It can be reduced with the M Sound Control button or switched off in a menu.",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_ST1926",
+   "note": "C/D: 'At least you can turn off the auto-tune effect via a menu on the touchscreen' (CD_RWD). evo: 'augmented through the speakers' (EVO)."
+  },
+  "asd_share_estimate": {
+   "value": "About half of the in-cabin engine sound under load in SPORT/SPORT+ is speaker-generated; less in COMFORT or with M Sound Control active",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": "No published figure. Estimate from reviewer comments (C/D wanting more natural sound; evo calling it augmented but authentic). Use as a mixing guide only."
+  },
+  "limiter_behaviour": {
+   "value": "Redline 7,200 rpm, limiter at about 7,250 rpm; in M mode the car holds the limiter rather than upshifting; expect a fast fuel/ignition-cut bounce.",
+   "unit": "",
+   "tag": "P",
+   "source": "EVO",
+   "note": "Bounce character is E."
+  },
+  "overrun_pops_by_mode": {
+   "value": "Not documented by BMW. Stock EU cars sound muted outside (OPF). Expected: COMFORT/EFFICIENT - flaps mostly closed, little or no crackle; SPORT - light burble on lift-off from mid rpm; SPORT+ - most frequent burbles, still mild. M Sound Control suppresses them.",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": "evo: 'fires with a satisfying burble' (start-up); a G80 owner reports the sound button 'cancels the burbles' (ASD_FORUM, anecdotal)."
+  },
+  "reviewer_quotes": {
+   "value": [
+    {
+     "quote": "The S58 motor fires with a satisfying burble.",
+     "source": "EVO"
+    },
+    {
+     "quote": "It may be augmented through the speakers, but it's as authentic a sound as you could hope for.",
+     "source": "EVO"
+    },
+    {
+     "quote": "the latest emission filters stuffed into the system result in a rather muted tone",
+     "source": "EVO"
+    },
+    {
+     "quote": "it has a certain timbre and hollow resonance that suits its brutish appearance.",
+     "source": "EVO"
+    },
+    {
+     "quote": "Maximum thrust results in 84 decibels of silky inline-six growl",
+     "source": "CD_RWD"
+    },
+    {
+     "quote": "we still wish BMW would let more of the engine's natural song into the cabin instead of boosting it through the audio system.",
+     "source": "CD_RWD"
+    },
+    {
+     "quote": "it suffers from the on-off nature of turbo lag",
+     "source": "CD_COMP"
+    },
+    {
+     "quote": "it isn't an indisputably wonderful straight-six.",
+     "source": "PH"
+    },
+    {
+     "quote": "a deep cold start roar",
+     "source": "MWS"
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "EVO",
+   "note": "All under 25 words; each item carries its own source id."
+  },
+  "reference_videos": {
+   "value": [
+    {
+     "what": "Launch control on a G80 M3 Competition (onboard, shows procedure and launch revs)",
+     "url": "https://www.youtube.com/watch?v=IPx546s2jYI",
+     "found_via": "https://www.bmwblog.com/2021/07/07/video-how-to-activate-launch-control-on-the-new-bmw-m3-competition/"
+    },
+    {
+     "what": "Stock vs Milltek exhaust, G80 M3 Competition (useful stock reference; verify which segments are stock)",
+     "url": "https://www.youtube.com/watch?v=TykrxACLwSk",
+     "found_via": "https://www.bmwblog.com/2021/11/30/g80-bmw-m3-competition-milltek"
+    },
+    {
+     "what": "G82 M4 vs F82 M4 vs E92 M3 sound and exhaust comparison (stock S58 coupe)",
+     "url": "https://www.youtube.com/watch?v=brCVctt293g",
+     "found_via": "https://www.bmwblog.com/2021/02/21/g82-m4-vs-f82-m4-vs-e92-m3-sound-exhaust"
+    },
+    {
+     "what": "Second video embedded in the same comparison article",
+     "url": "https://www.youtube.com/watch?v=gsi6K9gfzyQ",
+     "found_via": "https://www.bmwblog.com/2021/02/21/g82-m4-vs-f82-m4-vs-e92-m3-sound-exhaust"
+    },
+    {
+     "what": "Fi Exhaust on a G80 M3 Competition (aftermarket, much louder than stock)",
+     "url": "https://www.youtube.com/watch?v=qv_a5bJeFPg",
+     "found_via": "COMMONS_AUDIO"
+    },
+    {
+     "what": "Fi Exhaust G80 M3 (aftermarket)",
+     "url": "https://www.youtube.com/watch?v=_8_PyKTz2a0",
+     "found_via": "https://www.bmwblog.com/2021/10/15/video-the-fi-exhaust-system-for-the-g80-bmw-m3-sounds-crazy"
+    },
+    {
+     "what": "Dyno run, base manual G80 M3 (AutoTopNL)",
+     "url": "https://www.youtube.com/watch?v=oScJr9s78QU",
+     "found_via": "BMWBLOG_DYNO"
+    },
+    {
+     "what": "Dyno run, M4 Competition with Akrapovic exhaust (S58 Competition)",
+     "url": "https://www.youtube.com/watch?v=WYyuGe_-Frg",
+     "found_via": "https://www.bmwblog.com/2021/12/04/2021-bmw-m4-competition-akrapovic-dyno"
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "VIDEO_EMBEDS",
+   "note": "Links only, nothing downloaded from YouTube. IDs were taken from embeds in the listed articles; titles were not checked on YouTube. No stock flyby or autobahn onboard link could be confirmed before the search budget ran out."
+  },
+  "freely_licensed_recordings": {
+   "value": [
+    {
+     "file": "research_notes/cars/audio/RefM3G80/G80_M3_Competition_FiExhaust_CC-BY-3.0_FiExhaust.opus",
+     "commons_page": "https://commons.wikimedia.org/wiki/File:BMW_M3_(G80)_Competition_with_Fi_Exhaust_-_engine_and_exhaust_sound_(YouTube_qv_a5bJeFPg).opus",
+     "licence": "CC BY 3.0 (YouTube Creative Commons option; Commons licence review still pending)",
+     "attribution": "FiExhaust (YouTube), via Wikimedia Commons",
+     "duration_s": 80.7,
+     "format": "Ogg Opus, 48 kHz stereo, 120 kb/s",
+     "content": "start-up, revving or acceleration",
+     "caveat": "Aftermarket Fi Exhaust, not the stock system. Reference for engine orders and rev behaviour only, not for stock loudness or timbre. Confirm the licence review before any in-game use."
+    }
+   ],
+   "unit": "",
+   "tag": "P",
+   "source": "COMMONS_AUDIO",
+   "note": ""
+  },
+  "audio_engineer_notes": {
+   "value": "Fundamental firing frequency = rpm/20 Hz (3rd engine order); each exhaust branch carries the 1.5th order, so slight bank-to-bank differences add 1.5-order content. Rev range for loops: about 700 (idle) to 7,250 (limiter). Strong torque plateau 2,750-5,500 rpm means load-dependent timbre should change most around 2,000-3,000 rpm (boost onset).",
+   "unit": "",
+   "tag": "E",
+   "source": "CALC",
+   "note": ""
+  }
+ },
+ "visual_blockout": {
+  "body_style": {
+   "value": "Four-door notchback sports sedan; long bonnet, cab set back, short boot with integrated lip spoiler",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "engine_position": {
+   "value": "Front, longitudinal inline-6 roughly over and behind the front axle line",
+   "unit": "",
+   "tag": "A",
+   "source": "AMS",
+   "note": ""
+  },
+  "method": {
+   "value": "Proportions measured on BMW's orthographic side drawing (pixel scale 3.71 mm/px, heights normalised to the 1,433 mm roof); cross-checked by eye against a CC BY-SA 4.0 Commons photo (front three-quarter, not a pure profile; no pure profile was found among 40 sampled Commons files)",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Photo: COMMONS_PHOTO; category: COMMONS_CAT."
+  },
+  "front_axle_fraction_of_length": {
+   "value": 0.179,
+   "unit": "fraction from front",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "860 / 4,794."
+  },
+  "rear_axle_fraction_of_length": {
+   "value": 0.775,
+   "unit": "fraction from front",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "(860 + 2,857) / 4,794."
+  },
+  "windscreen_base_fraction": {
+   "value": 0.31,
+   "unit": "fraction from front",
+   "tag": "E",
+   "source": "BMW_SPEC_M3",
+   "note": "About 1.50 m from the nose, height about 0.99 m (cowl)."
+  },
+  "windscreen_top_fraction": {
+   "value": 0.49,
+   "unit": "fraction from front",
+   "tag": "E",
+   "source": "BMW_SPEC_M3",
+   "note": "Roof header about 2.35 m from the nose at about 1.40 m."
+  },
+  "roof_peak_fraction": {
+   "value": 0.59,
+   "unit": "fraction from front",
+   "tag": "E",
+   "source": "BMW_SPEC_M3",
+   "note": "About 2.82 m from the nose, near the B-pillar. Roof stays within 10 mm of peak from 0.53 to 0.68."
+  },
+  "roof_height": {
+   "value": 1433,
+   "unit": "mm",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "A small shark-fin antenna sits at about 0.71 L."
+  },
+  "rear_screen_fractions": {
+   "value": [
+    0.74,
+    0.9
+   ],
+   "unit": "fraction from front",
+   "tag": "E",
+   "source": "BMW_SPEC_M3",
+   "note": "Rear screen runs from the roof end (about 1.39 m high) down to the boot lid (about 1.07 m)."
+  },
+  "silhouette_heights": {
+   "value": [
+    [
+     0.0,
+     640
+    ],
+    [
+     0.03,
+     771
+    ],
+    [
+     0.06,
+     833
+    ],
+    [
+     0.09,
+     880
+    ],
+    [
+     0.12,
+     912
+    ],
+    [
+     0.16,
+     935
+    ],
+    [
+     0.19,
+     949
+    ],
+    [
+     0.22,
+     963
+    ],
+    [
+     0.25,
+     971
+    ],
+    [
+     0.28,
+     982
+    ],
+    [
+     0.31,
+     993
+    ],
+    [
+     0.34,
+     1087
+    ],
+    [
+     0.37,
+     1174
+    ],
+    [
+     0.4,
+     1254
+    ],
+    [
+     0.43,
+     1327
+    ],
+    [
+     0.46,
+     1378
+    ],
+    [
+     0.5,
+     1403
+    ],
+    [
+     0.53,
+     1418
+    ],
+    [
+     0.56,
+     1426
+    ],
+    [
+     0.59,
+     1433
+    ],
+    [
+     0.62,
+     1429
+    ],
+    [
+     0.65,
+     1426
+    ],
+    [
+     0.68,
+     1414
+    ],
+    [
+     0.74,
+     1389
+    ],
+    [
+     0.77,
+     1320
+    ],
+    [
+     0.81,
+     1262
+    ],
+    [
+     0.84,
+     1200
+    ],
+    [
+     0.87,
+     1135
+    ],
+    [
+     0.9,
+     1076
+    ],
+    [
+     0.93,
+     1051
+    ],
+    [
+     0.96,
+     1037
+    ],
+    [
+     0.99,
+     600
+    ]
+   ],
+   "unit": "[fraction of length from front, top-of-body height mm]",
+   "tag": "E",
+   "source": "BMW_SPEC_M3",
+   "note": "Upper silhouette traced from the drawing; last point is the drop at the tail face."
+  },
+  "nose_shape": {
+   "value": "Tall, blunt, near-vertical front face dominated by a very large vertical twin-kidney grille; bonnet top about 0.64 m at the nose rising to about 0.99 m at the cowl; deep front apron with outer vertical air-curtain intakes",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Heights E from the drawing."
+  },
+  "tail_shape": {
+   "value": "Short notchback deck ending in a body-colour or gloss-black lip spoiler at about 1.04 m; near-vertical tail face; black diffuser with four 100 mm tips in two pairs",
+   "unit": "",
+   "tag": "F",
+   "source": "BMW_PK",
+   "note": "Height E from the drawing."
+  },
+  "wheel_size_visual": {
+   "value": "Tyre outer diameter about 0.68 m front and rear",
+   "unit": "m",
+   "tag": "E",
+   "source": "CALC",
+   "note": ""
+  }
+ },
+ "derived_for_builder": {
+  "simulated_mass_with_driver": {
+   "value": 1805,
+   "unit": "kg",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "EU unladen weight already includes 75 kg driver/luggage; equals DIN 1,730 + 75."
+  },
+  "static_wheel_loads": {
+   "value": {
+    "front_each_N": 4700,
+    "rear_each_N": 4150
+   },
+   "unit": "N",
+   "tag": "E",
+   "source": "CALC",
+   "note": "1,805 kg x 9.81 x 53.1% / 2 and x 46.9% / 2."
+  },
+  "drag_area_for_sim": {
+   "value": 0.772,
+   "unit": "m^2",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": ""
+  },
+  "performance_targets": {
+   "value": {
+    "zeroTo100": 3.9,
+    "zeroTo200": 12.5,
+    "topSpeedKmh": 250,
+    "topSpeedKmh_MDriversPackage": 290
+   },
+   "unit": "s / km/h",
+   "tag": "F",
+   "source": "BMW_SPEC_M3",
+   "note": "Magazine tests run about 0.3 s quicker to 100 km/h (Citizen 3.64 s)."
+  }
+ },
+ "gaps": [
+  "Turbo model/frame size and compressor maps (only maker MHI and part numbers known).",
+  "Boost-versus-rpm curve (only the 1.7 bar maximum is published).",
+  "Idle rpm, cold-start idle and exact launch-control rpm (only a secondary 2,700 rpm figure).",
+  "Engine mass and rotating inertia.",
+  "Gearbox shift times and torque-converter stall speed.",
+  "Active M Differential preload/lock values.",
+  "Spring, damper and anti-roll-bar rates, CoG height, roll centres, alignment.",
+  "Downforce or lift coefficients (BMW gives only Cd x A).",
+  "Car and Driver idle dBA (not in the article text); AMS idle 45 dB(A) used instead.",
+  "EU stationary and pass-by noise for the exact pre-LCI RWD car from a homologation document (CoC); current values come from search extracts of JavaScript pages and ADAC.",
+  "Share of cabin sound produced by Active Sound Design.",
+  "Overrun pop/crackle behaviour by drive mode (undocumented; estimated).",
+  "European instrumented 100-0 km/h braking and 0-200 km/h (behind the AMS paywall).",
+  "A verified top-speed run (only a search extract of 293 km/h).",
+  "A freely licensed recording of a stock car, and stock flyby/onboard video links (search budget ran out).",
+  "A freely licensed pure side-profile photo (BMW's press drawing used instead).",
+  "Firing order is the BMW inline-six standard; not seen in an S58-specific document.",
+  "Exact 2024 LCI changes for the RWD car."
+ ],
+ "sources": [
+  {
+   "id": "BMW_PK",
+   "title": "The new BMW M3 Sedan and BMW M3 Competition Sedan. The new BMW M4 Coupe and BMW M4 Competition Coupe (full press kit, 32 pp.)",
+   "publisher": "BMW Group PressClub",
+   "url": "https://newsroom.bmwgroup.com/emea/download/7e3ab005-7810-4dfa-aee4-b1447be7ca79/20260909073602947-257.pdf",
+   "date": "2020-09"
+  },
+  {
+   "id": "BMW_SPEC_M3",
+   "title": "Specifications. The BMW M3 Sedan / M3 Competition Sedan (spec tables, output diagram, dimension drawing)",
+   "publisher": "BMW Group PressClub",
+   "url": "https://newsroom.bmwgroup.com/emea/download/76ac3089-d57b-44fb-9ea4-92409ea2fc4c/20260909073603867-778.pdf",
+   "date": "2020-09"
+  },
+  {
+   "id": "BMW_SPEC_M4",
+   "title": "Specifications. The BMW M4 Coupe / M4 Competition Coupe (contains the 375 kW / 650 Nm Competition output and torque diagram)",
+   "publisher": "BMW Group PressClub",
+   "url": "https://newsroom.bmwgroup.com/emea/download/f92f5ad6-e9e9-4ac9-9191-0855eec11dfe/20260909073605409-124.pdf",
+   "date": "2020-09"
+  },
+  {
+   "id": "BMW_PR_ARTICLE",
+   "title": "Press article page for the kit above (South Africa mirror of T0316649EN)",
+   "publisher": "BMW Group PressClub",
+   "url": "https://www.press.bmwgroup.com/south-africa/article/attachment/T0317466EN/461004",
+   "date": "2020-09"
+  },
+  {
+   "id": "BMW_US21",
+   "title": "The New 2021 BMW M3 Sedan and M4 Coupe (US press release with US specification table)",
+   "publisher": "BMW of North America (BMW Group PressClub USA)",
+   "url": "https://newsroom.bmwgroup.com/americas/download/08e69a09-1c81-4afb-abe8-91c294b68f37/20260728141634340-734.pdf",
+   "date": "2020-09"
+  },
+  {
+   "id": "BMW_US22XD",
+   "title": "The new 2022 BMW M3 Competition xDrive Sedan and M4 Competition xDrive Coupe (US release with spec table)",
+   "publisher": "BMW of North America (BMW Group PressClub USA)",
+   "url": "https://newsroom.bmwgroup.com/americas/download/5c120393-bb1b-4ec4-8785-8d41e50a4f6f/20260728141746562-334.pdf",
+   "date": "2021"
+  },
+  {
+   "id": "BMW_CA",
+   "title": "The New 2021 BMW M3 Sedan and M4 Coupe (Canada media information)",
+   "publisher": "BMW Group Canada",
+   "url": "https://newsroom.bmwgroup.com/americas/download/4c998b86-b012-4206-afb6-697faed51e93/20260731091652557-379.pdf",
+   "date": "2020-09-22"
+  },
+  {
+   "id": "BMW_ST1926",
+   "title": "Technical training manual ST1926 'S58 Engine' (written for F97 X3 M / F98 X4 M; same S58 family)",
+   "publisher": "BMW of North America (bmwtechinfo); copy read from BimmerPost mirror",
+   "url": "https://bmwtechinfo.bmwgroup.com/tech_training_manual/ST1926%20S58%20Engine.pdf",
+   "date": "2019"
+  },
+  {
+   "id": "BMW_ST1926_MIRROR",
+   "title": "Mirror of ST1926 used for reading",
+   "publisher": "BimmerPost",
+   "url": "https://www.bimmerpost.com/goodiesforyou/docs/ST1926-S58-Engine.pdf",
+   "date": "2019"
+  },
+  {
+   "id": "CD_RWD",
+   "title": "Tested: 2021 BMW M3 Competition Is a Quicker M3 (Mike Sutton)",
+   "publisher": "Car and Driver",
+   "url": "https://www.caranddriver.com/reviews/a37286079/2021-bmw-m3-competition-by-the-numbers/",
+   "date": "2021-08-12"
+  },
+  {
+   "id": "CD_COMP",
+   "title": "2021 Alfa Romeo Giulia Quadrifoglio vs. 2021 BMW M3 Competition (K.C. Colwell)",
+   "publisher": "Car and Driver",
+   "url": "https://www.caranddriver.com/reviews/comparison-test/a37179788/2021-alfa-romeo-giulia-quadrifoglio-vs-2021-bmw-m3-competition-compared/",
+   "date": "2021-08-05"
+  },
+  {
+   "id": "CD_XD",
+   "title": "2023 BMW M3 Competition xDrive Edition 50 Jahre tested (David Beard)",
+   "publisher": "Car and Driver",
+   "url": "https://www.caranddriver.com/reviews/a43389602/2023-bmw-m3-competition-xdrive-edition-50-jahre-by-the-numbers/",
+   "date": "2023-03-30"
+  },
+  {
+   "id": "MT_FT",
+   "title": "2021 BMW M3 Sedan First Test Review: Does the Face Ruin the Fun? (Jonny Lieberman; car is an M3 Competition)",
+   "publisher": "MotorTrend",
+   "url": "https://www.motortrend.com/cars/bmw/m3/2021/2021-bmw-m3-sedan-first-test-drive-review",
+   "date": "2021-04-20"
+  },
+  {
+   "id": "MT_COMP",
+   "title": "2021 BMW M3 Competition vs. Alfa Romeo Giulia Quadrifoglio Comparison Test: Four-Door Fire",
+   "publisher": "MotorTrend",
+   "url": "https://www.motortrend.com/reviews/2021-bmw-m3-competition-vs-alfa-romeo-giulia-quadrifoglio-comparison-test-review",
+   "date": "2021-06-29"
+  },
+  {
+   "id": "MT_XD",
+   "title": "2022 BMW M3 Competition PVOTY Review: Underrated In More Ways Than One (xDrive car)",
+   "publisher": "MotorTrend",
+   "url": "https://www.motortrend.com/news/2022-bmw-m3-competition-pvoty-review",
+   "date": "2022-02-10"
+  },
+  {
+   "id": "MT_XD_COMP",
+   "title": "2022 BMW M3 Competition vs. Cadillac CT4-V Blackwing: Last in Line (xDrive car)",
+   "publisher": "MotorTrend",
+   "url": "https://www.motortrend.com/reviews/2022-bmw-m3-competition-vs-cadillac-ct4-v-blackwing-comparison-test-review",
+   "date": "2022-01-12"
+  },
+  {
+   "id": "AMS",
+   "title": "Kosten und Realverbrauch: BMW M3 Competition - Technische Daten (test car, test date 04/2021)",
+   "publisher": "auto motor und sport",
+   "url": "https://www.auto-motor-und-sport.de/test/kosten-realverbrauch-bmw-m3-competition/technische-daten/",
+   "date": "2021-04"
+  },
+  {
+   "id": "CITIZEN_SHEET",
+   "title": "BMW M3 Competition road-test data sheet (test date 14 April 2021, 15 deg C)",
+   "publisher": "The Citizen (South Africa)",
+   "url": "https://media.citizen.co.za/wp-content/uploads/2021/04/M3data.pdf",
+   "date": "2021-04-14"
+  },
+  {
+   "id": "CITIZEN_ART",
+   "title": "BMW M3 Competition lives up to the hype",
+   "publisher": "The Citizen (South Africa)",
+   "url": "https://citizen.co.za/motoring/bmw-m3-competition-lives-up-to-the-hype",
+   "date": "2021-04-24"
+  },
+  {
+   "id": "ADAC",
+   "title": "Autokatalog: BMW M3 Competition Steptronic (07/22 - 05/24)",
+   "publisher": "ADAC",
+   "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/3er-reihe/g20-g21-g80-g81-facelift/325314",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "BMW_WEB_NOISE",
+   "title": "BMW market technical-data pages (Malta, Malaysia; Ireland/UK 2024 G80). Pages render with JavaScript and would not load; values come from search-result extracts of those pages",
+   "publisher": "BMW (regional websites)",
+   "url": "https://www.bmw.com.mt/en/all-models/m-series/bmw-3-series-m-models/bmw-m3-sedan-technical-data.html ; https://www.bmw.com.my/en/all-models/m-series/bmw-3-series-m-models/bmw-m3-sedan-technical-data.html ; https://www.bmw.ie/en/all-models/m-series/m3-series/m3-series-saloon-2024-g80-technical-data.html",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "EVO",
+   "title": "BMW M3 Competition 2021 review - still the benchmark performance saloon (Yousuf Ashraf; page updated since)",
+   "publisher": "evo",
+   "url": "https://www.evo.co.uk/bmw/m3-saloon/203950/bmw-m3-competition-2021-review-still-the-benchmark-performance-saloon",
+   "date": "2021-06-18"
+  },
+  {
+   "id": "PH",
+   "title": "2021 BMW M3 Competition (G80) | PH Review (Matt Bird)",
+   "publisher": "PistonHeads",
+   "url": "https://www.pistonheads.com/news/ph-driven/2021-bmw-m3-competition-g80-ph-review/43852",
+   "date": "2021-03-10"
+  },
+  {
+   "id": "MWS",
+   "title": "Get past the nose - I love the new G80 M3",
+   "publisher": "Machines With Souls",
+   "url": "https://machineswithsouls.com/the-bmw-g80-m3-review/",
+   "date": "2021-02-20"
+  },
+  {
+   "id": "ARM_DYNO",
+   "title": "S58 Stock Dyno Results (stock 2022 G82 M4 Competition xDrive, Mustang dynamometer, 93 octane)",
+   "publisher": "ARM Motorsports",
+   "url": "https://armmotorsports.com/blogs/news/s58-stock-dyno-results",
+   "date": "page dated 2026-06-02"
+  },
+  {
+   "id": "ARM_DYNO_IMG",
+   "title": "Dyno chart image used for digitising",
+   "publisher": "ARM Motorsports",
+   "url": "https://cdn.shopify.com/s/files/1/0082/6687/4995/files/S58_Stock_Dyno_957b04d7-71f8-400c-a3d3-7ca18013f327.jpg",
+   "date": "2026"
+  },
+  {
+   "id": "BMWBLOG_DYNO",
+   "title": "VIDEO: AutoTopNL's Zanzibar Metallic BMW M3 Goes on a Dyno (base manual M3)",
+   "publisher": "BMWBlog",
+   "url": "https://www.bmwblog.com/2021/04/10/zanzibar-bmw-m3-dyno/",
+   "date": "2021-04-10"
+  },
+  {
+   "id": "TURNER_TURBO",
+   "title": "OEM Mitsubishi turbocharger + exhaust manifold replacement set, BMW S58 (part nos. 11658469097 / 11658469098)",
+   "publisher": "Turner Motorsport",
+   "url": "https://www.turnermotorsport.com/p-53290951-oem-mitsubishi-turbocharger-exhaust-manifold-replacement-set-bmw-s58-30l/",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "TURNER_8HP76",
+   "title": "Automatic Transmission Service Kit - 8HP76 - BMW G87 M2, G80 M3 Comp, G82/83 M4 Comp",
+   "publisher": "Turner Motorsport",
+   "url": "https://www.turnermotorsport.com/p-31125611-automatic-transmission-service-kit-8hp76/",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "LEEBMANN_TC",
+   "title": "BMW repair kit torque converter GA8HP76 (fitment G80 M3 Competition, type codes 31AY/32AY)",
+   "publisher": "Leebmann24",
+   "url": "https://www.leebmann24.com/cz/en/product/bmw-repair-kit-torque-converter-10129714",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "DISC_PARTS",
+   "title": "Replacement disc listings for G80/G82 Competition: front 380 x 36 mm, rear 370 x 24 mm; Turner note on 400 x 38 mm carbon-ceramic",
+   "publisher": "azcarparts / Turner Motorsport (parts retailers)",
+   "url": "https://azcarparts.co.uk/products/for-bmw-m3-g80-g81-m4-g82-g83-competition-rear-left-right-brake-discs-pair-370mm ; https://www.turnermotorsport.com/p-38419088-front-2-piece-carbon-ceramic-brake-rotors-pair-380x36mm/",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "WIKI_B58",
+   "title": "BMW B58 (S58 section)",
+   "publisher": "Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/BMW_B58",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "FIRING",
+   "title": "BMW inline-six firing order 1-5-3-6-2-4 (BMW training document ST501 'Engine Diagnosis' via archive.org; GT Spark Plugs BMW inline-6 page; seen as search-result extracts, not opened)",
+   "publisher": "BMW NA training (archive.org) / gtsparkplugs.com",
+   "url": "https://archive.org/download/BMWTechnicalTrainingDocuments/ST501%20New%20Engine%20Technology/02_Engine%20Diagnosis.pdf ; https://gtsparkplugs.com/firing-order-bmw-inline-6.html",
+   "date": "various"
+  },
+  {
+   "id": "OPF_VENDORS",
+   "title": "G80 exhaust guides noting EU cars carry an OPF/GPF and US cars generally do not",
+   "publisher": "CenCal Motorsport / JD Customs (vendors)",
+   "url": "https://cencalmotorsport.com/blogs/cc-paddock/bmw-g80-m3-exhaust-guide-catback-downpipes-and-everything-that-changes-the-sound ; https://jdcustomsusa.com/collections/bmw-g80-m3-exhaust-manifold",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "BMAG_LC",
+   "title": "BMW Launch Control - How It Works and Which Models Have It",
+   "publisher": "Bimmer Mag",
+   "url": "https://www.bimmer-mag.com/?p=2655",
+   "date": "2025-05-09"
+  },
+  {
+   "id": "ASD_FORUM",
+   "title": "G80 owner forum thread on M Sound / Active Sound Design and burbles (anecdotal)",
+   "publisher": "G80.Bimmerpost",
+   "url": "https://g80.bimmerpost.com/forums/showthread.php?p=28140991",
+   "date": "2021-10-11"
+  },
+  {
+   "id": "MOTOR1_VMAX",
+   "title": "2021 BMW M3 Competition Impresses In Top Speed Run (AutoTopNL GPS run; page did not load, figure from search extract)",
+   "publisher": "Motor1",
+   "url": "https://www.motor1.com/news/497131/g80-m3-competition-top-speed-run/",
+   "date": "2021"
+  },
+  {
+   "id": "COMMONS_PHOTO",
+   "title": "File:BMW G80 M3 Competition M xDrive Black Sapphire Metallic (3).jpg (Damian B Oh, CC BY-SA 4.0, taken 2024-06-29)",
+   "publisher": "Wikimedia Commons",
+   "url": "https://commons.wikimedia.org/wiki/File:BMW_G80_M3_Competition_M_xDrive_Black_Sapphire_Metallic_(3).jpg",
+   "date": "2024-06-29"
+  },
+  {
+   "id": "COMMONS_CAT",
+   "title": "Category:BMW M3 Competition (G80) (40 photos sampled; no pure side profile found)",
+   "publisher": "Wikimedia Commons",
+   "url": "https://commons.wikimedia.org/wiki/Category:BMW_M3_Competition_(G80)",
+   "date": "accessed 2026-11-13"
+  },
+  {
+   "id": "COMMONS_AUDIO",
+   "title": "File:BMW M3 (G80) Competition with Fi Exhaust - engine and exhaust sound (YouTube qv a5bJeFPg).opus (FiExhaust, CC BY 3.0, licence review pending)",
+   "publisher": "Wikimedia Commons",
+   "url": "https://commons.wikimedia.org/wiki/File:BMW_M3_(G80)_Competition_with_Fi_Exhaust_-_engine_and_exhaust_sound_(YouTube_qv_a5bJeFPg).opus",
+   "date": "2021-11-28 (original)"
+  },
+  {
+   "id": "VIDEO_EMBEDS",
+   "title": "YouTube video IDs taken from embeds in BMWBlog articles (article URL given per video)",
+   "publisher": "BMWBlog / YouTube",
+   "url": "https://www.bmwblog.com/",
+   "date": "2021"
+  },
+  {
+   "id": "CALC",
+   "title": "Calculation in this file from the cited inputs (method in each note)",
+   "publisher": "this research",
+   "url": "",
+   "date": "2026-11-13"
+  }
+ ]
+}

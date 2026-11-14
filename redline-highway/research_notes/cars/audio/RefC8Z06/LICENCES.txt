@@ -1,0 +1,55 @@
+RefC8Z06 (Corvette Z06 C8, LT6 flat-plane V8) - reference recordings
+=====================================================================
+
+Nothing has been downloaded into this folder yet.
+
+Wikimedia returned "HTTP 429 Too many requests" for every original-file download from this
+session's shared network address on 2026-11-13 (thumbnail images worked). Fetch the files below
+by hand from the "direct" links, and keep this note next to them.
+
+No freely licensed recording of the LT6 itself was found on Wikimedia Commons. The Commons file
+"Chevrolet Corvette Z06 - engine and exhaust sound (YouTube 8kg9FOz-zR8).opus" is a 2011 C6 Z06
+(LS7, cross-plane crank). It is useful only as a contrast to the flat-plane sound.
+
+Candidates, all naturally aspirated flat-plane V8s:
+
+1. Shelby GT350, Ford "Voodoo" 5.2 L, 8,250 rpm. This is the closest analogue: a large American
+   naturally aspirated flat-plane V8.
+   Length: 8 min 53 s on-road "pure sound" drive.
+   Licence: CC BY 3.0. Commons licence review still pending.
+   Author: Triple A Dogs (YouTube). Original: "2016 Shelby Mustang GT350 drives the Tunnel of
+   Tree's in Michigan - Pure Sound (PT. 2)".
+   Page:   https://commons.wikimedia.org/wiki/File:Shelby_GT350_-_engine_and_exhaust_sound_(YouTube_tZyiN61fTHI).opus
+   Direct: https://upload.wikimedia.org/wikipedia/commons/a/a8/Shelby_GT350_-_engine_and_exhaust_sound_%28YouTube_tZyiN61fTHI%29.opus
+
+2. Ferrari 458 Italia, F136 4.5 L.
+   Length: 11.6 s pull-away from the start line, Goodwood Festival of Speed, 2010-07-03.
+   Licence: CC BY-SA 3.0. Own work, so no licence review is needed.
+   Author: Edvvc
+   Page:   https://commons.wikimedia.org/wiki/File:Ferrari_458_Italia.ogg
+   Direct: https://upload.wikimedia.org/wikipedia/commons/5/5a/Ferrari_458_Italia.ogg
+
+3. Ferrari F430 Spider, F136 E 4.3 L.
+   Length: 27.5 s of start-up, revs and acceleration.
+   Licence: CC BY 3.0. Commons licence review still pending.
+   Author: Fuzy F (YouTube). Original: "Ferrari F430 Spider Best Ferrari Sound!!"
+   Page:   https://commons.wikimedia.org/wiki/File:Ferrari_F430_Spider_-_engine_and_exhaust_sound_(YouTube_GpMZWVY6Sio).opus
+   Direct: https://upload.wikimedia.org/wikipedia/commons/6/62/Ferrari_F430_Spider_-_engine_and_exhaust_sound_%28YouTube_GpMZWVY6Sio%29.opus
+
+4. Ferrari 458 Speciale, F136 FL 4.5 L, fitted with an aftermarket "F1" exhaust (not stock).
+   Length: 37.7 s.
+   Licence: CC BY 3.0. Commons licence review still pending.
+   Author: TvdL Films (YouTube). Original: "Ferrari 458 Speciale with F1 Exhaust FLAMES & Revs".
+   Page:   https://commons.wikimedia.org/wiki/File:Ferrari_458_Speciale_-_engine_and_exhaust_sound_(YouTube_nltPXKAN6BI).opus
+   Direct: https://upload.wikimedia.org/wikipedia/commons/b/bd/Ferrari_458_Speciale_-_engine_and_exhaust_sound_%28YouTube_nltPXKAN6BI%29.opus
+
+Licence notes
+- CC BY: credit the author, the title, the licence and a link wherever the sound is used.
+- CC BY-SA: anything made from the file must also be released under CC BY-SA. That is awkward
+  for sounds inside a Roblox game, so use file 2 only as a listening and spectrum reference.
+- "Licence review pending" means Commons has not yet confirmed the YouTube Creative Commons
+  licence. Check the file page before relying on it.
+- Commons notes that YouTube's CC licence moved from 3.0 to 4.0 on 1 Aug 2025, and the change
+  was not retroactive.
+- None of these files is an LT6. Treat them as character references only (an even per-bank pulse
+  train and a high-rpm shriek), not as the car's own sound.

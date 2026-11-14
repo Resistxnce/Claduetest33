@@ -1,0 +1,25 @@
+{
+  "id": "TrafficTruck",
+  "displayName": "Traffic: generic truck",
+  "reference": "Generic 12 L turbo-diesel inline-6 with one exhaust (no particular truck).",
+  "sheet": "TrafficTruck_Engine",
+  "engine": {
+    "cylinders": 6, "layout": "inline", "crank": "even", "firingOrder": [1, 5, 3, 6, 2, 4],
+    "banks": { "A": [1, 2, 3, 4, 5, 6] }, "idleRpm": 600, "limiterRpm": 2100, "aspiration": "NA"
+  },
+  "exhaust": {
+    "evoDeg": 140, "pulseRiseDeg": 12, "pulseDecayDeg": 60, "rasp": 0.1, "gasTempK": 800, "pipeTempK": 550,
+    "collectors": [ { "name": "A", "cylinders": [1, 2, 3, 4, 5, 6], "primaryLengthM": 0.5, "lengthSpreadM": 0.08 } ],
+    "merge": { "type": "y" },
+    "outlets": [ { "collectors": ["A"], "pipeLengthM": 4.5, "tailLengthM": 1.2, "diameterM": 0.12 } ],
+    "muffler": { "valves": "closed", "closedLowpassHz": 900, "closedCutDb": 3 }
+  },
+  "intake": { "level": 0.2, "airboxHz": 70 },
+  "mechanical": { "combustion": 0.45, "valvetrain": 0.04, "injectors": 0.06, "blockHz": [1100, 2500] },
+  "idle": { "roughness": 0.05 },
+  "loops": { "rpmPoints": [1300], "seconds": 1.0, "limiter": false },
+  "loudness": { "interior": { "idleDbA": 52, "fullThrottleDbA": 82 }, "loadRangeDb": 10 },
+  "notes": {
+    "all": "[E] A generic placeholder for background trucks: diesel combustion knock is the strong block-noise level. Loudness figures are estimates."
+  }
+}
